@@ -1,5 +1,5 @@
 """
-NexusGuard 중앙 수집 서버 (Railway 배포본 소스 사본)
+GIGANG 중앙 수집 서버 (Railway 배포본 소스 사본)
 
 =====================================================================
 [이 서버가 하는 일]
@@ -118,7 +118,7 @@ def save_event(
 @app.route("/")
 def home():
     """서버가 살아 있는지 확인하는 용도. 브라우저로 열면 이 문구가 보인다."""
-    return "NexusGuard API Running"
+    return "GIGANG API Running"
 
 
 @app.route("/events", methods=["POST"])
@@ -297,7 +297,7 @@ def logs_page():
         <html lang="ko">
         <head>
             <meta charset="UTF-8">
-            <title>NexusGuard Logs</title>
+            <title>GIGANG Logs</title>
 
             <style>
                 body {
@@ -326,7 +326,7 @@ def logs_page():
 
         <body>
 
-            <h1>NexusGuard Logs</h1>
+            <h1>GIGANG Logs</h1>
 
             <table>
 

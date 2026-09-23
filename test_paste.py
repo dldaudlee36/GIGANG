@@ -9,8 +9,8 @@ from datetime import datetime, timedelta
 # 이 파일이 놓인 폴더(프로젝트 루트)를 모듈 경로에 추가
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from nexusguard.engine.correlation import CorrelationEngine
-from nexusguard.schemas.event import (
+from gigang.engine.correlation import CorrelationEngine
+from gigang.schemas.event import (
     SecurityEvent, LogSource, EventAction, Actor, Target, PayloadMetadata
 )
 

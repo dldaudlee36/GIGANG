@@ -3,7 +3,7 @@
 - 확장 JavaScript 테스트: 본문 미전송, 글자 수(유니코드 포함), 중복 등록 방지, 암호창·합성 이벤트 제외, 파일 선택 다중 처리 통과.
 - Agent HTTP 테스트: 정상 저장, 잘못된 메타데이터 거부, 실제 전송 실패 시 502, 본문 필드 차단 통과.
 - 빌드한 EXE 실행 후 로컬 HTTP 붙여넣기 메타데이터 → 운영 Railway → 대시보드 수집기 검증 통과.
-- 운영 테스트 기록: ID 14157, PASTE_ATTEMPT, 글자 수 29, 서버 시각 Wed, 09 Sep 2026 08:25:49 GMT. 대상은 nexusguard-paste-test.invalid 테스트 표시용 도메인.
+- 운영 테스트 기록: ID 14157, PASTE_ATTEMPT, 글자 수 29, 서버 시각 Wed, 09 Sep 2026 08:25:49 GMT. 대상은 gigang-paste-test.invalid 테스트 표시용 도메인.
 - Streamlit AppTest: 실서버 붙여넣기 로그와 글자 수 표시, 이벤트 필터, 기존 네 메뉴 정상 렌더링 통과.
 - 브라우저에서 기존 대시보드 렌더링과 수집 표시 확인.
 

@@ -1,5 +1,5 @@
 """
-NexusGuard - Shadow IT & AI Governance Engine
+GIGANG - Shadow IT & AI Governance Engine
 DNS 질의 기반 섀도우 IT/AI 식별, 위험도 산출 및 양성화 워크플로 관리 모듈
 
 =====================================================================
@@ -16,7 +16,7 @@ correlation.py 가 '위험한 사람'을 찾는다면,
 개인 노트북으로 몰래 쓴다. 이걸 '풍선 효과'라고 한다.
 막을수록 회사가 통제할 수 없는 곳으로 옮겨갈 뿐이다.
 
-그래서 NexusGuard는 관리자에게 3가지 선택지를 준다.
+그래서 GIGANG는 관리자에게 3가지 선택지를 준다.
   ① 정식 승인(양성화) — 업무에 꼭 필요하면 기업용 계약을 맺고 열어준다
   ② 사내 대체재 안내 — "그거 대신 사내 AI 쓰세요"라고 알려준다
   ③ 차단             — 정말 위험한 것만 막는다
@@ -40,8 +40,8 @@ LLM이 "이 회사에서 몇 명이 몇 번 썼는지"까지 알고 진단하게
 
 from typing import Dict, List, Optional, Any
 from datetime import datetime
-from nexusguard.schemas.event import SecurityEvent, LogSource
-from nexusguard.schemas.incident import ShadowAIAsset, Severity, SanctionStatus
+from gigang.schemas.event import SecurityEvent, LogSource
+from gigang.schemas.incident import ShadowAIAsset, Severity, SanctionStatus
 
 
 # 사내 정적 SaaS & AI 지식 베이스

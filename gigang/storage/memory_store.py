@@ -1,5 +1,5 @@
 """
-NexusGuard - Memory Store
+GIGANG - Memory Store
 시스템 상태 및 싱글톤 인스턴스 관리 저장소
 
 [이 파일이 하는 일]
@@ -31,14 +31,14 @@ WINDOWS_AGENT 또는 CHROME_EXTENSION 뿐이고 DNS는 없다는 점이었다.
 """
 
 from typing import Optional, TYPE_CHECKING
-from nexusguard.generators.dummy_logs import get_all_initial_events
-from nexusguard.schemas.event import LogSource
+from gigang.generators.dummy_logs import get_all_initial_events
+from gigang.schemas.event import LogSource
 
 # TYPE_CHECKING 은 '타입 힌트를 쓸 때만' import 하겠다는 뜻이다.
 # 실행 시점에는 import 되지 않으므로 순환 참조(서로가 서로를 import) 문제를 피할 수 있다.
 if TYPE_CHECKING:
-    from nexusguard.engine.correlation import CorrelationEngine
-    from nexusguard.engine.governance import ShadowAIGovernanceEngine
+    from gigang.engine.correlation import CorrelationEngine
+    from gigang.engine.governance import ShadowAIGovernanceEngine
 
 
 class AppContext:
@@ -55,8 +55,8 @@ class AppContext:
         # 함수 안에서 import 하는 이유:
         # 파일 맨 위에서 import 하면 correlation.py ↔ memory_store.py 가
         # 서로를 부르는 순환 참조가 생길 수 있어 실행 시점으로 미룬 것이다.
-        from nexusguard.engine.correlation import CorrelationEngine
-        from nexusguard.engine.governance import ShadowAIGovernanceEngine
+        from gigang.engine.correlation import CorrelationEngine
+        from gigang.engine.governance import ShadowAIGovernanceEngine
 
         # --- 1. 엔진 두 개 생성 ---
         self.correlation_engine = CorrelationEngine()      # 위험 상태 판정 담당
@@ -75,7 +75,7 @@ class AppContext:
         #   Railway 서버가 꺼져 있거나 네트워크가 안 될 수도 있으므로 try로 감싼다.
         #   실패해도 대시보드 자체는 떠야 하기 때문이다.
         try:
-            from nexusguard.collectors.team_collector import get_team_security_events
+            from gigang.collectors.team_collector import get_team_security_events
             self.team_events = get_team_security_events()
 
             # [수정됨] 예전에는 log_source == LogSource.DNS 인 것만 골라 넘겼는데

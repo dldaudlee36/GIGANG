@@ -1,5 +1,5 @@
 """
-NexusGuard - Root Entry Point for Streamlit Cloud
+GIGANG - Root Entry Point for Streamlit Cloud
 Streamlit Cloud 기본 실행 파일(app.py) 호환용 엔트리포인트
 """
 
@@ -13,6 +13,6 @@ if str(root_dir) not in sys.path:
 
 # Execute in Streamlit's script namespace so timed fragments keep the same
 # script identity across navigation and automatic reruns.
-dashboard_file = root_dir / "nexusguard" / "ui" / "app.py"
+dashboard_file = root_dir / "gigang" / "ui" / "app.py"
 __file__ = str(dashboard_file)
 exec(compile(dashboard_file.read_text(encoding="utf-8"), str(dashboard_file), "exec"), globals())

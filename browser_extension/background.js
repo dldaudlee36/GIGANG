@@ -59,7 +59,7 @@ async function diagnostics() {
     try {
         const response = await fetch(AGENT + '/health', {signal: AbortSignal.timeout(3000), credentials: 'omit', redirect: 'error'});
         const health = await response.json();
-        result.agent = {ok: response.ok && health.service === 'NexusGuardAgent' && /^3\./.test(health.version), version: health.version || '?'};
+        result.agent = {ok: response.ok && health.service === 'GIGANGAgent' && /^3\./.test(health.version), version: health.version || '?'};
     } catch { /* The popup will explain that the Agent is not reachable. */ }
     Object.assign(result, await chrome.storage.local.get(['lastPaste', 'lastUpload']));
     return result;
@@ -67,11 +67,11 @@ async function diagnostics() {
 
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
     if (sender.id !== chrome.runtime.id) return false;
-    if (message?.type === 'NEXUSGUARD_EVENT') {
+    if (message?.type === 'GIGANG_EVENT') {
         deliver(message, sender).then(respond, () => respond({status: 'failed', error: 'EXTENSION_ERROR'}));
         return true;
     }
-    if (message?.type === 'NEXUSGUARD_STATUS' && sender.url?.startsWith(chrome.runtime.getURL(''))) {
+    if (message?.type === 'GIGANG_STATUS' && sender.url?.startsWith(chrome.runtime.getURL(''))) {
         diagnostics().then(respond, () => respond({error: 'EXTENSION_ERROR'}));
         return true;
     }

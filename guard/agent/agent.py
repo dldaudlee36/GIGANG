@@ -1,4 +1,4 @@
-"""NexusGuard Agent v3: DNS, file-selection and paste metadata collection."""
+"""GIGANG Agent v3: DNS, file-selection and paste metadata collection."""
 import getpass
 import ipaddress
 import json
@@ -17,7 +17,7 @@ import requests
 VERSION = '3.0.0'
 SERVER_URL = os.getenv('RAILWAY_URL', 'https://bountiful-nature-production-22ec.up.railway.app/events')
 SERVER_DOMAIN = urlsplit(SERVER_URL).hostname
-LOCAL_EXTENSION_PORT = int(os.getenv('NEXUSGUARD_EXTENSION_PORT', '8765'))
+LOCAL_EXTENSION_PORT = int(os.getenv('GIGANG_EXTENSION_PORT', '8765'))
 USER_NAME = getpass.getuser()
 PC_NAME = socket.gethostname()
 
@@ -98,7 +98,7 @@ class ExtensionEventHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == '/health':
-            self.respond(200,{'service':'NexusGuardAgent','version':VERSION})
+            self.respond(200,{'service':'GIGANGAgent','version':VERSION})
         else:
             self.respond(404,{'error':'Not found'})
 
@@ -140,7 +140,7 @@ def main():
         print(f'포트 {LOCAL_EXTENSION_PORT} 사용 중: 기존 Agent 또는 테스트 서버를 종료하세요.',flush=True)
         return 1
     threading.Thread(target=server.serve_forever,daemon=True).start()
-    print(f'NexusGuard Agent {VERSION}\nPC: {PC_NAME}\n로컬 IP: {get_local_ip()}\n확장 연결: 127.0.0.1:{LOCAL_EXTENSION_PORT}',flush=True)
+    print(f'GIGANG Agent {VERSION}\nPC: {PC_NAME}\n로컬 IP: {get_local_ip()}\n확장 연결: 127.0.0.1:{LOCAL_EXTENSION_PORT}',flush=True)
     known = get_domains()
     try:
         while True:

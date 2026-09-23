@@ -3,8 +3,8 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from datetime import datetime, timedelta
-from nexusguard.engine.correlation import CorrelationEngine
-from nexusguard.schemas.event import (
+from gigang.engine.correlation import CorrelationEngine
+from gigang.schemas.event import (
     SecurityEvent, LogSource, EventAction, Actor, Target, PayloadMetadata
 )
 

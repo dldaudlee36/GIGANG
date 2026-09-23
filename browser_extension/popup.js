@@ -10,7 +10,7 @@ const failures = {
 async function refresh() {
     element('refresh').disabled = true;
     try {
-        const status = await chrome.runtime.sendMessage({type: 'NEXUSGUARD_STATUS'});
+        const status = await chrome.runtime.sendMessage({type: 'GIGANG_STATUS'});
         if (!status || status.error) throw new Error('EXTENSION_ERROR');
         element('version').textContent = `확장 ${status.version}`;
         element('agent').textContent = status.agent.ok ? `연결됨 · Agent ${status.agent.version}` : '연결 안 됨 · start-agent.bat을 실행하세요.';

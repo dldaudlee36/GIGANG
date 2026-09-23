@@ -1,5 +1,5 @@
 """
-NexusGuard - SQLite Persistence Storage Layer
+GIGANG - SQLite Persistence Storage Layer
 위험 상태(user_risk), 상태 이력(risk_history), 인시던트(incidents), 도메인 캐시(domain_cache) 영속화
 
 [이 파일이 하는 일]
@@ -36,13 +36,16 @@ from pathlib import Path
 from datetime import datetime, timedelta   # [수정됨] timedelta 추가 (최근 24시간 조회용)
 from typing import List, Optional, Dict, Any
 
-from nexusguard.schemas.incident import (
+from gigang.schemas.incident import (
     Incident, Severity, IncidentCategory, IncidentStatus, NetworkHop, RiskState
 )
 
-# DB 파일 위치: 프로젝트 최상위 폴더의 nexusguard.db
-# (이 파일 기준 storage → nexusguard → 프로젝트 루트, 이렇게 세 단계 위로 올라간다)
-DEFAULT_DB_PATH = os.path.join(str(Path(__file__).resolve().parent.parent.parent), "nexusguard.db")
+# DB 파일 위치: 프로젝트 최상위 폴더의 gigang.db (기존 gigang.db 호환 지원)
+# (이 파일 기준 storage → gigang → 프로젝트 루트, 이렇게 세 단계 위로 올라간다)
+_db_root = str(Path(__file__).resolve().parent.parent.parent)
+_gigang_db_path = os.path.join(_db_root, "gigang.db")
+_legacy_db_path = os.path.join(_db_root, "gigang.db")
+DEFAULT_DB_PATH = _gigang_db_path if (os.path.exists(_gigang_db_path) or not os.path.exists(_legacy_db_path)) else _legacy_db_path
 
 
 class SQLiteStore:

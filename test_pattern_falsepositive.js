@@ -1,8 +1,8 @@
 /*
- * NexusGuard - 붙여넣기 패턴 검출 오탐 테스트
+ * GIGANG - 붙여넣기 패턴 검출 오탐 테스트
  *
  * 실행 방법:
- *   1) 이 파일을 Nexusguard-main 폴더 안에 둔다
+ *   1) 이 파일을 GIGANG-main 폴더 안에 둔다
  *   2) 터미널에서:  node test_pattern_falsepositive.js
  *
  * guard/browser_extension/content.js 를 이 파일 위치 기준으로 찾습니다.
@@ -16,7 +16,7 @@ const candidates = [
   path.join(__dirname, 'guard', 'browser_extension', 'content.js'),
   path.join(__dirname, '..', 'browser_extension', 'content.js'),
   path.join(__dirname, '..', 'guard', 'browser_extension', 'content.js'),
-  path.join(__dirname, 'Nexusguard-main', 'guard', 'browser_extension', 'content.js'),
+  path.join(__dirname, 'GIGANG-main', 'guard', 'browser_extension', 'content.js'),
   path.join(__dirname, 'content.js'),
 ];
 
@@ -25,7 +25,7 @@ const contentPath = candidates.find(p => fs.existsSync(p));
 if (!contentPath) {
   console.error('content.js 를 찾을 수 없습니다. 확인한 위치:');
   candidates.forEach(p => console.error('  - ' + p));
-  console.error('\n이 파일을 Nexusguard-main 폴더 안에 두고 다시 실행하세요.');
+  console.error('\n이 파일을 GIGANG-main 폴더 안에 두고 다시 실행하세요.');
   process.exit(1);
 }
 

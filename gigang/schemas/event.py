@@ -1,9 +1,9 @@
 """
-NexusGuard - Unified Security Event Schema
+GIGANG - Unified Security Event Schema
 이기종 로그(DNS, Auth, Firewall, DB, Web)를 단일 표준으로 정규화하는 데이터 모델
 
 [이 파일이 하는 일]
-NexusGuard는 서로 다른 곳에서 로그를 받는다. 단말의 Windows Agent, Chrome 확장,
+GIGANG는 서로 다른 곳에서 로그를 받는다. 단말의 Windows Agent, Chrome 확장,
 방화벽, DB 감사 로그... 각자 형식이 전부 다르다.
 이 파일은 그 모든 로그를 SecurityEvent라는 하나의 형태로 통일한다.
 
@@ -41,7 +41,7 @@ class LogSource(str, Enum):
     WEB = "web"                             # 웹 프록시 로그 (HTTP GET/POST)
     SYSTEM = "system"                       # 그 외 시스템 로그
     CHROME_EXTENSION = "chrome-extension"   # 크롬 확장 프로그램이 감지한 파일 첨부
-    WINDOWS_AGENT = "windows-agent"         # 단말의 NexusGuardAgent.exe 가 감지한 접속
+    WINDOWS_AGENT = "windows-agent"         # 단말의 GIGANGAgent.exe 가 감지한 접속
 
 
 class EventAction(str, Enum):
@@ -116,7 +116,7 @@ class SecurityEvent(BaseModel):
     """
     정규화된 보안 이벤트 하나.
 
-    NexusGuard 안을 돌아다니는 모든 로그는 결국 이 형태가 된다.
+    GIGANG 안을 돌아다니는 모든 로그는 결국 이 형태가 된다.
     수집기(collectors/)가 원본 로그를 이 형태로 바꾸고,
     엔진(engine/correlation.py)이 이것만 보고 위험도를 판정한다.
     """

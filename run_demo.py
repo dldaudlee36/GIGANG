@@ -1,5 +1,5 @@
 """
-NexusGuard - E2E Verification and Runner Script
+GIGANG - E2E Verification and Runner Script
 전체 파이프라인 무결성 검증 및 Streamlit 대시보드 실행 보조 스크립트
 
 [이 파일이 하는 일]
@@ -29,9 +29,9 @@ if sys.stdout.encoding != 'utf-8':
     except Exception:
         pass
 from datetime import datetime
-from nexusguard.generators import get_all_initial_events
-from nexusguard.storage import get_context
-from nexusguard.schemas import Severity
+from gigang.generators import get_all_initial_events
+from gigang.storage import get_context
+from gigang.schemas import Severity
 
 
 def verify_pipeline():
@@ -44,7 +44,7 @@ def verify_pipeline():
     ※ 여기서 쓰는 것은 전부 더미 로그다. 실제 Railway 수집 로그는 점검 대상이 아니다.
     """
     print("==================================================")
-    print("🛡️ NexusGuard E2E 파이프라인 무결성 검증 시작")
+    print("🛡️ GIGANG E2E 파이프라인 무결성 검증 시작")
     print("==================================================")
 
     # 1. 이벤트 생성 검증
@@ -71,8 +71,8 @@ def verify_pipeline():
         print(f"   - {asset.domain:15} | 위험도: {asset.risk_level.value:8} | {asset.user_count}명 사용 | 상태: {asset.sanction_status.value}")
 
     print("==================================================")
-    print("🎉 NexusGuard Phase 1 모든 핵심 모듈 정상 검증 완료!")
-    print("   대시보드 실행 명령: streamlit run nexusguard/ui/app.py")
+    print("🎉 GIGANG Phase 1 모든 핵심 모듈 정상 검증 완료!")
+    print("   대시보드 실행 명령: streamlit run gigang/ui/app.py")
     print("==================================================")
 
 

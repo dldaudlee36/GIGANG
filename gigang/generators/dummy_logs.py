@@ -1,5 +1,5 @@
 """
-NexusGuard - Dummy Log Generator
+GIGANG - Dummy Log Generator
 시나리오 A(외부 침투 및 내부 피보팅) & 시나리오 B(섀도우 AI 데이터 유출) 모의 원천 로그 생성기
 
 =====================================================================
@@ -16,7 +16,7 @@ NexusGuard - Dummy Log Generator
   시나리오 A : 외부 공격자가 침투해 내부로 파고들어 고객정보를 빼가는 흐름
                브루트포스 → 로그인 성공 → SSH 이동 → DB 조회 → 외부 유출
   시나리오 B : 내부 직원이 기밀 조회 후 ChatGPT에 올리는 흐름
-               ★ NexusGuard 주력 시나리오. WATCH → HIGH 전이를 검증한다
+               ★ GIGANG 주력 시나리오. WATCH → HIGH 전이를 검증한다
   배경 로그  : 평상시 정상 트래픽. 위험 로그만 있으면 비현실적이므로 섞어준다
 
 [⚠ 중요]
@@ -30,7 +30,7 @@ Railway에서 받아온 진짜 로그는 엔진까지 도달하지 않는다.
 
 from datetime import datetime, timedelta
 from typing import List
-from nexusguard.schemas.event import (
+from gigang.schemas.event import (
     SecurityEvent, LogSource, EventAction, Actor, Target, PayloadMetadata
 )
 
@@ -179,7 +179,7 @@ def generate_scenario_b_logs(base_time: datetime = None) -> List[SecurityEvent]:
     시나리오 B: 내부 직원의 섀도우 AI 접속 및 기밀 데이터 유출 시뮬레이션
     - 내부 PC(192.168.10.45) DB 조회 -> 3분 내 chatgpt.com DNS 질의 -> 외부 AI 업로드 트래픽
 
-    ★ NexusGuard가 풀려는 문제를 그대로 재현한 시나리오다.
+    ★ GIGANG가 풀려는 문제를 그대로 재현한 시나리오다.
 
     이 세 이벤트가 엔진에 순서대로 들어가면 다음이 일어난다.
       1) DB 조회       → 엔진이 조회 시각만 기억 (아직 상태 안 바뀜)

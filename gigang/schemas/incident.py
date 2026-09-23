@@ -1,5 +1,5 @@
 """
-NexusGuard - Incident & Governance Schema
+GIGANG - Incident & Governance Schema
 상관분석을 통해 생성된 침해사고(Incident) 및 섀도우 IT/AI 자산 모델
 
 [이 파일이 하는 일]
@@ -24,11 +24,11 @@ from pydantic import BaseModel, Field
 
 class RiskState(str, Enum):
     """
-    사용자의 위험 상태. NexusGuard 설계의 핵심 개념이다.
+    사용자의 위험 상태. GIGANG 설계의 핵심 개념이다.
 
     NORMAL   : 평상시. 아무 문제 없음
     WATCH    : 선제 감시. 유출 '준비' 정황은 보이지만 아직 데이터는 안 나갔다.
-               ★ 이 단계가 NexusGuard의 차별점. 기존 보안 장비는 여기서 아무것도 안 한다.
+               ★ 이 단계가 GIGANG의 차별점. 기존 보안 장비는 여기서 아무것도 안 한다.
     HIGH     : 실제로 데이터가 나갔다. 침해사고 확정
     CRITICAL : HIGH보다 심각한 경우 (대규모 유출 등)
     """
@@ -67,7 +67,7 @@ class IncidentCategory(str, Enum):
     """
     침해사고의 유형 분류.
 
-    NexusGuard가 주력으로 다루는 것은 SHADOW_AI_EXFILTRATION(섀도우 AI 유출)이고,
+    GIGANG가 주력으로 다루는 것은 SHADOW_AI_EXFILTRATION(섀도우 AI 유출)이고,
     나머지는 대시보드에 함께 보여주는 일반적인 보안 사고 유형이다.
     """
     LATERAL_MOVEMENT = "LATERAL_MOVEMENT"              # 외부 침투 및 내부 측면이동
@@ -116,7 +116,7 @@ class Incident(BaseModel):
     evidences(근거 목록)가 특히 중요하다.
     "왜 이게 위험하다고 판단했는지"를 사람이 읽을 수 있게 배점과 함께 적어둔 것으로,
     관리자가 차단 여부를 직접 결정할 때 판단 재료가 된다.
-    (NexusGuard는 시스템이 자동 차단하지 않는다. 결정은 사람이 한다.)
+    (GIGANG는 시스템이 자동 차단하지 않는다. 결정은 사람이 한다.)
     """
     incident_id: str = Field(description="인시던트 고유 식별자 (예: INC-001)")
     title: str = Field(description="인시던트 제목")
@@ -138,7 +138,7 @@ class SanctionStatus(str, Enum):
     """
     외부 AI 서비스에 대한 사내 승인 상태.
 
-    NexusGuard의 거버넌스 철학: 무조건 막으면 직원들은 개인 폰/노트북으로 몰래 쓴다(풍선 효과).
+    GIGANG의 거버넌스 철학: 무조건 막으면 직원들은 개인 폰/노트북으로 몰래 쓴다(풍선 효과).
     그래서 '차단'만이 아니라 '양성화(정식 승인)' 경로를 함께 제공한다.
     """
     APPROVED = "APPROVED"          # 정식 승인됨 (안전하게 써도 되는 도구)

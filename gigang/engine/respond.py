@@ -1,5 +1,5 @@
 """
-NexusGuard - SOAR Response Hook Module
+GIGANG - SOAR Response Hook Module
 위험 상태 전이 및 인시던트 발생 시 자동 대응/전파를 수행하는 단일 확장 훅
 
 =====================================================================
@@ -35,7 +35,7 @@ Security Orchestration, Automation and Response의 약자다.
 아래 on_risk_state_changed() 안의 block_outbound_ip / revoke_user_session 호출은
 주석 처리되어 있다. 실수로 지운 게 아니라 의도적인 설계다.
 
-NexusGuard는 시스템이 자동으로 차단하지 않는다.
+GIGANG는 시스템이 자동으로 차단하지 않는다.
 오탐일 경우 멀쩡한 직원의 업무를 시스템이 마비시킬 수 있기 때문이다.
 차단 여부는 관리자가 대시보드에서 근거를 확인하고 직접 결정한다.
 """
@@ -44,9 +44,9 @@ import logging
 from typing import List, Optional
 from datetime import datetime
 
-# 'nexusguard.soar' 이름표를 단 로거.
+# 'gigang.soar' 이름표를 단 로거.
 # 나중에 이 이름으로 필터링하면 SOAR 관련 로그만 따로 볼 수 있다.
-logger = logging.getLogger("nexusguard.soar")
+logger = logging.getLogger("gigang.soar")
 
 
 def notify_slack(message: str, channel: str = "#incident-alerts") -> bool:

@@ -1,9 +1,9 @@
 """
-NexusGuard - Multi-Dimensional Correlation Engine with Risk State Machine
+GIGANG - Multi-Dimensional Correlation Engine with Risk State Machine
 2단계 위험 상태 기계(Risk State Machine) 기반 실시간 상관분석 & 인시던트 생성 엔진
 
 =====================================================================
-[이 파일이 NexusGuard의 심장이다]
+[이 파일이 GIGANG의 심장이다]
 =====================================================================
 
 들어온 로그(SecurityEvent) 하나하나를 보고
@@ -11,7 +11,7 @@ NexusGuard - Multi-Dimensional Correlation Engine with Risk State Machine
 
 [핵심 아이디어 — 왜 2단계인가]
 기존 보안 장비는 데이터가 다 빠져나간 뒤에야 경보를 울린다(사후 약방문).
-NexusGuard는 그 전에 한 번 더 끊어서 본다.
+GIGANG는 그 전에 한 번 더 끊어서 본다.
 
   1단계 WATCH : 아직 데이터는 안 나갔다. 하지만 '나갈 준비'를 하는 정황이 보인다.
                 → 관리자에게 1차 주의 알림
@@ -43,12 +43,12 @@ from typing import List, Dict, Optional, Any
 from datetime import datetime, timedelta
 import json
 
-from nexusguard.schemas.event import SecurityEvent, LogSource, EventAction
-from nexusguard.schemas.incident import (
+from gigang.schemas.event import SecurityEvent, LogSource, EventAction
+from gigang.schemas.incident import (
     Incident, Severity, IncidentCategory, IncidentStatus, NetworkHop, RiskState
 )
-from nexusguard.engine.respond import on_risk_state_changed
-from nexusguard.storage.sqlite_store import SQLiteStore
+from gigang.engine.respond import on_risk_state_changed
+from gigang.storage.sqlite_store import SQLiteStore
 
 # 상태별 만료 주기 (TTL)
 # 이 시간이 지나면 해당 상태는 조회에서 제외되어 자동으로 NORMAL로 취급된다.
@@ -69,6 +69,17 @@ SENSITIVE_TABLES = {"customer_info", "customer_vault", "corp_strategic_plan", "s
 # ※ 아래 update_user_risk() 에서는 이 목록에 없어도 도메인 이름에 'ai', 'gpt' 등이
 #   들어 있으면 같은 취급을 한다(신규 AI 사이트가 계속 생기기 때문).
 KNOWN_AI_DOMAINS = {"chatgpt.com", "api.openai.com", "claude.ai", "wetransfer.com", "dropbox.com"}
+
+# DB 로그인 계정 <-> 사원/단말 마스터 계정(Windows Agent User) 매핑 테이블
+# DB 감사 로그의 원본 user_name(sales_user, report_user)을 보존하면서
+# 윈도우 단말(User)과 동일 인물로 묶어 다단계 상관분석을 수행하기 위한 식별자 매핑
+DB_USER_IDENTITY_MAPPING: Dict[str, str] = {
+    "sales_user": "User",
+    "report_user": "User",
+    "test_user": "User",
+    "kim_marketing": "User",
+}
+
 
 
 class CorrelationEngine:
@@ -172,7 +183,7 @@ class CorrelationEngine:
           화면에서 모의 데이터임을 구분 표기하는 것이 좋다.
 
           INC-001 CRITICAL : 외부 침투 후 고객정보 대량 유출
-          INC-002 HIGH     : 섀도우 AI 유출 (NexusGuard 주력 시나리오)
+          INC-002 HIGH     : 섀도우 AI 유출 (GIGANG 주력 시나리오)
           INC-003 LOW      : 정상 업무 트래픽 (대조군)
           INC-004 MEDIUM   : WATCH 상태 예시
         """
@@ -356,7 +367,9 @@ class CorrelationEngine:
         주의: 각 분기 끝에 return이 있다. 한 이벤트는 한 가지 판정만 받는다.
         """
         # 사용자를 무엇으로 식별할지 정한다. 계정명이 있으면 계정명, 없으면 IP를 쓴다.
-        user = event.actor.user_id or event.actor.src_ip
+        # DB 계정(sales_user, report_user 등)은 매핑 사전을 통해 윈도우 단말 마스터 계정(User)으로 정규화한다.
+        raw_user = event.actor.user_id or event.actor.src_ip
+        user = DB_USER_IDENTITY_MAPPING.get(raw_user, raw_user)
         now_utc = datetime.utcnow()
 
         # 1. 만료 시각(expires_at > now) 기준 현재 유효 상태 조회
@@ -388,7 +401,7 @@ class CorrelationEngine:
         #   · 이미 WATCH 인 사용자 → HIGH 로 승격. 전송이 실제 일어난 것으로 본다.
         #   · NORMAL 인 사용자     → 상태를 바꾸지 않고 기록만 남긴다.
         #     정상 사용자도 긴 문서를 붙여넣는 일이 흔해서, 이것만으로 올리면 오탐이 된다.
-        #     (NexusGuard의 '조건을 모두 만족했을 때만 올린다' 원칙과 같은 맥락이다)
+        #     (GIGANG의 '조건을 모두 만족했을 때만 올린다' 원칙과 같은 맥락이다)
         #
         # 붙여넣은 내용 자체는 수집하지도 저장하지도 않는다. 길이와 패턴 개수만 쓴다.
         if event.action == EventAction.PASTE_ATTEMPT:
@@ -511,7 +524,7 @@ class CorrelationEngine:
                     return
 
         # 2.3 미승인 AI / 외부 SaaS 단순 접근 및 질의 포착 (전송 이전 선제 감시)
-        # ★ NexusGuard의 핵심 차별점이 구현된 부분이다.
+        # ★ GIGANG의 핵심 차별점이 구현된 부분이다.
         #   데이터가 나가기 '전에' 감시를 시작하는 곳.
         if (event.log_source in [LogSource.DNS, LogSource.WEB, LogSource.WINDOWS_AGENT]) and is_ai_or_cloud:
             # 이 사용자가 어느 AI 사이트에 언제 접속했는지 기록해둔다
@@ -688,8 +701,8 @@ class CorrelationEngine:
             title = f"{prefix_str}사용자 '{user}' 미승인 서비스({target_domain})로 기밀 파일('{fname}') 업로드 유출 확정"
             summary = f"사용자 '{user}'({event.actor.src_ip})가 {target_domain}에 기밀 파일('{fname}', {size_kb:.1f} KB) 업로드를 시도하여 Chrome 확장 프로그램 및 에이전트에 의해 실시간 포착/차단되었습니다."
             evidences = [
-                f"Chrome 확장 프로그램(NexusGuard Upload Detector) 실시간 첨부 감지: '{fname}' ({fsize:,} bytes) (+4점)",
-                f"단말 Windows Agent(NexusGuardAgent.exe) 로컬 브릿지 연동 및 Railway 중앙 서버 실시간 전송 검증 (+2점)",
+                f"Chrome 확장 프로그램(GIGANG Upload Detector) 실시간 첨부 감지: '{fname}' ({fsize:,} bytes) (+4점)",
+                f"단말 Windows Agent(GIGANGAgent.exe) 로컬 브릿지 연동 및 Railway 중앙 서버 실시간 전송 검증 (+2점)",
                 f"동일 사용자/단말({user} / {event.actor.src_ip}) 킬체인 100% 일치 (+2점)",
                 evidence_note or f"기밀 DB 조회 직후 15분 내 미승인 서비스({target_domain}) 파일 업로드 연계 (+2점)"
             ]

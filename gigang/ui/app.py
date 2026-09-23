@@ -16,9 +16,9 @@ import pandas as pd
 import base64
 import streamlit.components.v1 as components
 from datetime import datetime, timedelta
-from nexusguard.storage import get_context
-from nexusguard.schemas import Severity, SanctionStatus, IncidentStatus, Incident
-from nexusguard.schemas.event import SecurityEvent, LogSource, EventAction, Actor, Target, PayloadMetadata
+from gigang.storage import get_context
+from gigang.schemas import Severity, SanctionStatus, IncidentStatus, Incident
+from gigang.schemas.event import SecurityEvent, LogSource, EventAction, Actor, Target, PayloadMetadata
 
 # 데이터프레임 내 검색 강조 색상을 선명한 골드 옐로우(rgba(250,204,21,0.65))로 보장
 def _ensure_vivid_search_highlight():
@@ -515,7 +515,7 @@ st.markdown("""
     /* =================================================== */
     /* 🌟 모든 페이지 타이틀 헤더 규격 통일 (28px) */
     /* =================================================== */
-    .nexus-page-title-box {
+    .gigang-page-title-box {
         position: relative;
         display: inline-flex;
         align-items: center;
@@ -523,7 +523,7 @@ st.markdown("""
         margin-bottom: 22px;
         cursor: pointer;
     }
-    .nexus-page-title {
+    .gigang-page-title {
         margin: 0 !important;
         font-size: 28px !important;
         font-weight: 800 !important;
@@ -736,11 +736,11 @@ st.markdown("""
     }
 
     /* 페이지 제목 앞 아이콘 전용 설명창: 아이콘에만 반응하고 제목 아래로 펼침 */
-    .nexus-page-title > .tooltip-container {
+    .gigang-page-title > .tooltip-container {
         cursor: help;
         flex-shrink: 0;
     }
-    .nexus-page-title > .tooltip-container .tooltip-popup {
+    .gigang-page-title > .tooltip-container .tooltip-popup {
         top: calc(100% + 10px);
         bottom: auto;
         left: 0;
@@ -753,13 +753,13 @@ st.markdown("""
         transform: translate(0, -4px) scale(0.98);
         transform-origin: top left;
     }
-    .nexus-page-title > .tooltip-container .tooltip-popup::after {
+    .gigang-page-title > .tooltip-container .tooltip-popup::after {
         top: -12px;
         left: 18px;
         margin-left: 0;
         border-color: transparent transparent #38bdf8 transparent;
     }
-    .nexus-page-title > .tooltip-container:hover .tooltip-popup {
+    .gigang-page-title > .tooltip-container:hover .tooltip-popup {
         transform: translate(0, 0) scale(1);
     }
 
@@ -1110,7 +1110,7 @@ st.markdown("""
             padding-left: 16px !important;
             padding-right: 16px !important;
         }
-        .nexus-page-title {
+        .gigang-page-title {
             font-size: 23px !important;
         }
         .kpi-card {
@@ -1556,7 +1556,7 @@ components.html("""
                 sidebar.style.setProperty('min-width', newWidth + 'px', 'important');
                 sidebar.style.setProperty('max-width', newWidth + 'px', 'important');
                 sidebar.style.setProperty('transition', 'none', 'important');
-                sessionStorage.setItem('nexusguard_sb_width', newWidth);
+                sessionStorage.setItem('gigang_sb_width', newWidth);
                 window.parent.dispatchEvent(new Event('resize'));
             });
 
@@ -1589,7 +1589,7 @@ components.html("""
             } else {
                 // 펼침 시: 핸들 복원 및 사용자가 설정했던 사이드바 폭 적용 (기본 300px)
                 if (handle) handle.style.display = 'block';
-                const saved = sessionStorage.getItem('nexusguard_sb_width') || '300';
+                const saved = sessionStorage.getItem('gigang_sb_width') || '300';
                 const w = Math.min(Math.max(parseInt(saved, 10), 240), 750);
                 sidebar.style.setProperty('width', w + 'px', 'important');
                 sidebar.style.setProperty('min-width', w + 'px', 'important');
@@ -1599,7 +1599,7 @@ components.html("""
         }
 
         // 접힘/펼침(aria-expanded) 속성 변경 실시간 감지 옵저버 등록
-        if (!sidebar._nexusCollapseObs) {
+        if (!sidebar._gigangCollapseObs) {
             const collapseObs = new MutationObserver((mutations) => {
                 for (const m of mutations) {
                     if (m.type === 'attributes' && m.attributeName === 'aria-expanded') {
@@ -1608,7 +1608,7 @@ components.html("""
                 }
             });
             collapseObs.observe(sidebar, { attributes: true, attributeFilter: ['aria-expanded'] });
-            sidebar._nexusCollapseObs = collapseObs;
+            sidebar._gigangCollapseObs = collapseObs;
         }
 
         syncSidebarState();
@@ -1616,7 +1616,7 @@ components.html("""
 
     // 🌟 상단 웰컴 배너 실시간 시계 (1초 단위 자동 갱신)
     function tickLiveClock() {
-        const clockEls = parentDoc.querySelectorAll('#nexus-live-clock, .bento-clock-box');
+        const clockEls = parentDoc.querySelectorAll('#gigang-live-clock, .bento-clock-box');
         if (!clockEls || clockEls.length === 0) return;
 
         const now = new Date();
@@ -1635,10 +1635,10 @@ components.html("""
         });
     }
 
-    if (window.parent._nexusClockInterval) {
-        window.parent.clearInterval(window.parent._nexusClockInterval);
+    if (window.parent._gigangClockInterval) {
+        window.parent.clearInterval(window.parent._gigangClockInterval);
     }
-    window.parent._nexusClockInterval = window.parent.setInterval(tickLiveClock, 1000);
+    window.parent._gigangClockInterval = window.parent.setInterval(tickLiveClock, 1000);
     tickLiveClock();
 
     function onDomMutation() {
@@ -1693,7 +1693,7 @@ def get_cached_context():
 ctx = get_cached_context()
 incidents = ctx.correlation_engine.get_all_incidents()
 if not incidents:
-    from nexusguard.collectors.team_collector import fetch_railway_events
+    from gigang.collectors.team_collector import fetch_railway_events
     r_logs = fetch_railway_events(timeout=3, force=False)
     if r_logs:
         ctx.correlation_engine.generate_incidents_from_railway(r_logs)
@@ -1791,7 +1791,7 @@ with st.sidebar:
             btn_reset = st.button("🔄 초기화\n시뮬 리셋", use_container_width=True, help="시뮬레이션 데이터 초기화")
 
         # Railway 수집 상태 세션 변수 사전 초기화
-        from nexusguard.collectors.team_collector import set_railway_collection_enabled, is_railway_collection_enabled
+        from gigang.collectors.team_collector import set_railway_collection_enabled, is_railway_collection_enabled
         if "railway_collection_active" not in st.session_state:
             st.session_state["railway_collection_active"] = False
             set_railway_collection_enabled(False)
@@ -1820,7 +1820,7 @@ with st.sidebar:
                     help="Railway 실시간 로그 수집을 켜거나 끕니다."
                 )
                 if st.button("🔄 최신 로그 즉시 동기화", disabled=not sb_railway_active, use_container_width=True, key="btn_sb_sync_now", help="Railway 중앙 서버에서 최신 에이전트 수집 로그를 즉시 갱신합니다."):
-                    from nexusguard.collectors.team_collector import fetch_railway_events, get_railway_fetch_status
+                    from gigang.collectors.team_collector import fetch_railway_events, get_railway_fetch_status
                     r_logs = fetch_railway_events(timeout=5, force=True)
                     if get_railway_fetch_status().get("ok"):
                         st.toast(f"🔄 Railway 중앙 서버에서 최신 {len(r_logs)}개 에이전트 로그를 동기화했습니다.", icon="🌐")
@@ -1828,7 +1828,7 @@ with st.sidebar:
                         st.toast("Railway 조회 실패: 마지막 성공 기록을 유지합니다.", icon="⚠️")
                     st.rerun()
 
-    from nexusguard.collectors.team_collector import get_team_sim_scenarios
+    from gigang.collectors.team_collector import get_team_sim_scenarios
     SIM_SCENARIOS = get_team_sim_scenarios()
 
     if btn_watch:
@@ -1980,7 +1980,7 @@ with st.sidebar:
     if btn_reset:
         ctx.correlation_engine.store.clear_all()
         ctx.correlation_engine.incidents.clear()
-        from nexusguard.collectors.team_collector import fetch_railway_events
+        from gigang.collectors.team_collector import fetch_railway_events
         r_logs = fetch_railway_events(timeout=3, force=False)
         if r_logs:
             ctx.correlation_engine.generate_incidents_from_railway(r_logs)
@@ -2754,7 +2754,7 @@ def render_interactive_map(svg_markup: str):
 
 if menu == "종합 관제":
     st.markdown(f"""
-    <div class="nexus-page-title-box"><div class="nexus-page-title" role="heading" aria-level="1">{text_tooltip("종합 관제", "종합 관제", "실시간 이기종 로그를 연계하여 침해사고를 재구성하고 내부 데이터 거버넌스를 모니터링하는 Zero Trust XDR 화면입니다.")}</div></div>
+    <div class="gigang-page-title-box"><div class="gigang-page-title" role="heading" aria-level="1">{text_tooltip("종합 관제", "종합 관제", "실시간 이기종 로그를 연계하여 침해사고를 재구성하고 내부 데이터 거버넌스를 모니터링하는 Zero Trust XDR 화면입니다.")}</div></div>
     """, unsafe_allow_html=True)
 
     # 위험도별 인시던트 목록 분할 (WATCH: MEDIUM / NORMAL: LOW)
@@ -2843,7 +2843,7 @@ if menu == "종합 관제":
             <p>GIGANG XDR Platform — 실시간 이기종 로그 상관분석 & 섀도우 AI 선제 방어 가동 중</p>
         </div>
         <div class="bento-banner-right">
-            <div class="bento-clock-box" id="nexus-live-clock">
+            <div class="bento-clock-box" id="gigang-live-clock">
                 {curr_time_str}
             </div>
         </div>
@@ -3160,8 +3160,8 @@ if menu == "종합 관제":
 # ==========================================
 elif menu == "킬체인 분석":
     st.markdown("""
-    <div class="nexus-page-title-box">
-        <h1 class="nexus-page-title">외부 침투 및 침해사고 심층 분석</h1>
+    <div class="gigang-page-title-box">
+        <h1 class="gigang-page-title">외부 침투 및 침해사고 심층 분석</h1>
     </div>
     """, unsafe_allow_html=True)
 
@@ -3305,14 +3305,14 @@ elif menu == "킬체인 분석":
 # VIEW 3: AI·IT 거버넌스 (Shadow IT/AI)
 # ==========================================
 elif menu == "AI·IT 거버넌스":
-    from nexusguard.collectors.team_collector import fetch_railway_events
+    from gigang.collectors.team_collector import fetch_railway_events
     r_events = fetch_railway_events(force=True)
     ctx.governance_engine.sync_railway_events(r_events)
     r_stats = ctx.governance_engine.get_railway_domain_stats()
 
     st.markdown("""
-    <div class="nexus-page-title-box">
-        <h1 class="nexus-page-title">사내 섀도우 IT 및 생성형 AI 거버넌스 대시보드</h1>
+    <div class="gigang-page-title-box">
+        <h1 class="gigang-page-title">사내 섀도우 IT 및 생성형 AI 거버넌스 대시보드</h1>
     </div>
     """, unsafe_allow_html=True)
 
@@ -3635,16 +3635,16 @@ elif menu == "AI·IT 거버넌스":
 
     st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
 elif menu == "중앙 서버 파이프라인":
-    from nexusguard.collectors.team_collector import (
+    from gigang.collectors.team_collector import (
         fetch_railway_events, fetch_activity_log_events, RAILWAY_URL, RAILWAY_API_KEY, get_railway_api_key
     )
 
     st.markdown(f"""
-    <div class="nexus-page-title-box"><div class="nexus-page-title" role="heading" aria-level="1">{text_tooltip("중앙 서버 파이프라인", "중앙 서버 파이프라인", "Windows 에이전트(GIGANGAgent.exe)와 Railway 중앙 서버(Flask + PostgreSQL)의 실시간 로그 수집 및 연동 상태를 확인하는 화면입니다.")}</div></div>
+    <div class="gigang-page-title-box"><div class="gigang-page-title" role="heading" aria-level="1">{text_tooltip("중앙 서버 파이프라인", "중앙 서버 파이프라인", "Windows 에이전트(GIGANGAgent.exe)와 Railway 중앙 서버(Flask + PostgreSQL)의 실시간 로그 수집 및 연동 상태를 확인하는 화면입니다.")}</div></div>
     """, unsafe_allow_html=True)
 
     # Railway 수집 활성화 여부
-    from nexusguard.collectors.team_collector import set_railway_collection_enabled, is_railway_collection_enabled
+    from gigang.collectors.team_collector import set_railway_collection_enabled, is_railway_collection_enabled
     if "railway_collection_active" not in st.session_state:
         st.session_state["railway_collection_active"] = False
         set_railway_collection_enabled(False)
@@ -3696,7 +3696,7 @@ elif menu == "중앙 서버 파이프라인":
             )
         with col_ctrl2:
             if st.button("🔄 최신 로그 즉시 동기화", disabled=not railway_active, use_container_width=True, key="btn_view_sync_now", help="Railway 중앙 서버에서 최신 에이전트 수집 로그를 즉시 갱신합니다."):
-                from nexusguard.collectors.team_collector import fetch_railway_events, get_railway_fetch_status
+                from gigang.collectors.team_collector import fetch_railway_events, get_railway_fetch_status
                 r_logs = fetch_railway_events(timeout=5, force=True)
                 if get_railway_fetch_status().get("ok"):
                     st.toast(f"🔄 Railway 중앙 서버에서 최신 {len(r_logs)}개 에이전트 로그를 동기화했습니다.", icon="🌐")
@@ -3709,9 +3709,11 @@ elif menu == "중앙 서버 파이프라인":
     @st.fragment(run_every=5 if railway_active else None)
     def render_live_pipeline():
         r_events = fetch_railway_events(timeout=5, force=railway_active)
-        from nexusguard.collectors.team_collector import get_railway_fetch_status
+        from gigang.collectors.team_collector import get_railway_fetch_status, fetch_remote_db_logs, get_db_api_fetch_status
         fetch_status = get_railway_fetch_status()
-        act_events = fetch_activity_log_events()
+        remote_act = fetch_remote_db_logs()
+        act_events = remote_act if remote_act else fetch_activity_log_events()
+        db_fetch_status = get_db_api_fetch_status()
 
         # 상단 실시간 메트릭 카드 4종 (폰트 사이즈 축소, 줄바꿈 방지, 엄격한 중앙 정렬 통일)
         kpi_c1, kpi_c2, kpi_c3, kpi_c4 = st.columns(4)
@@ -3831,7 +3833,13 @@ elif menu == "중앙 서버 파이프라인":
             st.warning("Railway 서버에서 수집된 로그가 없습니다.")
 
         st.markdown("---")
-        st.markdown("### 사내 DB 감사 활동 로그")
+        st.markdown("### 🗄️ 사내 DB 감사 활동 로그")
+        if db_fetch_status.get("ok"):
+            st.caption(f"🟢 원격 DB REST API 실시간 연동됨 (최근 {db_fetch_status.get('count', 0)}건 수신)")
+        elif db_fetch_status.get("error") and db_fetch_status.get("error") != "DB_LOG_API_URL 미설정":
+            st.caption(f"🟡 원격 DB API 연결 대기: {db_fetch_status.get('error')} (로컬 activity.log 자동 폴백 사용 중)")
+        else:
+            st.caption("로컬 activity.log 기준 · .env의 DB_LOG_API_URL 설정 시 원격 REST API로 자동 전환됩니다.")
         if act_events:
             df_act = pd.DataFrame(act_events).rename(columns={
                 "id": "ID",

@@ -1,22 +1,22 @@
-// NexusGuard 3.1: capture metadata here, send HTTP only from the extension worker.
+// GIGANG 3.1: capture metadata here, send HTTP only from the extension worker.
 (() => {
-    if (globalThis.__nexusguardV31Installed) return;
-    globalThis.__nexusguardV31Installed = true;
+    if (globalThis.__gigangV31Installed) return;
+    globalThis.__gigangV31Installed = true;
 
     async function sendEvent(path, metadata) {
         try {
             const result = await chrome.runtime.sendMessage({
-                type: 'NEXUSGUARD_EVENT',
+                type: 'GIGANG_EVENT',
                 event_type: path === '/paste-event' ? 'PASTE_ATTEMPT' : 'FILE_UPLOAD_ATTEMPT',
                 metadata
             });
             if (!result || result.status !== 'saved') {
-                console.warn('[NexusGuard] 전송 실패', result?.error || '확장 새로고침 필요');
+                console.warn('[GIGANG] 전송 실패', result?.error || '확장 새로고침 필요');
                 return;
             }
-            console.log('[NexusGuard] Railway 저장 성공', result.event_type);
+            console.log('[GIGANG] Railway 저장 성공', result.event_type);
         } catch (error) {
-            console.warn('[NexusGuard] 확장 연결 실패 — 확장과 사이트를 새로고침하세요.', error.name);
+            console.warn('[GIGANG] 확장 연결 실패 — 확장과 사이트를 새로고침하세요.', error.name);
         }
     }
 
@@ -30,7 +30,7 @@
                 file_size: file.size,
                 timestamp: new Date().toISOString()
             };
-            console.log('[NexusGuard] FILE_UPLOAD_ATTEMPT', metadata);
+            console.log('[GIGANG] FILE_UPLOAD_ATTEMPT', metadata);
             void sendEvent('/upload-event', metadata);
         }
     }, true);
@@ -46,8 +46,8 @@
             timestamp: new Date().toISOString(),
             text_length: textLength
         };
-        console.log('[NexusGuard] PASTE_ATTEMPT', metadata);
+        console.log('[GIGANG] PASTE_ATTEMPT', metadata);
         void sendEvent('/paste-event', metadata);
     }, true);
-    console.log('[NexusGuard] 붙여넣기 감지 준비 완료 · 확장 3.1.0');
+    console.log('[GIGANG] 붙여넣기 감지 준비 완료 · 확장 3.1.0');
 })();

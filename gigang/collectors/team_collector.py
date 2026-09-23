@@ -1,6 +1,6 @@
 """
-NexusGuard - Team Agent & Railway Pipeline Collector
-팀원들이 개발한 Windows Agent(NexusGuardAgent.exe) 및 Railway 중앙 서버(Flask+PostgreSQL) 실시간 연동 모듈
+GIGANG - Team Agent & Railway Pipeline Collector
+팀원들이 개발한 Windows Agent(GIGANGAgent.exe) 및 Railway 중앙 서버(Flask+PostgreSQL) 실시간 연동 모듈
 
 =====================================================================
 [이 파일이 하는 일]
@@ -86,7 +86,7 @@ def _get_env_or_secret(key: str, default: str = "") -> str:
         pass
     return default
 
-from nexusguard.schemas.event import (
+from gigang.schemas.event import (
     SecurityEvent, LogSource, EventAction, Actor, Target, PayloadMetadata
 )
 
@@ -341,6 +341,153 @@ def fetch_railway_events(timeout: int = 5, force: bool = False) -> List[Dict[str
     return _cached_railway_events
 
 
+# --- 원격 DB 로그 REST API 연동 ---
+# --- 원격 DB 로그 REST API 연동 ---
+DEFAULT_DB_LOG_API_URL = "https://desktop-oli.tail2bbbea.ts.net"
+DB_LOG_API_URL = _get_env_or_secret("DB_LOG_API_URL", DEFAULT_DB_LOG_API_URL)
+DB_LOG_API_KEY = _get_env_or_secret("DB_LOG_API_KEY", _get_env_or_secret("DB_API_KEY", ""))
+
+_cached_db_events: List[Dict[str, Any]] = []
+_db_last_after: Optional[str] = None
+_db_api_fetch_status: Dict[str, Any] = {
+    "ok": None,
+    "last_success": None,
+    "error": None,
+    "count": 0,
+    "endpoint": "/api/db-logs/since",
+    "last_after": None,
+}
+
+
+def get_db_api_fetch_status() -> Dict[str, Any]:
+    """DB 로그 API 조회 상태를 반환한다. (대시보드 배너/연결 표시용)"""
+    return dict(_db_api_fetch_status)
+
+
+def get_db_api_url() -> str:
+    """현재 설정된 DB 로그 API 주소를 가져온다."""
+    return _get_env_or_secret("DB_LOG_API_URL", DB_LOG_API_URL)
+
+
+def set_db_api_url(url: str) -> None:
+    """런타임에 DB 로그 API 주소를 변경한다."""
+    global DB_LOG_API_URL
+    DB_LOG_API_URL = (url or "").strip()
+
+
+def get_db_api_key() -> str:
+    """현재 설정된 DB 로그 API 키를 가져온다."""
+    return _get_env_or_secret("DB_LOG_API_KEY", _get_env_or_secret("DB_API_KEY", DB_LOG_API_KEY))
+
+
+def set_db_api_key(key: str) -> None:
+    """런타임에 DB 로그 API 키를 변경한다."""
+    global DB_LOG_API_KEY
+    DB_LOG_API_KEY = (key or "").strip()
+
+
+def reset_db_api_cursor() -> None:
+    """커서(after)를 초기화하여 처음부터 다시 수집할 수 있도록 한다."""
+    global _db_last_after
+    _db_last_after = None
+    _db_api_fetch_status["last_after"] = None
+
+
+def fetch_remote_db_logs(limit: int = 100, timeout: int = 4) -> List[Dict[str, Any]]:
+    """
+    DB 담당 팀원이 구축한 외부 REST API 서버에서 점진적 증분 DB 쿼리 로그를 수집한다.
+      - 상태 확인: GET /health
+      - 증분 로그: GET /api/db-logs/since?after={마지막처리시간}&limit={limit}
+      - 인증 헤더: X-API-Key: {DB_API_KEY}
+      - 응답: {"logs": [...], "next_after": "..."}
+    """
+    global _cached_db_events, _db_api_fetch_status, _db_last_after
+    api_base = get_db_api_url()
+    if not api_base:
+        _db_api_fetch_status.update(ok=False, error="DB_LOG_API_URL 미설정")
+        return _cached_db_events
+
+    base_clean = api_base.rstrip("/")
+    endpoint = f"{base_clean}/api/db-logs/since"
+
+    params: Dict[str, Any] = {"limit": limit}
+    if _db_last_after:
+        params["after"] = _db_last_after
+    else:
+        # 최초 호출 시 after 필수 요구 대응 (당일 또는 2시간 전 기준)
+        params["after"] = (datetime.utcnow() - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S")
+
+    headers: Dict[str, str] = {}
+    api_key = get_db_api_key()
+    if api_key:
+        headers["X-API-Key"] = api_key
+
+    try:
+        resp = requests.get(endpoint, params=params, headers=headers, timeout=timeout)
+        if resp.status_code != 200:
+            _db_api_fetch_status.update(ok=False, error=f"HTTP_{resp.status_code}")
+            return _cached_db_events
+
+        data = resp.json()
+
+        # 1. next_after 커서 갱신 (다음 호출 시 after 파라미터로 전송)
+        next_after = data.get("next_after") if isinstance(data, dict) else None
+        if next_after:
+            _db_last_after = str(next_after)
+            _db_api_fetch_status["last_after"] = _db_last_after
+
+        # 2. 신규 로그 파싱
+        raw_items = data if isinstance(data, list) else data.get("logs") or data.get("data") or []
+
+        newly_parsed = []
+        for idx, item in enumerate(raw_items):
+            if not isinstance(item, dict):
+                continue
+            ev_id = item.get("id") or f"RDB-{idx+1}"
+            ev_time = item.get("event_time") or item.get("timestamp") or datetime.utcnow().isoformat()
+            user = item.get("user_name") or item.get("user") or "sales_user"
+            action = item.get("action") or item.get("event_type") or "DB_SELECT"
+            target = item.get("target_table") or item.get("table_name") or item.get("target") or "customer_vault"
+            query = item.get("query_string") or item.get("query") or f"SELECT * FROM {target};"
+            rows = item.get("rows_affected") or item.get("rows") or 1
+            src_ip = item.get("src_ip") or item.get("ip") or "127.0.0.1"
+
+            newly_parsed.append({
+                "id": str(ev_id),
+                "event_time": str(ev_time),
+                "user_name": str(user),
+                "src_ip": str(src_ip),
+                "pc_name": item.get("pc_name") or "db-client",
+                "event_type": str(action),
+                "source": "remote-db-api",
+                "target": str(target),
+                "query_string": str(query),
+                "rows": int(rows) if rows is not None else 1,
+                "risk_score": 0
+            })
+
+        # 3. 신규 로그 병합 (기존 캐시에 없는 새 로그만 상단 병합, 최대 100건 롤링 유지)
+        if newly_parsed:
+            existing_ids = {e.get("id") for e in _cached_db_events}
+            fresh_events = [e for e in newly_parsed if e.get("id") not in existing_ids]
+            _cached_db_events = (fresh_events + _cached_db_events)[:100]
+
+        _db_api_fetch_status.update(
+            ok=True,
+            last_success=datetime.utcnow().isoformat() + "Z",
+            error=None,
+            count=len(newly_parsed),
+            total_cached=len(_cached_db_events)
+        )
+        return _cached_db_events
+    except requests.RequestException as e:
+        _db_api_fetch_status.update(ok=False, error=f"연결 실패: {type(e).__name__}")
+        return _cached_db_events
+    except Exception as e:
+        _db_api_fetch_status.update(ok=False, error=str(e))
+        return _cached_db_events
+
+
 def fetch_activity_log_events() -> List[Dict[str, Any]]:
     """
     팀원이 생성한 guard/logs/activity.log 파일에서 DB_SELECT 및 WEB_ACCESS 로그 파싱.
@@ -362,7 +509,7 @@ def fetch_activity_log_events() -> List[Dict[str, Any]]:
     # 여러 후보 경로를 차례로 확인해서 먼저 발견되는 파일을 쓴다
     candidate_paths = [
         os.path.join("data", "activity.log"),
-        r"C:\Users\User\Downloads\NexusguardAgent\guard\logs\activity.log",
+        r"C:\Users\User\Downloads\GIGANGAgent\guard\logs\activity.log",
         r"C:\Users\User\Documents\카카오톡 받은 파일\guard\logs\activity.log",
         os.path.join(os.path.dirname(__file__), "..", "..", "data", "activity.log")
     ]
@@ -429,7 +576,9 @@ def get_team_security_events() -> List[SecurityEvent]:
       DNS는 만들어지지 않는다. 파일 상단 '주의 2' 참고.
     """
     railway_logs = fetch_railway_events()
-    activity_logs = fetch_activity_log_events()
+    # 원격 DB 로그 API 우선 수집, 미설정/실패 시 로컬 activity.log 자동 폴백
+    remote_db = fetch_remote_db_logs()
+    activity_logs = remote_db if remote_db else fetch_activity_log_events()
 
     events: List[SecurityEvent] = []
 
@@ -533,30 +682,36 @@ def get_team_security_events() -> List[SecurityEvent]:
                 )
             )
 
-    # 2. Activity.log 변환
+    # 2. DB 및 Activity 로그 변환 (원격 DB API 수집분 우선 반영)
     for act in activity_logs:
         dt = _parse_event_time(act.get("event_time"))
-        user = act.get("user_name", "kim")
+        user = act.get("user_name", "sales_user")
         target_name = act.get("target", "customer_vault")
         ev_type = act.get("event_type", "DB_SELECT")
-        ev_id = f"EVT-{act.get('id')}"
+        ev_id = f"EVT-DB-{act.get('id')}"
+        query_str = act.get("query_string") or f"SELECT * FROM {target_name};"
+        src_ip = act.get("src_ip") or "192.168.10.50"
 
-        if ev_type == "DB_SELECT":
+        if ev_type in ("DB_SELECT", "SELECT"):
             events.append(
                 SecurityEvent(
                     event_id=ev_id,
                     timestamp=dt,
                     log_source=LogSource.DB,
-                    actor=Actor(user_id=user, src_ip="192.168.10.50"),
-                    target=Target(dst_ip="10.0.0.30", dst_port=3306, hostname="db-cust-01"),
+                    actor=Actor(user_id=user, src_ip=src_ip),
+                    target=Target(dst_ip="10.0.0.30", dst_port=3306, hostname="mysql-db-server"),
                     action=EventAction.SELECT,
                     payload=PayloadMetadata(
-                        query_string=f"SELECT * FROM {target_name};",
+                        query_string=query_str,
                         table_name=target_name,
-                        rows_affected=act.get("rows", 2),
-                        category="PrivilegedDataAccess"
+                        rows_affected=act.get("rows", 1),
+                        category="PrivilegedDataAccess",
+                        extra={
+                            "raw_db_user": user,
+                            "source": act.get("source", "activity.log"),
+                        }
                     ),
-                    raw_message=f"{act.get('event_time')} user={user} action=DB_SELECT target={target_name} rows={act.get('rows', 2)}"
+                    raw_message=f"{act.get('event_time')} user={user} action=DB_SELECT target={target_name} rows={act.get('rows', 1)}"
                 )
             )
         elif ev_type == "WEB_ACCESS":
@@ -638,10 +793,10 @@ def load_team_guide_markdown() -> str:
     아무것도 없으면 안내 문구를 돌려준다.
     """
     candidate_paths = [
-        os.path.join("data", "NexusGuard_팀원공유_초간단_수집가이드_v3.md"),
-        r"C:\Users\User\Downloads\NexusguardAgent\NexusGuard_팀원공유_초간단_수집가이드_v3.md",
-        os.path.join("data", "NexusGuard_팀원공유_초간단가이드.md"),
-        r"C:\Users\User\Documents\카카오톡 받은 파일\NexusGuard_팀원공유_초간단가이드 (2).md",
+        os.path.join("data", "GIGANG_팀원공유_초간단_수집가이드_v3.md"),
+        r"C:\Users\User\Downloads\GIGANGAgent\GIGANG_팀원공유_초간단_수집가이드_v3.md",
+        os.path.join("data", "GIGANG_팀원공유_초간단가이드.md"),
+        r"C:\Users\User\Documents\카카오톡 받은 파일\GIGANG_팀원공유_초간단가이드 (2).md",
     ]
     for p in candidate_paths:
         if os.path.exists(p):
@@ -650,4 +805,4 @@ def load_team_guide_markdown() -> str:
                     return f.read()
             except Exception:
                 pass
-    return "# NexusGuard 팀원 가이드 파일을 찾을 수 없습니다."
+    return "# GIGANG 팀원 가이드 파일을 찾을 수 없습니다."
