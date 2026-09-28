@@ -1,7 +1,9 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*$py.class
 *.class
+.pytest_cache/
 
 # Virtual Environments
 .venv/
@@ -19,17 +21,22 @@ env/
 .DS_Store
 Thumbs.db
 
-# Exclude README & walkthroughs per user request
-README.md
-walkthroughs/
+# Executables & Scripts
 *.bat
 *.ps1
-*.png
-!docs/screenshots/*.png
-*_backup*.py
+*.exe
+
+# Databases & Logs
 *.db
 *.sqlite3
-*.exe
+*.log
+launcher-logs/
+
+# Sensitive Environment files
 .env
 .env.*
 !.env.example
+
+# Images (exclude temp, allow docs/screenshots)
+*.png
+!docs/screenshots/*.png

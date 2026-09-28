@@ -1,149 +1,208 @@
-# 🛡️ GIGANG (기강 / CloudShield v3.1)
-### Zero Trust 기반 엔드포인트-DB-웹 3차원 상관분석 & Shadow AI 거버넌스 플랫폼
+# 🛡️ GIGANG (Zero Trust Security Platform)
+### Zero Trust 기반 다기종 로그 상관분석 & 섀도우 AI 거버넌스 플랫폼 (v3.1)
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)
 ![Chrome Extension](https://img.shields.io/badge/Chrome_Extension-v3.1_Manifest_V3-brightgreen.svg)
-![Windows Agent](https://img.shields.io/badge/Windows_Agent-GIGANGAgent_v3.0.0-orange.svg)
-![Database](https://img.shields.io/badge/MySQL-8.0_Tailscale_VPN-informational.svg)
+![Windows Agent](https://img.shields.io/badge/Windows_Agent-v3.0.0-orange.svg)
 ![AI Model](https://img.shields.io/badge/AI-Google_Gemini_Flash-purple.svg)
+![UI Framework](https://img.shields.io/badge/Dashboard-Streamlit_Responsive-ff4b4b.svg)
 
-> **"기존 SIEM처럼 데이터가 다 털린 후에 울리는 '사후 약방문'도, DLP처럼 업무를 마비시키는 '무조건 차단'도 아닙니다.**  
-> GIGANG는 **사내 DB 기밀 접근 ➔ 단말기 클립보드/프로세스 ➔ 브라우저 웹 전송**을 3차원으로 교차 추적하여, **'선제 감시(WATCH) ➔ 실시간 유출 시 즉시 대응(HIGH) ➔ 정상 업무 시 스스로 정상화(30분 TTL 자가 치유)'**하는 차세대 지능형 보안관제(SecOps) 플랫폼입니다."
-
----
-
-## 📌 1. 핵심 아키텍처 & 4대 실제 연동 파이프라인
-
-본 프로젝트는 단순 가상 목업(Mock)이 아닌, **실제 엔드포인트 OS, 웹 브라우저, 엔터프라이즈 DB, 클라우드 백엔드가 유기적으로 연결된 4대 실시간 데이터 파이프라인**으로 작동합니다.
-
-```mermaid
-flowchart TB
-    subgraph SOURCELAYER ["1. 다기종 원천 수집 계층 (Multi-Source Log Layer)"]
-        direction LR
-        A["🖥️ [Windows OS Agent]\n(GIGANGAgent.exe v3.0.0)\n• Win32 API 클립보드 후킹\n• 비정상 프로세스 및 DNS 추적"]
-        B["🌐 [Chrome Extension]\n(GIGANG Web Sentry v3.1)\n• Manifest V3 백그라운드\n• 웹 폼 붙여넣기 및 파일 첨부 실시간 감시"]
-        C["🗄️ [Enterprise DB Audit]\n(MySQL 8.0 & Tailscale)\n• customer_vault 24,500건 실제 고객 DB\n• mysql.general_log 실시간 뷰어 연동"]
-        D["☁️ [Cloud Collector Server]\n(Railway Cloud / Flask API)\n• 실시간 수집 이벤트 JSON 정규화\n• 토큰 격리 및 원격 동기화"]
-    end
-
-    subgraph ENGINELAYER ["2. 코어 상관분석 & AI 추론 계층 (Correlation Engine Layer)"]
-        direction TB
-        E["⚙️ [2단계 위험 상태 머신 (Risk State Machine)]\n• 1차: 기밀 DB 조회 + 미승인 SaaS 접속 ➔ WATCH 승격 (선제 감시)\n• 2차: WATCH 상태 중 외부 데이터 전송 ➔ HIGH 확정 (침해사고 발령)\n• 3차: 30분간 무전송 시 ➔ NORMAL 자동 복귀 (Self-Healing TTL)"]
-        F["🤖 [Google Gemini Flash AI SOC Copilot]\n• 킬체인 공격 경로(Attack Path) 실시간 인과추론\n• MITRE ATT&CK T1567 / T1005 매핑\n• 1-Click 차단 및 침해사고 대응 플레이북 생성"]
-    end
-
-    subgraph UILAYER ["3. 통합 관제 대시보드 (16:9 Glassmorphism Bento Grid)"]
-        direction LR
-        G["📊 4대 핵심 KPI 카드\n(위험 점수, WATCH 인원, HIGH 건수, DB 쿼리)"]
-        H["🕸️ 동적 SVG 킬체인 토폴로지\n(단말 ➔ 기밀 DB ➔ 외부 AI/C2 경로 시각화)"]
-        I["⏳ 30분 자가 치유 동적 링 타이머\n(WATCH 만료 실시간 카운트다운)"]
-        J["🛡️ 1-Click 긴급 SOAR 대응\n(단말 격리, DNS 싱크홀, 계정 세션 차단)"]
-    end
-
-    SOURCELAYER --> ENGINELAYER
-    ENGINELAYER --> UILAYER
-```
+> **"업무는 자유롭게, 기밀은 안전하게"**  
+> 기존 SIEM처럼 데이터가 다 유출된 뒤에야 울리는 **'사후 약방문'**도, DLP처럼 모든 접근을 막아 업무를 마비시키는 **'무조건 차단'**도 아닙니다.  
+> **GIGANG**은 사내 기밀 DB 접근부터 단말기 행위, 웹 브라우저를 통한 외부 AI 전송까지 **3차원 인과관계 상관분석**을 수행하여, **'선제 감시(WATCH) ➔ 실제 유출 시 즉시 대응(HIGH) ➔ 정상 업무 시 스스로 정상화(30분 자가 치유)'**하는 차세대 지능형 보안관제(SecOps) 플랫폼입니다.
 
 ---
 
-## ⚡ 2. 2단계 위험 상태 기계 (Risk State Machine)
+## 📸 프로젝트 핵심 화면 (Screenshots Showcase)
 
-보안 관제 요원의 알람 피로도(Alert Fatigue)를 해소하고 골든타임을 확보하기 위해 독자 개발한 **적응형 위험 상태 기계**입니다.
+### 1. 종합 관제 대시보드 (Overview Dashboard)
+사내 실시간 보안 위험도 게이지, 위협 수준별 인시던트 현황, 활성 위협 타임라인을 한눈에 파악합니다.
+![01_overview_dashboard](docs/screenshots/01_overview_dashboard.png)
+
+### 2. 3-Hop 킬체인 토폴로지 (Attack Path & Killchain Topology)
+`[사내 기밀 DB] ➔ [단말기/임직원 PC] ➔ [외부 AI SaaS / ChatGPT]`로 이어지는 침해 사고의 전체 경로를 동적 그래프로 시각화합니다.
+![02_killchain_topology](docs/screenshots/02_killchain_topology.png)
+
+### 3. 비인가 Shadow AI 거버넌스 (Shadow AI Governance & Gemini Copilot)
+사내에서 접근하는 미승인 외부 AI 사이트를 실시간 탐지하고, **Google Gemini AI**가 데이터 유출 위험성과 위협 수준을 정밀 진단합니다.
+![03_shadow_ai_governance](docs/screenshots/03_shadow_ai_governance.png)
+
+### 4. 중앙 텔레메트리 파이프라인 (Central Ingestion Pipeline)
+Chrome 확장 프로그램, Windows 에이전트, DB 감사 로그 스트림을 실시간 수집 및 단일 표준 스키마(`common_schema.json`)로 정규화합니다.
+![04_central_pipeline](docs/screenshots/04_central_pipeline.png)
+
+---
+
+## ⚡ 핵심 차별점 & 운영 메커니즘 (Key Innovations)
+
+### 1. 3단계 동적 라이프사이클 (FSM Risk State Machine)
+보안 관제 요원의 **알람 피로도(Alert Fatigue)를 해소**하고 유출 골든타임을 확보하기 위해 독자 개발한 상태 기반 상관분석 엔진입니다.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> NORMAL: 기본 정상 상태 (위험 점수 0~20점)
-    NORMAL --> WATCH: [1차 선제 감시] customer_vault 대량 조회 + 미승인 외부 SaaS 접속 포착 (점수: 68점)
-    WATCH --> HIGH: [2차 유출 확정] WATCH 상태 중 클립보드 복사+붙여넣기 / 48MB 대용량 전송 감지 (점수: 92점)
-    WATCH --> NORMAL: [자가 치유] 30분간 추가 전송 행위 없음 (오탐 자동 해제 및 시스템 복구)
-    HIGH --> CRITICAL: 야간 시간대 / 반복적 기밀 반출 / 다중 도메인 유출 시 가중
-    HIGH --> NORMAL: SOAR 1-Click 단말 격리 및 침해사고 종결 처리 완료
+    [*] --> NORMAL: 기본 정상 상태 (위험도 0~20점)
+    
+    NORMAL --> WATCH: [Step 1] 기밀 DB 조회 후 30분 내 비인가 AI 접속 (위험도 68점)
+    note right of WATCH
+        • 선제 감시 모드 돌입
+        • 30분 감시 타이머 가동
+        • 아직 전송 전이므로 차단하지 않음
+    end note
+
+    WATCH --> HIGH: [Step 2] 48MB 대용량 파일 첨부 또는 민감 패턴 대량 붙여넣기 발생
+    note right of HIGH
+        • 위험도 92점 폭발
+        • 3-Hop 킬체인 연결
+        • Gemini AI SOC 브리핑 자동 생성
+        • 1-Click 격리 대응 활성화
+    end note
+
+    WATCH --> NORMAL: [Step 3] 30분간 추가 전송 행위 없음 (단순 질의)
+    note left of NORMAL
+        • 자가 치유 (Self-Healing)
+        • 오탐 자동 제거
+    end note
+
+    NORMAL --> HIGH: [우회 방어] 과거 WATCH 이력 보유 직원이 시간차 지연 유출 시도
+    note right of NORMAL
+        • 잠복형 유출 방어 소급 분석
+    end note
 ```
 
-### 🛡️ 잠복형 유출(Dormant Exfiltration) 방어
-- 30분 TTL이 지나 `NORMAL`로 복귀했더라도, 영속 DB(`risk_history`)에 24시간 동안 과거 `WATCH` 이력이 보존됩니다.
-- 수 시간 뒤 갑작스러운 외부 트래픽 스파이크 발생 시 `has_user_prior_watch_history` 검사를 통해 **지연 잠복형 유출(INC-DORMANT)**로 직행 차단합니다.
+- **[Step 1] 선제 감시 (WATCH)**: 기밀 DB 조회 후 30분 이내 AI 사이트 접속 시 즉시 위험도 68점 승격 및 30분 타이머 가동 (전송 전 단계 선제 감시).
+  ![05_sim_step1_watch](docs/screenshots/05_sim_step1_watch.png)
+- **[Step 2] 침해사고 확정 (HIGH)**: 48MB 대용량 파일 첨부 포착 시 위험도 92점 폭발, 3-Hop 킬체인 연결, Gemini AI 브리핑 자동 연동.
+  ![06_sim_step2_high](docs/screenshots/06_sim_step2_high.png)
+- **[Step 3] 자가 치유 검증 (Self-Healing)**: 30분 동안 추가 유출이 없으면 스스로 NORMAL 상태로 환원되어 오탐(False Positive)을 100% 제거.
+  ![07_sim_step3_selfhealing](docs/screenshots/07_sim_step3_selfhealing.png)
+
+### 2. 본문 미수집 원칙 (Zero Payload Ingestion)
+- **철저한 프라이버시 보호**: 단말 브라우저나 클립보드에서 텍스트 본문이나 파일 원본을 서버로 절대 수집/전송하지 않습니다.
+- **메타데이터 기반 판정**: 글자 수, 주민번호/계좌번호 등 민감 패턴 매칭 카운트, 파일 크기(바이트), 타임스탬프, 도메인 해시만을 분석하여 개인정보 침해 우려를 원천 차단합니다.
+
+### 3. 맥락 기반 Shadow AI 거버넌스 & Gemini AI Copilot
+- **정밀 진단**: 단순 도메인 URL뿐 아니라 사내 누적 트래픽, 사용자 수 등의 텔레메트리를 AI 프롬프트에 주입하여 상황 맞춤형 평가를 수행합니다.
+- **SQLite 영구 캐싱 & 로컬 Fallback**: 기존 평가 도메인은 1ms 캐시로 비용을 절감하며, API 키 부재나 네트워크 단절 시에도 로컬 룰베이스로 무중단 자동 전환됩니다.
+- **Human-in-the-Loop**: AI는 분석 및 권고안을 제시하며, 최종 격리/차단 결정은 관제사의 1-Click 승인을 통해 실행됩니다.
+
+> 📖 **더 자세한 시스템 메커니즘 분석**:  
+> 시스템 아키텍처 및 상세 이론은 [`docs/GIGANG_Operational_Mechanism_Analysis.md`](./docs/GIGANG_Operational_Mechanism_Analysis.md) 문서를 참고하십시오.
 
 ---
 
-## 🎬 3. 시연 및 테스트 시나리오 ("마케팅팀 김대리 사건")
+## 🏗️ 시스템 아키텍처 (3-Tier Architecture)
 
-| 단계 | 행동 및 로그 원천 | 시스템 내부 동작 및 판정 | 대시보드 표출 화면 |
-| :---: | :--- | :--- | :--- |
-| **Phase 0**<br>(09:00) | 정상 업무 로그인<br>(단말 에이전트 수집) | 계정 상태: `NORMAL (15점)` | 평온한 그린 상태, 실시간 파이프라인 정상 표시 |
-| **Phase 1**<br>(14:00) | `customer_vault` 2.4만 건 조회 +<br>미승인 AI(`chatgpt.com`) 접속 | **1차 선제 감시 발동**<br>계정 상태 ➔ `WATCH (68점)` 승격 (30분 TTL 부여) | 상단 Ticker 노란색 경고 점등, 30분 링 타이머 카운트다운 시작 |
-| **Phase 2**<br>(14:08) | 2.4만 건 CSV + 기획서 묶음(48MB)<br>외부 전송 / 클립보드 붙여넣기 | **2차 침해사고 확정**<br>계정 상태 ➔ `HIGH (92점)` 폭발 (`INC-SEC-015`) | SVG 토폴로지 붉은 공격선 연결, Gemini AI 침해사고 긴급 브리핑 |
-| **Phase 3**<br>(14:09) | 관제사 1-Click 긴급 대응 클릭 | 단말 네트워크 즉각 격리 + DNS 싱크홀 + AD 계정 잠금 | 조치 완료 알림 및 포렌식 보고서 자동 생성 |
-| **Edge Case**<br>(14:35) | 단순 질문 후 전송 없이 30분 경과 | **시스템 자가 치유 (Self-Healing)**<br>`WATCH` ➔ `NORMAL` 자동 복구 | 오탐 자동 정리 및 정상 상태 환원 |
+```mermaid
+flowchart TB
+    subgraph Tier1["1. 분산 수집 센서 (Endpoint & Telemetry Sensors)"]
+        A["🌐 Chrome Extension v3.1<br/>(AI 사이트 접속 / 48MB 파일 첨부 / 붙여넣기 감지)"]
+        B["🖥️ Windows Agent v3.0<br/>(DNS 캐시 실시간 폴링)"]
+        C["🗄️ MySQL DB Audit Logger<br/>(customer_vault 기밀 조회 감시)"]
+    end
 
----
+    subgraph Tier2["2. 중앙 인제스천 & 상관분석 엔진 (Central Pipeline & Engine)"]
+        D["⚙️ FastAPI Ingestion Server<br/>(이벤트 정규화 & 디바운싱)"]
+        E["🧠 동적 상관분석 FSM 엔진<br/>(NORMAL ➔ WATCH ➔ HIGH ➔ 자가치유)"]
+        F["🔍 잠복형 유출 소급 분석기<br/>(Historical Retroactive Correlation)"]
+        G["🤖 Shadow AI 거버넌스 엔진<br/>(Gemini Flash + SQLite Cache)"]
+    end
 
-## 📚 4. 프로젝트 문서 완독 가이드 (어떤 문서를 읽어야 하는가?)
+    subgraph Tier3["3. 통합 관제 콘솔 (Streamlit Dashboard & SOAR)"]
+        H["📊 실시간 Bento Grid 관제 콘솔"]
+        I["🕸️ 3-Hop 동적 킬체인 토폴로지"]
+        J["🛡️ 1-Click 긴급 격리 대응 (SOAR)"]
+    end
 
-프로젝트를 100% 깊이 있게 이해하고 평가하기 위해 문서들이 목적별로 체계화되어 있습니다:
-
+    Tier1 --> Tier2
+    Tier2 --> Tier3
 ```
-📦 GIGANG 문서 맵 (Documentation Sitemap)
- ├── 📄 README.md                             <-- [현재 문서] 프로젝트 전체 개요, 파이프라인 구조, 빠른 실행
- ├── 📋 GIGANG_Notion_Proposal.md             <-- [필독 1: 기획/심사용] 5개 교과목 연계, 전사 아키텍처, 6주 완성 로드맵
- ├── 🎬 GIGANG_Full_Scenario_Notion.md        <-- [필독 2: 발표/시연용] 상세 시나리오, 1분 발표 스피치 대본, 심사위원 Q&A 치트키
- ├── ✅ GIGANG_Notion_Deliverables.md         <-- [검증용] 최종 산출물 체크리스트, 모델 사양, 팀원 역할 분담
- ├── 🤖 GIGANG_Governance_Gemini_Review.md    <-- [기술 심층] Shadow AI 거버넌스 및 Gemini API 연동 분석
- ├── 🗄️ docs/GIGANG_DB_Test_Guide.md          <-- [실전 DB] MySQL 8.0 Audit 로그, BLOB 디코딩, Tailscale 연동 가이드
- └── 📝 GIGANG_Meeting_Minutes_Notion.md      <-- [개발 히스토리] 1~6차 전 과정 회의록 및 의사결정 기록
+
+---
+
+## 📁 프로젝트 디렉터리 구조 (Directory Structure)
+
+```text
+GIGANG/
+├── app.py                             # Streamlit 대시보드 실행 엔트리포인트
+├── run_demo.py                        # E2E 파이프라인 검증 및 모의 시뮬레이션
+├── requirements.txt                   # 필수 파이썬 라이브러리 목록
+├── test_dedup.py                      # 이벤트 중복 수집 방지 검증 테스트
+├── test_paste.py                      # 클립보드 붙여넣기 및 FSM 전이 테스트
+├── test_pattern_falsepositive.js      # 패턴 매칭 정밀도 검증 (Node.js)
+│
+├── browser_extension/                 # Chrome 확장 프로그램 v3.1 (Manifest V3)
+│   ├── manifest.json
+│   ├── background.js                  # 서비스 워커 (이벤트 디바운싱 & 인제스천)
+│   ├── content.js                     # 웹 폼 붙여넣기 및 파일 드래그앤드롭 감지
+│   ├── popup.html & popup.js          # 센서 상태 확인 팝업 UI
+│   └── README.md
+│
+├── gigang/                            # 핵심 백엔드 패키지
+│   ├── collectors/                    # 다기종 로그 수집 및 정규화
+│   ├── engine/                        # 동적 상관분석 FSM & AI 거버넌스 엔진
+│   ├── generators/                    # 시뮬레이션 모의 로그 생성기
+│   ├── schemas/                       # 이벤트 및 인시던트 데이터 모델
+│   ├── storage/                       # 메모리 스토어 및 SQLite 캐시
+│   └── ui/                            # Streamlit 대시보드 UI 컴포넌트
+│
+├── source/
+│   ├── agent/agent.py                 # Windows 네이티브 DNS 폴링 에이전트
+│   └── railway_server/                # 중앙 수집 클라우드 서버 (FastAPI/Dockerfile)
+│
+├── data/
+│   └── mysql_audit_log.csv            # 사내 기밀 DB 샘플 감사 로그
+│
+└── docs/
+    ├── GIGANG_Operational_Mechanism_Analysis.md # 시스템 운영 메커니즘 상세 분석 보고서
+    ├── GIGANG_Midterm_Presentation_Pack.md     # 중간 발표 패키지 (대본/Q&A/명세)
+    └── screenshots/                             # 고해상도 대시보드 실화면 증적 (01~07)
 ```
 
-1. **프로젝트의 기획 의도와 기술적 완성도를 평가하고 싶을 때**:
-   👉 [`GIGANG_Notion_Proposal.md`](./GIGANG_Notion_Proposal.md)
-   - 문제 정의, 기존 솔루션 한계 극복 방안, 4대 데이터 파이프라인, 16:9 Glassmorphism Bento Grid 명세, 정보보안 5대 핵심 교과목 연계성 기술.
-2. **시연 시나리오와 발표 대본, 예상 질의응답을 확인하고 싶을 때**:
-   👉 [`GIGANG_Full_Scenario_Notion.md`](./GIGANG_Full_Scenario_Notion.md)
-   - 김대리 사건 4단계 전개 과정, 오탐 자가 치유(TTL) 및 잠복형 유출 방어 로직, 1분 핵심 발표 스피치 대본, 심사위원 단골 공격 질문 3종 Q&A 수록.
-3. **제출물 목록과 요구사항 반영 여부를 검토하고 싶을 때**:
-   👉 [`GIGANG_Notion_Deliverables.md`](./GIGANG_Notion_Deliverables.md)
-   - 소스코드 저장소, AI 모델 규격(`Google Gemini Flash`), Tailscale DB 뷰어 주소, 팀원 역할 매핑(`팀원 1~4`).
-4. **실제 DB 환경 및 감사 쿼리를 테스트하고 싶을 때**:
-   👉 [`docs/GIGANG_DB_Test_Guide.md`](./docs/GIGANG_DB_Test_Guide.md)
-   - MySQL 8.0 `mysql.general_log` 조회 쿼리, `CONVERT(argument USING utf8)`을 통한 BLOB 문제 해결, Tailscale VPN 연동 튜토리얼.
-
 ---
 
-## 👥 5. 팀 구성 및 역할 분담
+## 🚀 빠른 시작 가이드 (Quick Start)
 
-공정하고 객관적인 평가를 위해 익명화 표준(`팀원 1~4`)을 적용했습니다.
+### 1. 환경 준비
+- **Python 3.10 이상** 설치
+- Google Gemini API Key (선택: 미설정 시 내장 룰베이스 엔진으로 무중단 자동 전환)
 
-| 구분 | 담당 영역 | 핵심 산출물 및 기여 내용 |
-| :---: | :---: | :--- |
-| **팀원 1** | **Collector & Log Ingestion** | • `GIGANGAgent.exe v3.0.0` (Win32 API 클립보드 후킹, DNS/프로세스 수집기)<br>• Chrome Extension v3.1 Web Sentry 배포 및 연동 |
-| **팀원 2** | **Normalizer & Schema** | • 다기종 이기종 로그 Unified JSON 정규화 파이프라인 구축<br>• 미등록 비정형 로그 Fallback 정규화 및 데이터 정합성 검증 |
-| **팀원 3** | **Correlation Engine & DB** | • 2단계 위험 상태 기계 (`NORMAL ➔ WATCH ➔ HIGH ➔ 30분 TTL`) 엔진 구현<br>• MySQL 8.0 `customer_vault` 2.4만 건 DB 감사 로그 및 Tailscale VPN 연동 |
-| **팀원 4** | **Dashboard & AI SOC & PM** | • 16:9 다크 글래스모피즘 Bento Grid 관제 대시보드 풀스택 구축<br>• Google Gemini Flash 연동 (킬체인 추론, MITRE 매핑, 1-Click SOAR 대응) |
-
----
-
-## 🚀 6. 빠른 시작 가이드 (Quick Start)
-
-### 사전 준비사항
-- Python 3.10 이상
-- Google Gemini API Key (선택: 미입력 시 내장 Rule-based 로컬 엔진으로 무중단 자동 전환)
-
-### 설치 및 실행
+### 2. 저장소 클론 및 패키지 설치
 ```bash
-# 1. 저장소 클론
-git clone https://github.com/dldaudlee36/GIGANG_SIM_TEST.git
-cd GIGANG_SIM_TEST
+# 저장소 클론
+git clone https://github.com/dldaudlee36/GIGANG.git
+cd GIGANG
 
-# 2. 필수 의존성 패키지 설치
+# 필수 패키지 설치
 pip install -r requirements.txt
+```
 
-# 3. 환경 변수 설정 (.env 파일 생성)
-# GEMINI_API_KEY=your_gemini_api_key_here
+### 3. 환경 변수 설정 (선택 사항)
+`.env` 파일에 Gemini API 키를 설정합니다:
+```bash
+GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-# 4. 통합 관제 대시보드 실행
+### 4. 무결성 검증 테스트 실행
+```bash
+python run_demo.py
+python test_dedup.py
+python test_paste.py
+```
+
+### 5. 통합 관제 대시보드 실행
+```bash
 streamlit run app.py
 ```
-실행 후 웹 브라우저에서 `http://localhost:8501`로 접속하면 16:9 Bento Grid 보안관제 센터가 구동됩니다.
+브라우저에서 `http://localhost:8501`로 접속하면 GIGANG 보안관제 센터가 구동됩니다.
 
 ---
-*Developed with ❤️ by GIGANG Security Operations Team*
+
+## 👥 팀원 역할 분담 (R&R)
+- **팀원 1 (Collector)**: Chrome Extension v3.1 Web Sentry 개발, 시나리오 정의 및 텔레메트리 연동
+- **팀원 2 (Infra)**: Windows Agent 3.0.0 (DNS 캐시 폴링) 및 Railway 중앙 인제스천 서버 구축
+- **팀원 3 (Database)**: 사내 기밀 DB 구축, 웹 포털 연동 및 접속 감사 로그(Audit Log) 파이프라인
+- **팀원 4 (Engine & UI)**: 3단계 동적 FSM 상관분석 엔진, Google Gemini AI 연동, Streamlit 관제 콘솔 개발
+
+---
+*GIGANG Security Operations Platform — "업무는 자유롭게, 기밀은 안전하게"*

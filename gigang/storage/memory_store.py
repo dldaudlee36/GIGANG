@@ -31,7 +31,6 @@ WINDOWS_AGENT 또는 CHROME_EXTENSION 뿐이고 DNS는 없다는 점이었다.
 """
 
 from typing import Optional, TYPE_CHECKING
-from gigang.generators.dummy_logs import get_all_initial_events
 from gigang.schemas.event import LogSource
 
 # TYPE_CHECKING 은 '타입 힌트를 쓸 때만' import 하겠다는 뜻이다.
@@ -58,18 +57,12 @@ class AppContext:
         from gigang.engine.correlation import CorrelationEngine
         from gigang.engine.governance import ShadowAIGovernanceEngine
 
-        # --- 1. 엔진 두 개 생성 ---
-        self.correlation_engine = CorrelationEngine()      # 위험 상태 판정 담당
+        # --- 1. 엔진 두 개 생성 (가짜 목 인시던트 생성 배제) ---
+        self.correlation_engine = CorrelationEngine(enable_mock_incidents=False)      # 위험 상태 판정 담당
         self.governance_engine = ShadowAIGovernanceEngine()  # 섀도우 AI 자산 관리 담당
 
-        # --- 2. 시연용 더미 이벤트 생성 ---
-        self.initial_events = get_all_initial_events()
-
-        # --- 3. 더미 이벤트를 각 엔진에 투입 ---
-        # 대시보드를 처음 켰을 때 화면이 텅 비어 있지 않도록 미리 채워 넣는 용도다.
-        self.correlation_engine.ingest_events(self.initial_events)
-        for ev in self.initial_events:
-            self.governance_engine.process_dns_event(ev)
+        # --- 2. 더미 이벤트 제거: 서버를 통해 수집되지 않은 가짜 로그는 투입하지 않음 ---
+        self.initial_events = []
 
         # --- 4. 팀원들의 실제 에이전트 및 DB 이벤트 피딩 ---
         #   Railway 서버가 꺼져 있거나 네트워크가 안 될 수도 있으므로 try로 감싼다.

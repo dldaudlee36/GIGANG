@@ -227,8 +227,18 @@ def _fallback_heuristic_analysis(domain: str) -> Dict[str, Any]:
     """
     d = domain.lower()
 
-    # 1) 생성형 AI 계열로 보이는 경우 → 위험도 HIGH
-    if any(k in d for k in ["ai", "gpt", "bot", "deep", "claude", "gemini", "copilot", "llm", "perplexity", "sora", "midjourney", "hugging"]):
+    # 1) 생성형 AI 계열로 보이는 경우 → 위험도 HIGH (railway, tailscale 등 오탐 방지)
+    is_ai_keyword = (
+        d.endswith(".ai") or 
+        ".ai." in d or 
+        "-ai." in d or
+        any(k in d for k in [
+            "gpt", "openai", "claude", "gemini", "copilot", "llm", "perplexity", 
+            "anthropic", "mistral", "cohere", "sora", "midjourney", "huggingface", 
+            "deepseek", "chatgpt", "dall-e", "stablediffusion"
+        ])
+    )
+    if is_ai_keyword:
         return {
             "service_name": domain.capitalize(),
             "category": "생성형 AI 및 LLM 서비스",
@@ -237,7 +247,7 @@ def _fallback_heuristic_analysis(domain: str) -> Dict[str, Any]:
             "alternative": None
         }
     # 2) 클라우드 저장소·파일 전송 계열 → 위험도 MEDIUM
-    elif any(k in d for k in ["drive", "box", "cloud", "share", "transfer", "sync", "mega", "storage", "datadog", "kakao"]):
+    elif any(k in d for k in ["drive", "box", "cloud", "share", "transfer", "sync", "mega", "storage", "datadog", "kakao", "dropbox"]):
         return {
             "service_name": domain.capitalize(),
             "category": "클라우드 서비스 및 데이터 전송",
@@ -269,63 +279,30 @@ class ShadowAIGovernanceEngine:
         self.assets: Dict[str, ShadowAIAsset] = {}
 
         # 도메인별 고유 IP 및 사용자 집합 추적
-        # set(집합)을 쓰는 이유: 같은 사람이 100번 접속해도 사용자 1명으로 세기 위해서다.
-        # 중복이 자동으로 제거되므로 len()을 하면 실제 사용자 수가 나온다.
         self._domain_users: Dict[str, set] = {}
         self._domain_counts: Dict[str, int] = {}   # 도메인별 총 접속 횟수
 
         # sync_railway_events() 가 계산한 도메인별 집계 결과를 그대로 보관한다.
-        # 화면에서 "이 도메인에 누가 몇 번 접속했나"를 보여줄 때 쓴다.
         self._railway_domain_stats: Dict[str, Dict[str, Any]] = {}
+
+        # 수동으로 AI 진단된 도메인 보관용
+        self._manually_diagnosed_domains: set = set()
 
         self._init_defaults()
 
     def _init_defaults(self):
         """
-        기본 시연용 데이터 초기화
-
-        대시보드를 처음 켰을 때 거버넌스 화면이 비어 있지 않도록
-        자주 쓰이는 서비스 6개를 미리 채워 넣는다. 인원수와 접속 건수는 가짜 값이다.
-        실제 로그가 들어오면 sync_railway_events() 가 이 값들을 덮어쓴다.
+        초기 자산 목록:
+        서버를 통해 수집되지 않은 가짜 목 데이터는 일절 생성하지 않고 빈 상태로 대기합니다.
+        실제 Railway 중앙 서버 로그(sync_railway_events)가 동기화되면 실데이터만 반영됩니다.
         """
-        defaults = [
-            ("chatgpt.com", 3, 14, 52, "매일 (실시간 감지 집중)", Severity.HIGH, "사용자 입력 데이터가 AI 모델 재학습에 활용될 수 있어 사내 기밀 유출 고위험", SanctionStatus.UNAPPROVED),
-            ("wetransfer.com", 1, 2, 8, "비정기 (간헐 접속)", Severity.HIGH, "익명 파일 전송 서비스로 사내 감사 로그 추적 불가 및 데이터 유출 취약", SanctionStatus.BLOCKED),
-            ("claude.ai", 2, 5, 21, "주 4회 (정기 사용)", Severity.HIGH, "긴 문서 분석 기능으로 인해 대량 사내 보고서 업로드 위험 존재", SanctionStatus.UNAPPROVED),
-            ("dropbox.com", 2, 4, 18, "주 3회", Severity.MEDIUM, "개인 계정 사용 추정. 외부 협업 시 링크 유출에 따른 무단 다운로드 위험", SanctionStatus.UNAPPROVED),
-            ("notion.so", 1, 1, 4, "1회 관찰", Severity.LOW, "단순 문서 작성 용도 관찰 중. 현재까지 대용량 파일 전송 미탐지", SanctionStatus.UNAPPROVED),
-            ("slack.com", 8, 42, 126, "매일 (전사 기본)", Severity.LOW, "사내 정식 계약 체결 도구 (SSO 연동 및 데이터 보존 정책 적용됨)", SanctionStatus.APPROVED),
-        ]
-        for domain, depts, users, count, freq, risk, diag, status in defaults:
-            self.assets[domain] = ShadowAIAsset(
-                domain=domain,
-                service_name=KNOWN_SAAS_DATABASE.get(domain, {}).get("service_name", domain.capitalize()),
-                category=KNOWN_SAAS_DATABASE.get(domain, {}).get("category", "외부 SaaS"),
-                department_count=depts,
-                user_count=users,
-                usage_frequency=freq,
-                risk_level=risk,
-                ai_diagnosis=diag,
-                sanction_status=status,
-                recommended_alternative=None,
-                detected_at=datetime.now(),
-                access_count=count,
-                active_users=[f"임직원 {users}명"]
-            )
+        self.assets = {}
 
     def sync_railway_events(self, railway_events: List[Dict[str, Any]]):
         """
-        Railway 중앙 서버에서 수집된 실제 이벤트 로그를 분석하여
-        각 도메인의 접속 건수, 임직원 수, 사용 빈도를 실시간 카운트 형식으로 갱신하고,
-        신규 외부 AI/SaaS 도메인을 거버넌스 자산 목록에 동적으로 추가.
-
-        [흐름]
-          1) 로그를 도메인별로 묶어 집계한다 (접속 횟수 / 사용자 / IP / 파일업로드 시도)
-          2) 이미 알고 있는 자산은 그 집계로 숫자를 갱신한다
-          3) 처음 보는 도메인 중 AI·클라우드로 보이거나 2회 이상 접속된 것은 자산으로 새로 등록한다
-
-        [주의] 이 함수는 화면 쪽에서 주기적으로 불러줘야 한다.
-          엔진이 스스로 서버를 조회하지 않는다. 로그를 받아서 처리만 한다.
+        Railway 중앙 서버에서 수집된 실제 이벤트 로그만을 분석하여
+        각 도메인의 실제 접속 건수, 실제 임직원 수, 사용 빈도를 정확히 산출하고
+        자산 목록(self.assets)을 순수 실데이터 기반으로 갱신합니다.
         """
         if not railway_events:
             return
@@ -334,9 +311,6 @@ class ShadowAIGovernanceEngine:
         domain_stats: Dict[str, Dict[str, Any]] = {}
 
         for ev in railway_events:
-            # --- 도메인 정리 ---
-            # 로그에 "https://chatgpt.com/chat?a=1" 처럼 들어올 수 있으므로
-            # 프로토콜·경로·포트를 차례로 떼어내 순수 도메인만 남긴다.
             raw_target = ev.get("target") or ""
             target = raw_target.strip().lower()
             if not target or target in ("unknown", "none", "null", "-"):
@@ -349,11 +323,10 @@ class ShadowAIGovernanceEngine:
                 target = target.split(":")[0]
 
             if "." not in target:
-                continue   # 도메인 형태가 아니면 버린다
+                continue   # 도메인 형태가 아니면 건너뜀
 
-            # 우리 서버 자신과 로컬 주소는 거버넌스 대상이 아니다.
-            # (Agent가 서버로 로그를 보내는 것까지 '섀도우 IT 접속'으로 세면 안 된다)
-            if any(ign in target for ign in ["railway.app", "localhost", "127.0.0.1", "0.0.0.0"]):
+            # 중앙 서버 자체(Railway) 및 내부 로컬/게이트웨이 주소는 거버넌스 자산에서 제외
+            if any(ign in target for ign in ["railway.app", "railway.com", "localhost", "127.0.0.1", "0.0.0.0"]):
                 continue
 
             user = ev.get("user_name") or ev.get("user") or "User"
@@ -378,63 +351,71 @@ class ShadowAIGovernanceEngine:
             if ev_type == "FILE_UPLOAD_ATTEMPT":
                 domain_stats[target]["file_uploads"] += 1
 
-        self._railway_domain_stats = domain_stats   # 화면에서 꺼내 쓸 수 있게 보관
+        self._railway_domain_stats = domain_stats   # 화면용 보관
 
-        # 1. 기존 자산 통계 실시간 업데이트
-        for domain, asset in self.assets.items():
-            if domain in domain_stats:
-                st = domain_stats[domain]
-                rly_count = st["count"]
-                rly_users = st["users"]
-                
-                # 실시간 카운트 반영
-                base_count = getattr(asset, "access_count", 0) or 10
-                asset.access_count = base_count + rly_count
-                
-                # 시연용으로 넣어둔 "임직원 14명" 같은 가짜 항목은 걷어내고
-                # 실제 수집된 사용자 이름으로 대체한다.
-                cur_users = set(asset.active_users or [])
-                cur_users = {u for u in cur_users if not u.startswith("임직원 ")}
-                cur_users |= rly_users
-                asset.active_users = sorted(list(cur_users))
-                asset.user_count = max(len(cur_users), asset.user_count)
-                asset.department_count = max(len(st["ips"]), asset.department_count)
-                
-                # 사용 빈도 실시간 계산
-                if rly_count >= 10 or st["file_uploads"] > 0:
-                    asset.usage_frequency = f"실시간 급증 (누적 {asset.access_count}건 / 전송시도 {st['file_uploads']}건)"
-                elif rly_count >= 3:
-                    asset.usage_frequency = f"실시간 빈번 (누적 {asset.access_count}건)"
-                elif rly_count >= 1:
-                    asset.usage_frequency = f"실시간 감지 (누적 {asset.access_count}건)"
-            else:
-                if not getattr(asset, "access_count", 0):
-                    asset.access_count = asset.user_count * 3
+        # 🌟 서버 수집 데이터가 없는 기존 더미 자산은 정리하고 오직 실데이터 및 수동 진단 자산만 유지
+        retained_assets: Dict[str, ShadowAIAsset] = {}
+        for d, a in self.assets.items():
+            if d in self._manually_diagnosed_domains and d not in domain_stats:
+                retained_assets[d] = a
 
-        # 2. Railway에서 새롭게 발견된 외부 AI / SaaS 도메인 등록
-        #    모든 도메인을 다 등록하면 목록이 광고·CDN 주소로 가득 찬다.
-        #    그래서 AI·클라우드로 보이거나(이름 기준) 2회 이상 접속된 것만 올린다.
+        # 🌟 실제 서버에서 수집된 도메인들을 100% 실측 데이터 기반으로 등록/갱신
         for domain, st in domain_stats.items():
-            if domain not in self.assets:
-                is_ai_or_cloud = any(k in domain for k in ["ai", "gpt", "gemini", "claude", "bot", "cloud", "kakao", "datadog", "google", "drive", "share", "github", "notion", "poma"])
-                if is_ai_or_cloud or st["count"] >= 2:
-                    heuristic = _fallback_heuristic_analysis(domain)
-                    user_list = sorted(list(st["users"])) if st["users"] else ["User"]
-                    self.assets[domain] = ShadowAIAsset(
-                        domain=domain,
-                        service_name=heuristic["service_name"],
-                        category=heuristic["category"],
-                        department_count=max(1, len(st["ips"])),
-                        user_count=max(1, len(user_list)),
-                        usage_frequency=f"실시간 감지 ({st['count']}건 접속)",
-                        risk_level=heuristic["risk_level"],
-                        ai_diagnosis=heuristic["ai_diagnosis"],
-                        sanction_status=SanctionStatus.UNAPPROVED,
-                        recommended_alternative=None,
-                        detected_at=datetime.now(),
-                        access_count=st["count"],
-                        active_users=user_list
-                    )
+            rly_count = st["count"]
+            user_list = sorted(list(st["users"])) if st["users"] else ["User"]
+            ip_list = sorted(list(st["ips"])) if st["ips"] else ["unknown"]
+
+            # 사전 정의 지식 베이스 검색 (부모 도메인 포함)
+            meta = None
+            if domain in KNOWN_SAAS_DATABASE:
+                meta = KNOWN_SAAS_DATABASE[domain]
+            else:
+                for parent_k, parent_v in KNOWN_SAAS_DATABASE.items():
+                    if domain.endswith("." + parent_k):
+                        meta = parent_v
+                        break
+
+            if meta:
+                svc_name = meta.get("service_name", domain.capitalize())
+                category = meta.get("category", "외부 SaaS")
+                risk = meta.get("default_risk", Severity.MEDIUM)
+                diag = meta.get("ai_diagnosis", "외부 서비스 접근 감지")
+                status = meta.get("default_status", SanctionStatus.UNAPPROVED)
+            else:
+                heuristic = _fallback_heuristic_analysis(domain)
+                svc_name = heuristic["service_name"]
+                category = heuristic["category"]
+                risk = heuristic["risk_level"]
+                diag = heuristic["ai_diagnosis"]
+                status = SanctionStatus.UNAPPROVED
+
+            # 실제 발생 건수 기준 사용 빈도 표기
+            if st["file_uploads"] > 0:
+                freq = f"실시간 급증 (누적 {rly_count}건 / 전송시도 {st['file_uploads']}건)"
+            elif rly_count >= 10:
+                freq = f"실시간 급증 (누적 {rly_count}건)"
+            elif rly_count >= 3:
+                freq = f"실시간 빈번 (누적 {rly_count}건)"
+            else:
+                freq = f"실시간 감지 (누적 {rly_count}건)"
+
+            retained_assets[domain] = ShadowAIAsset(
+                domain=domain,
+                service_name=svc_name,
+                category=category,
+                department_count=max(1, len(ip_list)),
+                user_count=max(1, len(user_list)),
+                usage_frequency=freq,
+                risk_level=risk,
+                ai_diagnosis=diag,
+                sanction_status=status,
+                recommended_alternative=None,
+                detected_at=datetime.now(),
+                access_count=rly_count,
+                active_users=user_list
+            )
+
+        self.assets = retained_assets
 
     def get_railway_domain_stats(self) -> Dict[str, Dict[str, Any]]:
         """
@@ -598,5 +579,6 @@ class ShadowAIGovernanceEngine:
                 active_users=user_list
             )
             self.assets[d] = asset
+        self._manually_diagnosed_domains.add(d)
         return asset
 

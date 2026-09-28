@@ -247,44 +247,6 @@ st.markdown("""
         transform: translateY(-2px) !important;
     }
 
-    /* 사이드바 실시간 시뮬레이터 아이콘 마우스 오버 툴팁 */
-    section[data-testid="stSidebar"] [data-testid="stExpanderIcon"] {
-        position: relative;
-        cursor: help !important;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-    section[data-testid="stSidebar"] [data-testid="stExpanderIcon"]::after {
-        content: "💡 사내 Shadow AI 기밀 유출 킬체인을 단계별로 실시간 시뮬레이션합니다.\\A👥 팀원 실제 로그 연동 모드 (GIGANGAgent.exe & activity.log)";
-        position: absolute;
-        left: 32px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: rgba(8, 14, 28, 0.92);
-        backdrop-filter: blur(24px);
-        color: #f1f5f9;
-        border: 1px solid rgba(56, 189, 248, 0.25);
-        border-radius: 14px;
-        padding: 12px 16px;
-        font-size: 11.5px;
-        font-weight: 500;
-        line-height: 1.5;
-        white-space: pre-wrap;
-        width: 270px;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.9), 0 0 16px rgba(56, 189, 248, 0.25);
-        pointer-events: none;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.2s ease, visibility 0.2s ease;
-        z-index: 9999999;
-    }
-    section[data-testid="stSidebar"] [data-testid="stExpanderIcon"]:hover::after,
-    section[data-testid="stSidebar"] summary:hover [data-testid="stExpanderIcon"]::after {
-        opacity: 1;
-        visibility: visible;
-    }
-
     /* 🌟 Cyber Glassmorphism Bento Grid KPI Cards */
     .kpi-card {
         background: rgba(255, 255, 255, 0.035) !important;
@@ -1754,242 +1716,43 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    with st.expander("실시간 시뮬레이터", icon="🧪", expanded=True):
-        import streamlit.components.v1 as _components
-        _components.html("""
-        <script>
-        function attachSimTooltip() {
-            try {
-                const pDoc = window.parent.document;
-                const icon = pDoc.querySelector('[data-testid="stExpanderIcon"]');
-                const summary = icon ? icon.closest('summary') : null;
-                const tip = "사내 Shadow AI 기밀 유출 킬체인을 단계별로 실시간 시뮬레이션합니다. (팀원 실제 로그 연동 모드: GIGANGAgent.exe & activity.log)";
-                if (icon) {
-                    icon.setAttribute('title', tip);
-                    icon.style.cursor = 'help';
-                }
-                if (summary) {
-                    summary.setAttribute('title', tip);
-                }
-            } catch(e) {}
-        }
-        attachSimTooltip();
-        setTimeout(attachSimTooltip, 300);
-        setTimeout(attachSimTooltip, 1000);
-        </script>
-        """, height=0, width=0)
-        col_s1, col_s2 = st.columns(2)
-        with col_s1:
-            btn_watch = st.button("👁️ 1단계\n선제 감시", use_container_width=True, help="기밀 DB 조회 + 미승인 SaaS/AI 접속 포착 -> WATCH 선제 승격")
-        with col_s2:
-            btn_high = st.button("🚨 2단계\n유출 확정", use_container_width=True, help="WATCH 대상자의 대용량 외부 전송 포착 -> HIGH Incident 즉시 확정")
-            
-        col_s3, col_s4 = st.columns(2)
-        with col_s3:
-            btn_heal = st.button("⏱️ 3단계\n오탐 해제", use_container_width=True, help="전송 없이 30분 경과 -> NORMAL 상태로 자가 치유")
-        with col_s4:
-            btn_reset = st.button("🔄 초기화\n시뮬 리셋", use_container_width=True, help="시뮬레이션 데이터 초기화")
 
-        # Railway 수집 상태 세션 변수 사전 초기화
-        from gigang.collectors.team_collector import set_railway_collection_enabled, is_railway_collection_enabled
-        if "railway_collection_active" not in st.session_state:
-            st.session_state["railway_collection_active"] = False
-            set_railway_collection_enabled(False)
-        if "sb_railway_toggle" not in st.session_state:
-            st.session_state["sb_railway_toggle"] = st.session_state["railway_collection_active"]
-        if "view_railway_collection_toggle" not in st.session_state:
-            st.session_state["view_railway_collection_toggle"] = st.session_state["railway_collection_active"]
+    # Railway 수집 상태 세션 변수 사전 초기화
+    from gigang.collectors.team_collector import set_railway_collection_enabled, is_railway_collection_enabled
+    if "railway_collection_active" not in st.session_state:
+        st.session_state["railway_collection_active"] = False
+        set_railway_collection_enabled(False)
+    if "sb_railway_toggle" not in st.session_state:
+        st.session_state["sb_railway_toggle"] = st.session_state["railway_collection_active"]
+    if "view_railway_collection_toggle" not in st.session_state:
+        st.session_state["view_railway_collection_toggle"] = st.session_state["railway_collection_active"]
 
-        # 현재 '중앙 서버 파이프라인' 페이지가 아닐 때만 사이드바 수집 제어 박스 표시
-        if menu != "중앙 서버 파이프라인":
-            st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
-            with st.container(border=True):
-                st.markdown("<div style='font-size:12px; font-weight:700; color:#38bdf8; margin-bottom:4px;'>🌐 Railway 실시간 수집</div>", unsafe_allow_html=True)
+    # 현재 '중앙 서버 파이프라인' 페이지가 아닐 때만 사이드바 수집 제어 박스 표시
+    if menu != "중앙 서버 파이프라인":
+        with st.container(border=True):
+            st.markdown("<div style='font-size:12px; font-weight:700; color:#38bdf8; margin-bottom:4px;'>🌐 Railway 실시간 수집</div>", unsafe_allow_html=True)
 
-                def _on_sb_railway_toggle():
-                    val = st.session_state.get("sb_railway_toggle", False)
-                    st.session_state["railway_collection_active"] = val
-                    st.session_state["view_railway_collection_toggle"] = val
-                    set_railway_collection_enabled(val)
+            def _on_sb_railway_toggle():
+                val = st.session_state.get("sb_railway_toggle", False)
+                st.session_state["railway_collection_active"] = val
+                st.session_state["view_railway_collection_toggle"] = val
+                set_railway_collection_enabled(val)
 
-                sb_railway_active = st.toggle(
-                    "실시간 로그 수집 가동", 
-                    value=st.session_state.get("railway_collection_active", False),
-                    key="sb_railway_toggle", 
-                    on_change=_on_sb_railway_toggle, 
-                    help="Railway 실시간 로그 수집을 켜거나 끕니다."
-                )
-                if st.button("🔄 최신 로그 즉시 동기화", disabled=not sb_railway_active, use_container_width=True, key="btn_sb_sync_now", help="Railway 중앙 서버에서 최신 에이전트 수집 로그를 즉시 갱신합니다."):
-                    from gigang.collectors.team_collector import fetch_railway_events, get_railway_fetch_status
-                    r_logs = fetch_railway_events(timeout=5, force=True)
-                    if get_railway_fetch_status().get("ok"):
-                        st.toast(f"🔄 Railway 중앙 서버에서 최신 {len(r_logs)}개 에이전트 로그를 동기화했습니다.", icon="🌐")
-                    else:
-                        st.toast("Railway 조회 실패: 마지막 성공 기록을 유지합니다.", icon="⚠️")
-                    st.rerun()
-
-    from gigang.collectors.team_collector import get_team_sim_scenarios
-    SIM_SCENARIOS = get_team_sim_scenarios()
-
-    if btn_watch:
-        import random
-        # 현재 WATCH 상태가 아닌 시나리오를 우선 선별
-        active_watch_users = [u.get("user") for u in ctx.correlation_engine.get_watch_users() if u.get("state") == "WATCH"]
-        available_scenarios = [s for s in SIM_SCENARIOS if s["user"] not in active_watch_users]
-        sc = random.choice(available_scenarios) if available_scenarios else random.choice(SIM_SCENARIOS)
-        st.session_state["last_sim_scenario"] = sc
-        
-        now = datetime.utcnow()
-        ev1 = SecurityEvent(
-            event_id=f"EVT-SIM-DB-{int(now.timestamp())}-{random.randint(10,99)}",
-            timestamp=now,
-            log_source=LogSource.DB,
-            actor=Actor(user_id=sc["user"], src_ip=sc["ip"]),
-            target=Target(dst_ip="10.0.0.30", dst_port=3306),
-            action=EventAction.SELECT,
-            payload=PayloadMetadata(table_name=sc["table"], query_string=sc["query"])
-        )
-        ev2 = SecurityEvent(
-            event_id=f"EVT-SIM-DNS-{int(now.timestamp())}-{random.randint(10,99)}",
-            timestamp=now + timedelta(seconds=5),
-            log_source=LogSource.DNS,
-            actor=Actor(user_id=sc["user"], src_ip=sc["ip"]),
-            target=Target(domain=sc["service"]),
-            action=EventAction.QUERY,
-            payload=PayloadMetadata(category=sc["category"])
-        )
-        ctx.correlation_engine.update_user_risk(ev1)
-        ctx.correlation_engine.update_user_risk(ev2)
-        # 1단계 선제 감시 인시던트 생성 (WATCH 카운트 및 드롭다운 실시간 연동)
-        watch_inc = ctx.correlation_engine.create_watch_incident(sc["user"], sc)
-        st.session_state.selected_incident_id = watch_inc.incident_id
-        st.toast(f"⚡ [1단계 선제 감시] '{sc['user']}'({sc['name']}) WATCH 승격! ({sc['data_desc']} 접근 포착)", icon="👁️")
-        st.rerun()
-
-    if btn_high:
-        now = datetime.utcnow()
-        active_watch_list = [u for u in ctx.correlation_engine.get_watch_users() if u.get("state") == "WATCH"]
-        target_user = None
-        sc = None
-        if active_watch_list:
-            target_user = active_watch_list[0]["user"]
-            for s in SIM_SCENARIOS:
-                if s["user"] == target_user:
-                    sc = s
-                    break
-        if not sc:
-            sc = st.session_state.get("last_sim_scenario", SIM_SCENARIOS[0])
-            # WATCH 상태가 아니라면 1단계를 선행 처리 후 2단계 전이
-            ev_pre1 = SecurityEvent(
-                event_id=f"EVT-PRE-DB-{int(now.timestamp())}",
-                timestamp=now - timedelta(minutes=2),
-                log_source=LogSource.DB,
-                actor=Actor(user_id=sc["user"], src_ip=sc["ip"]),
-                target=Target(dst_ip="10.0.0.30", dst_port=3306),
-                action=EventAction.SELECT,
-                payload=PayloadMetadata(table_name=sc["table"], query_string=sc["query"])
+            sb_railway_active = st.toggle(
+                "실시간 로그 수집 가동", 
+                value=st.session_state.get("railway_collection_active", False),
+                key="sb_railway_toggle", 
+                on_change=_on_sb_railway_toggle, 
+                help="Railway 실시간 로그 수집을 켜거나 끕니다."
             )
-            ev_pre2 = SecurityEvent(
-                event_id=f"EVT-PRE-DNS-{int(now.timestamp())}",
-                timestamp=now - timedelta(minutes=1),
-                log_source=LogSource.DNS,
-                actor=Actor(user_id=sc["user"], src_ip=sc["ip"]),
-                target=Target(domain=sc["service"]),
-                action=EventAction.QUERY,
-                payload=PayloadMetadata(category=sc["category"])
-            )
-            ctx.correlation_engine.update_user_risk(ev_pre1)
-            ctx.correlation_engine.update_user_risk(ev_pre2)
-
-        file_name = sc.get("file_name")
-        file_size = sc.get("file_size") or sc.get("bytes", 24500000)
-
-        if file_name:
-            ev3 = SecurityEvent(
-                event_id=f"EVT-SIM-UPLOAD-{int(now.timestamp())}",
-                timestamp=now,
-                log_source=LogSource.CHROME_EXTENSION,
-                actor=Actor(user_id=sc["user"], src_ip=sc["ip"]),
-                target=Target(domain=sc["dst_domain"], hostname="DESKTOP-OF0CMDB"),
-                action=EventAction.FILE_UPLOAD_ATTEMPT,
-                payload=PayloadMetadata(
-                    file_name=file_name,
-                    file_size=file_size,
-                    bytes_sent=file_size,
-                    category="Shadow_AI_Exfiltration"
-                )
-            )
-        else:
-            ev3 = SecurityEvent(
-                event_id=f"EVT-SIM-FW-{int(now.timestamp())}",
-                timestamp=now,
-                log_source=LogSource.FIREWALL,
-                actor=Actor(user_id=sc["user"], src_ip=sc["ip"]),
-                target=Target(domain=sc["dst_domain"], dst_port=443),
-                action=EventAction.ALLOW,
-                payload=PayloadMetadata(bytes_sent=sc["bytes"])
-            )
-        ctx.correlation_engine.update_user_risk(ev3)
-        # 해당 사용자의 기존 미완료 WATCH 인시던트 정리
-        for inc_id, inc in list(ctx.correlation_engine.incidents.items()):
-            if sc["user"] in inc.title and inc.severity == Severity.MEDIUM:
-                inc.status = IncidentStatus.RESOLVED
-                ctx.correlation_engine.store.save_incident(inc)
-        # 생성된 최신 HIGH 인시던트로 자동 포커스
-        for inc in ctx.correlation_engine.get_all_incidents():
-            if (sc["user"] in inc.title or sc["user"] in inc.actor) and inc.severity == Severity.HIGH:
-                st.session_state.selected_incident_id = inc.incident_id
-                break
-        if file_name:
-            st.toast(f"🚨 [2단계 유출 확정] '{sc['user']}'({sc['name']}) '{file_name}'({file_size/(1024*1024):.1f}MB) 파일 첨부 포착! HIGH Incident 생성 완료!", icon="🚨")
-        else:
-            st.toast(f"🚨 [2단계 유출 확정] '{sc['user']}'({sc['name']}) 외부 {sc['bytes']/(1024*1024):.1f}MB 전송 포착! HIGH Incident 생성 완료!", icon="🚨")
-        st.rerun()
-
-    if btn_heal:
-        now = datetime.utcnow()
-        active_watch_list = [u for u in ctx.correlation_engine.get_watch_users() if u.get("state") == "WATCH"]
-        if active_watch_list:
-            heal_user = active_watch_list[0]["user"]
-            ctx.correlation_engine.store.upsert_risk(
-                user=heal_user,
-                state="NORMAL",
-                score=15,
-                reasons=["30분 경과: 외부 데이터 전송 행위 없음 (오탐 자동 해제)"],
-                expires_at=now + timedelta(hours=1)
-            )
-            ctx.correlation_engine.store.append_history(
-                user=heal_user,
-                from_state="WATCH",
-                to_state="NORMAL",
-                reason="30분 만료(TTL)로 인한 정상(NORMAL) 자가 치유"
-            )
-            # 기존 미완료 WATCH 인시던트 종료
-            for inc_id, inc in list(ctx.correlation_engine.incidents.items()):
-                if heal_user in inc.title and inc.severity == Severity.MEDIUM:
-                    inc.status = IncidentStatus.RESOLVED
-                    ctx.correlation_engine.store.save_incident(inc)
-            # 3단계 오탐 해제 인시던트 생성 (NORMAL 카운트 및 드롭다운 실시간 연동)
-            heal_inc = ctx.correlation_engine.create_heal_incident(heal_user)
-            st.session_state.selected_incident_id = heal_inc.incident_id
-            st.toast(f"⏱️ [오탐 자동 해제] 30분간 전송이 없었던 '{heal_user}'이(가) NORMAL로 자가 치유되었습니다.", icon="⏱️")
-            st.rerun()
-        else:
-            st.toast("현재 사전 감시(WATCH) 중인 사용자가 없습니다. (1단계 선제 감시를 먼저 가동하세요)", icon="ℹ️")
-
-    if btn_reset:
-        ctx.correlation_engine.store.clear_all()
-        ctx.correlation_engine.incidents.clear()
-        from gigang.collectors.team_collector import fetch_railway_events
-        r_logs = fetch_railway_events(timeout=3, force=False)
-        if r_logs:
-            ctx.correlation_engine.generate_incidents_from_railway(r_logs)
-            st.session_state.selected_incident_id = list(ctx.correlation_engine.incidents.keys())[0] if ctx.correlation_engine.incidents else None
-            st.toast("🔄 Railway 실시간 수집 데이터 기반으로 초기화 완료", icon="🔄")
-        else:
-            st.session_state.selected_incident_id = None
-            st.toast("🔄 모든 인시던트 및 상태가 초기화되었습니다 (빈 상태).", icon="🔄")
-        st.rerun()
+            if st.button("🔄 최신 로그 즉시 동기화", disabled=not sb_railway_active, use_container_width=True, key="btn_sb_sync_now", help="Railway 중앙 서버에서 최신 에이전트 수집 로그를 즉시 갱신합니다."):
+                from gigang.collectors.team_collector import fetch_railway_events, get_railway_fetch_status
+                r_logs = fetch_railway_events(timeout=5, force=True)
+                if get_railway_fetch_status().get("ok"):
+                    st.toast(f"🔄 Railway 중앙 서버에서 최신 {len(r_logs)}개 에이전트 로그를 동기화했습니다.", icon="🌐")
+                else:
+                    st.toast("Railway 조회 실패: 마지막 성공 기록을 유지합니다.", icon="⚠️")
+                st.rerun()
 
     st.markdown("---")
     
@@ -2016,7 +1779,7 @@ with st.sidebar:
 
     with st.expander("🔑 Gemini AI 엔진 연동 설정", expanded=False):
         st.markdown("<div style='font-size:12px; color:#cbd5e1; margin-bottom:6px;'>미등록 외부 SaaS 및 Shadow AI 도메인을 자동 분류하고 데이터 재학습 위험도를 실시간 진단하는 AI 보강(Enrichment) 엔진입니다.</div>", unsafe_allow_html=True)
-        key_input = st.text_input("Gemini API Key", type="password", value=st.session_state.get("gemini_api_key", ""), placeholder="AIzaSy... 또는 AQ.Ab... (Google AI Studio)", help="Google AI Studio에서 발급받은 API 키가 자동 적용되어 실시간 Gemini 3.6 / 2.5 Flash 모델이 가동됩니다.")
+        key_input = st.text_input("Gemini API Key", type="password", value=st.session_state.get("gemini_api_key", ""), placeholder="AIzaSy... 또는 AQ.Ab... (Google AI Studio)", help="Google AI Studio에서 발급받은 API 키가 자동 적용되어 실시간 Google Gemini Flash 클라우드 모델이 가동됩니다.")
         if key_input != st.session_state.get("gemini_api_key", ""):
             st.session_state["gemini_api_key"] = key_input
             if key_input:
@@ -2027,7 +1790,7 @@ with st.sidebar:
         use_local_ai = enable_local
 
     if has_gemini_key:
-        gemini_status_line = '<div style="color: #62d487; font-size:12px; margin-top:5px; display:flex; align-items:center;"><span class="pipeline-pulse-dot"></span> Gemini AI 판별 모듈 가동 중 (Cloud 3.6/2.5)</div>'
+        gemini_status_line = '<div style="color: #62d487; font-size:12px; margin-top:5px; display:flex; align-items:center;"><span class="pipeline-pulse-dot"></span> Gemini AI 판별 모듈 가동 중 (Google Cloud API)</div>'
     elif use_local_ai:
         gemini_status_line = '<div style="color: #62d487; font-size:12px; margin-top:5px; display:flex; align-items:center;"><span class="pipeline-pulse-dot"></span> Gemini AI 판별 모듈 가동 중 (로컬 AI)</div>'
     else:
@@ -2857,9 +2620,10 @@ if menu == "종합 관제":
     total_inc_all = crit_high_count + watch_count + normal_count
     defense_rate = int((normal_count / max(1, total_inc_all)) * 100) if total_inc_all > 0 else 98
 
-    # WATCH 실시간 남은 TTL 계산 (가장 최근 활성 감시자 기준)
+    # WATCH 실시간 남은 TTL 계산 (가장 최근 활성 감시자 기준, 기본 30분=1800초)
     ttl_display = "30:00"
     ttl_sub = "대응 대기 (TTL 30m)"
+    rem_sec = 1800
     if active_watch:
         try:
             w_first = active_watch[0]
@@ -2870,8 +2634,14 @@ if menu == "종합 관제":
             ttl_display = f"{rem_m:02d}:{rem_s:02d}"
             ttl_sub = f"'{w_first['user']}' 유출 감시 카운트다운"
         except Exception:
-            ttl_display = "25:00"
+            ttl_display = "30:00"
             ttl_sub = "선제 감시 타이머 가동"
+            rem_sec = 1800
+
+    # TTL 타이머 링 동적 오프셋 계산 (원 둘레: 2 * π * 26 ≈ 163.36)
+    # 30:00(100% 잔여)일 때 offset=0으로 꽉 찬 완전한 원형, 시간이 경과할수록 시계 방향으로 소진
+    ttl_ratio = max(0.0, min(1.0, rem_sec / 1800.0))
+    ttl_offset = round(163.36 * (1.0 - ttl_ratio), 1)
 
     # SVG 링 오프셋 계산 (둘레: 163.3)
     normal_offset = max(10, int(163.3 * (1 - (defense_rate / 100.0))))
@@ -2957,7 +2727,7 @@ if menu == "종합 관제":
                         </defs>
                         <circle cx="34" cy="34" r="26" stroke="rgba(255,255,255,0.08)" stroke-width="6" fill="none" />
                         <circle cx="34" cy="34" r="26" stroke="url(#ringGradOrange4)" stroke-width="6" fill="none"
-                                stroke-dasharray="163.3" stroke-dashoffset="35" stroke-linecap="round"
+                                stroke-dasharray="163.36" stroke-dashoffset="{ttl_offset}" stroke-linecap="round"
                                 transform="rotate(-90 34 34)" style="filter:drop-shadow(0 0 8px rgba(249,115,22,0.6));" />
                     </svg>
                 </div>
@@ -3175,9 +2945,10 @@ elif menu == "킬체인 분석":
         </div>
         """, unsafe_allow_html=True)
     else:
-        curr_target_id = st.session_state.get("selected_incident_id", incidents[0].incident_id)
-        if curr_target_id not in incident_ids:
+        curr_target_id = st.session_state.get("selected_incident_id")
+        if not curr_target_id or curr_target_id not in incident_ids:
             curr_target_id = incident_ids[0]
+            st.session_state.selected_incident_id = curr_target_id
 
         def format_inc_option(inc_id: str) -> str:
             inc = ctx.correlation_engine.get_incident(inc_id)
@@ -3194,7 +2965,7 @@ elif menu == "킬체인 분석":
         def on_killchain_dropdown():
             st.session_state.selected_incident_id = st.session_state.killchain_tab_selectbox
 
-        st.session_state.killchain_tab_selectbox = st.session_state.selected_incident_id
+        st.session_state.killchain_tab_selectbox = curr_target_id
 
         sel_tab_id = st.selectbox(
             "🔎 분석 대상 인시던트 선택",
@@ -3205,6 +2976,9 @@ elif menu == "킬체인 분석":
         )
 
         target_inc = ctx.correlation_engine.get_incident(st.session_state.selected_incident_id)
+        if not target_inc and incident_ids:
+            target_inc = ctx.correlation_engine.get_incident(incident_ids[0])
+            st.session_state.selected_incident_id = incident_ids[0]
 
         # 🌟 인시던트 위험도에 따른 동적 설명창 테마
         summary_class = {
@@ -3451,16 +3225,16 @@ elif menu == "AI·IT 거버넌스":
 
     # 🌟 뷰 모드에 따른 열 너비 비율 최적화 (글자 잘림/도형 겹침 원천 방지)
     if gov_view_mode == "AI 소견 와이드 (상세)":
-        col_widths = [1.6, 0.8, 1.15, 0.85, 0.55, 1.0, 3.3, 0.65, 0.65]
+        col_widths = [1.8, 0.85, 1.15, 0.9, 0.6, 1.0, 4.4]
     elif gov_view_mode == "컴팩트 (1줄 요약)":
-        col_widths = [1.8, 0.8, 1.15, 0.9, 0.6, 1.05, 2.7, 0.65, 0.65]
+        col_widths = [2.0, 0.85, 1.15, 0.95, 0.65, 1.1, 4.0]
     else:  # 표준 맞춤 (2줄 자동 줄바꿈)
-        col_widths = [1.7, 0.8, 1.15, 0.9, 0.6, 1.05, 2.95, 0.65, 0.65]
+        col_widths = [1.9, 0.85, 1.15, 0.95, 0.65, 1.1, 4.2]
 
     with st.container(key="gov_table_box"):
         # 상단 고정 헤더 행 (Sticky Header)
         with st.container(key="gov_hdr_row"):
-            h1, h2, h3, h4, h5, h6, h7, h8, h9 = st.columns(col_widths, vertical_alignment="center")
+            h1, h2, h3, h4, h5, h6, h7 = st.columns(col_widths, vertical_alignment="center")
             with h1:
                 k = "hdr_active_domain" if st.session_state["gov_sort_col"] == "domain" else "hdr_domain"
                 if st.button(f"도메인 / 서비스{gov_sort_icon('domain')}", key=k, use_container_width=True, help="도메인명 기준 오름차순/내림차순 정렬"):
@@ -3493,10 +3267,6 @@ elif menu == "AI·IT 거버넌스":
                     st.rerun()
             with h7:
                 st.markdown("<div style='text-align: center; color: #94a3b8; font-size: 12px; font-weight: 700; height: 36px; display: flex; align-items: center; justify-content: center;'>Gemini AI 진단 소견</div>", unsafe_allow_html=True)
-            with h8:
-                st.markdown("<div style='text-align: center; color: #10b981; font-size: 12px; font-weight: 700; height: 36px; display: flex; align-items: center; justify-content: center;'>승인</div>", unsafe_allow_html=True)
-            with h9:
-                st.markdown("<div style='text-align: center; color: #ef4444; font-size: 12px; font-weight: 700; height: 36px; display: flex; align-items: center; justify-content: center;'>차단</div>", unsafe_allow_html=True)
 
         # 데이터 행 렌더링
         if not sorted_assets:
@@ -3518,7 +3288,7 @@ elif menu == "AI·IT 거버넌스":
             device_count = asset.department_count  # n개 기기
 
             with st.container(key=f"gov_row_{asset.domain.replace('.', '_')}"):
-                c1, c2, c3, c4, c5, c6, c7, c8, c9 = st.columns(col_widths, vertical_alignment="center")
+                c1, c2, c3, c4, c5, c6, c7 = st.columns(col_widths, vertical_alignment="center")
 
                 with c1:
                     st.markdown(f"""
@@ -3621,22 +3391,10 @@ elif menu == "AI·IT 거버넌스":
                     </div>
                     """, unsafe_allow_html=True)
 
-                with c8:
-                    if st.button("승인", key=f"gov_app_{asset.domain}", use_container_width=True, help=f"{asset.domain} 서비스를 사내 정식 승인 목록으로 전환합니다."):
-                        ctx.governance_engine.update_sanction_status(asset.domain, SanctionStatus.APPROVED)
-                        st.toast(f"'{asset.domain}' 정식 승인(양성화) 완료", icon="✅")
-                        st.rerun()
-
-                with c9:
-                    if st.button("차단", key=f"gov_blk_{asset.domain}", use_container_width=True, help=f"{asset.domain} 접근을 방화벽 및 DNS 싱크홀로 차단합니다."):
-                        ctx.governance_engine.update_sanction_status(asset.domain, SanctionStatus.BLOCKED)
-                        st.toast(f"'{asset.domain}' 차단 정책 적용 완료", icon="⛔")
-                        st.rerun()
-
     st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
 elif menu == "중앙 서버 파이프라인":
     from gigang.collectors.team_collector import (
-        fetch_railway_events, fetch_activity_log_events, RAILWAY_URL, RAILWAY_API_KEY, get_railway_api_key
+        fetch_railway_events, RAILWAY_URL, RAILWAY_API_KEY, get_railway_api_key
     )
 
     st.markdown(f"""
@@ -3709,11 +3467,8 @@ elif menu == "중앙 서버 파이프라인":
     @st.fragment(run_every=5 if railway_active else None)
     def render_live_pipeline():
         r_events = fetch_railway_events(timeout=5, force=railway_active)
-        from gigang.collectors.team_collector import get_railway_fetch_status, fetch_remote_db_logs, get_db_api_fetch_status
+        from gigang.collectors.team_collector import get_railway_fetch_status
         fetch_status = get_railway_fetch_status()
-        remote_act = fetch_remote_db_logs()
-        act_events = remote_act if remote_act else fetch_activity_log_events()
-        db_fetch_status = get_db_api_fetch_status()
 
         # 상단 실시간 메트릭 카드 4종 (폰트 사이즈 축소, 줄바꿈 방지, 엄격한 중앙 정렬 통일)
         kpi_c1, kpi_c2, kpi_c3, kpi_c4 = st.columns(4)
@@ -3761,8 +3516,8 @@ elif menu == "중앙 서버 파이프라인":
             """, unsafe_allow_html=True)
 
         st.markdown("---")
-        st.markdown("### 🌐 Railway 중앙 서버 수집 이벤트")
-        st.caption("각 PC에서 `GIGANGAgent.exe` 및 Chrome 확장 프로그램(`Upload Detector`)이 사이트 접속(WEB_ACCESS), 파일 첨부 시도(FILE_UPLOAD_ATTEMPT), 텍스트 붙여넣기(PASTE_ATTEMPT)를 실시간 감지하여 중앙 서버에 전송한 실제 데이터입니다.")
+        st.markdown("### 🗄️ 사내 DB 감사 활동 로그")
+        st.caption("각 PC에서 `GIGANGAgent.exe` 및 Chrome 확장 프로그램(`Upload Detector`)이 사이트 접속(WEB_ACCESS), 파일 첨부 시도(FILE_UPLOAD_ATTEMPT), 텍스트 붙여넣기(PASTE_ATTEMPT), 사내 DB 감사 활동을 실시간 감지하여 중앙 서버에 수집한 데이터입니다.")
 
         col_btn_ref, _ = st.columns([1, 6])
         with col_btn_ref:
@@ -3830,26 +3585,6 @@ elif menu == "중앙 서버 파이프라인":
             })
             st.dataframe(df_display, hide_index=True, use_container_width=True, height=380)
         else:
-            st.warning("Railway 서버에서 수집된 로그가 없습니다.")
-
-        st.markdown("---")
-        st.markdown("### 🗄️ 사내 DB 감사 활동 로그")
-        if db_fetch_status.get("ok"):
-            st.caption(f"🟢 원격 DB REST API 실시간 연동됨 (최근 {db_fetch_status.get('count', 0)}건 수신)")
-        elif db_fetch_status.get("error") and db_fetch_status.get("error") != "DB_LOG_API_URL 미설정":
-            st.caption(f"🟡 원격 DB API 연결 대기: {db_fetch_status.get('error')} (로컬 activity.log 자동 폴백 사용 중)")
-        else:
-            st.caption("로컬 activity.log 기준 · .env의 DB_LOG_API_URL 설정 시 원격 REST API로 자동 전환됩니다.")
-        if act_events:
-            df_act = pd.DataFrame(act_events).rename(columns={
-                "id": "ID",
-                "event_time": "발생 시각",
-                "user_name": "사용자",
-                "pc_name": "PC 이름",
-                "event_type": "수행 액션",
-                "target": "대상 테이블/도메인",
-                "rows": "조회 행 수"
-            })
-            st.dataframe(df_act, hide_index=True, use_container_width=True)
+            st.warning("수집된 사내 DB 감사 활동 로그가 없습니다.")
 
     render_live_pipeline()
