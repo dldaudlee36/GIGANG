@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GIGANG SecOps · 보안 상관분석 & 제로 트러스트 관제 센터</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ==================== SIDEBAR ==================== -->
+  <aside class="side">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#06101e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <div>
+        <div>GIGANG SecOps</div>
+        <span class="sub">상관분석 & SOAR v3.8</span>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="on" id="nav-overview" onclick="switchView('overview')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>
+        </svg>
+        종합 관제 개요
+      </a>
+      <a id="nav-briefing" onclick="switchView('briefing')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/>
+        </svg>
+        AI 브리핑 & SOAR
+        <span class="badge" id="navBadge">3</span>
+      </a>
+      <a id="nav-timeline" onclick="switchView('timeline')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+        타임라인 & 킬체인
+      </a>
+      <a id="nav-network" onclick="switchView('network')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>
+        </svg>
+        네트워크 홉 맵
+      </a>
+      <a id="nav-copilot" onclick="switchView('copilot')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        AI 보안 Copilot
+        <span class="badge blue">AI</span>
+      </a>
+      <a id="nav-logs" onclick="switchView('logs')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>
+        </svg>
+        보안 이벤트 스트림
+      </a>
+    </nav>
+
+    <div class="sys">
+      <b><span class="dot"></span> GIGANG 코어 정상</b>
+      상관분석 엔진: 온라인 (v3.8)<br>
+      AI 에이전트: Gemini 2.5 Flash<br>
+      시그니처: v2026.10.07 동기화
+    </div>
+  </aside>
+
+  <!-- ==================== MAIN ==================== -->
+  <main class="main">
+    <!-- Top Header -->
+    <header class="top">
+      <div>
+        <h1>보안 관제 및 상관분석 콘솔</h1>
+        <p id="clock">실시간 모니터링 중</p>
+      </div>
+      <div class="tools">
+        <!-- Incident Selector -->
+        <select id="incidentSelect" class="select-box" onchange="onIncidentChange()" title="분석할 침해사고 선택">
+          <!-- Populated by app.js -->
+        </select>
+        <button class="btn-action" id="btnSimulate" onclick="triggerSimulation()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          공격 시뮬레이션
+        </button>
+        <button class="ghost" id="btnRefresh" onclick="fetchIncidents(); showToast('데이터를 새로고침했습니다.');">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+          새로고침
+        </button>
+        <div class="avatar" title="SecOps 관리자" onclick="location.href='login.html'">G</div>
+      </div>
+    </header>
+
+    <!-- Top KPI Metrics -->
+    <section class="grid kpis">
+      <div class="panel kpi">
+        <div class="lbl">
+          차단된 공격
+          <div class="ico" style="background:rgba(244,63,94,.15);color:var(--red)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M5 5l14 14"/></svg>
+          </div>
+        </div>
+        <div class="val" id="k1">184,392</div>
+        <div class="delta up">▲ 14건 실시간 자동 차단</div>
+      </div>
+
+      <div class="panel kpi">
+        <div class="lbl">
+          선택 사건 위험도
+          <div class="ico" style="background:rgba(251,191,36,.15);color:var(--amber)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>
+          </div>
+        </div>
+        <div class="val" id="kpiSeverity" style="color:var(--red)">CRITICAL</div>
+        <div class="delta down">CVSS 9.8 환산 등급</div>
+      </div>
+
+      <div class="panel kpi">
+        <div class="lbl">
+          상관분석 위협 점수
+          <div class="ico" style="background:rgba(34,211,238,.15);color:var(--cyan)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+          </div>
+        </div>
+        <div class="val" id="kpiScore" style="color:var(--cyan)">11.5 <span style="font-size:16px;font-weight:400;color:var(--muted)">/ 12.0</span></div>
+        <div class="delta up">● 다차원 규칙 4개 매칭</div>
+      </div>
+
+      <div class="panel kpi">
+        <div class="lbl">
+          SOAR 대응 상태
+          <div class="ico" style="background:rgba(52,211,153,.15);color:var(--green)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+          </div>
+        </div>
+        <div class="val" id="kpiStatus" style="color:var(--amber)">OPEN</div>
+        <div class="delta warn">● 1-Click 플레이북 대기 중</div>
+      </div>
+    </section>
+
+    <!-- Incident Header Banner -->
+    <div class="incident-banner">
+      <div>
+        <div class="title-row">
+          <span class="tag crit" id="incidentTag">CRITICAL INCIDENT</span>
+          <h2 id="incidentTitle">공공 Wi-Fi(Rogue AP) 중간자 감청 감지 및 제로 트러스트 자동 차단</h2>
+        </div>
+        <div class="meta">
+          <span>사건 ID: <b class="mono" id="incidentId">INC-20260831-003</b></span>
+          <span>발생 시각: <b class="mono" id="incidentTime">2026-08-31 10:30:00</b></span>
+          <span>피해 대상: <b id="incidentUser">minji.kim@company.com</b></span>
+          <span>출발지 IP: <b class="mono" id="incidentIp">172.20.10.4 (Starbucks_Guest_Free)</b></span>
+        </div>
+      </div>
+      <div>
+        <button class="ghost" onclick="switchView('briefing')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          상세 브리핑 & 대응 이동
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Sub-Navigation -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" id="tab-overview" onclick="switchView('overview')">
+        📊 종합 관제 개요
+      </button>
+      <button class="tab-btn" id="tab-briefing" onclick="switchView('briefing')">
+        🤖 AI 위협 브리핑 & SOAR
+      </button>
+      <button class="tab-btn" id="tab-timeline" onclick="switchView('timeline')">
+        ⏱️ 타임라인 & 킬체인
+      </button>
+      <button class="tab-btn" id="tab-network" onclick="switchView('network')">
+        🌐 네트워크 홉 맵
+      </button>
+      <button class="tab-btn" id="tab-copilot" onclick="switchView('copilot')">
+        💬 AI 관제 Copilot
+      </button>
+      <button class="tab-btn" id="tab-logs" onclick="switchView('logs')">
+        📜 실시간 이벤트 스트림
+      </button>
+    </div>
+
+    <!-- ==================== VIEW 1: OVERVIEW ==================== -->
+    <div id="view-overview">
+      <section class="grid mid">
+        <!-- Live Traffic Canvas Chart -->
+        <div class="panel">
+          <h3>
+            실시간 트래픽 및 패킷 흐름
+            <span class="legend">
+              <span><i style="background:var(--cyan)"></i>정상 트래픽</span>
+              <span><i style="background:var(--red)"></i>악성 / 이상 트래픽</span>
+            </span>
+          </h3>
+          <canvas class="chart" id="chart"></canvas>
+        </div>
+
+        <!-- Security Gauge -->
+        <div class="panel">
+          <h3>보안 신뢰 점수 <small>종합 보안 지수</small></h3>
+          <div class="gauge">
+            <canvas id="gauge" width="360" height="360"></canvas>
+            <div class="c">
+              <b id="score">92</b>
+              <span>/ 100 · 양호</span>
+            </div>
+          </div>
+          <div class="bars">
+            <div class="bar"><div><span>방화벽 차단률</span><span>96%</span></div><div class="t"><i style="width:96%"></i></div></div>
+            <div class="bar"><div><span>제로 트러스트 PDP 정책</span><span>92%</span></div><div class="t"><i style="width:92%"></i></div></div>
+            <div class="bar"><div><span>엔드포인트 EDR 에이전트</span><span>88%</span></div><div class="t"><i style="width:88%"></i></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid bot">
+        <!-- Recent Events Table -->
+        <div class="panel">
+          <h3>최근 보안 이벤트 <small>실시간 갱신</small></h3>
+          <table>
+            <thead>
+              <tr><th>시간</th><th>유형</th><th>출발지 IP</th><th>대상 포트</th><th>심각도</th><th>조치</th></tr>
+            </thead>
+            <tbody id="events"></tbody>
+          </table>
+        </div>
+
+        <!-- Threat Distribution & System Feed -->
+        <div class="panel">
+          <h3>공격 유형 분포 <small>최근 24시간</small></h3>
+          <div class="bars" style="margin-top:0" id="types"></div>
+          <h3 style="margin-top:26px">시스템 실시간 피드</h3>
+          <div class="feed" id="feed"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== VIEW 2: AI BRIEFING & SOAR ==================== -->
+    <div id="view-briefing" style="display:none">
+      <div class="grid" style="grid-template-columns:1.3fr 1fr; gap:18px;">
+        <!-- AI Briefing Card -->
+        <div class="panel">
+          <h3>
+            <span>✨ GenAI 자동 위협 분석 & 상황 브리핑</span>
+            <span class="tag violet">Gemini 2.5 Flash</span>
+          </h3>
+          <div class="ai-summary-box" id="aiSummaryText">
+            사용자가 카페 오픈 Wi-Fi 환경에 접속한 상태에서 악의적인 중간자 공격자(Rogue AP)에 의해 DNS 변조 및 SSL 가짜 인증서 주입이 탐지되었습니다. 제로 트러스트 PDP 정책에 따라 중요 API 접근이 즉시 차단되었으며, 안전한 사내 VPN 터널링으로 강제 전환이 요구됩니다.
+          </div>
+          <h4 style="font-size:12.5px;color:var(--muted);margin-top:20px;margin-bottom:8px;font-weight:600">
+            🏷️ MITRE ATT&CK 공격 기법 맵핑
+          </h4>
+          <div class="mitre-tags" id="mitreContainer">
+            <!-- Populated by app.js -->
+          </div>
+        </div>
+
+        <!-- SOAR Playbook Card -->
+        <div class="panel">
+          <h3>
+            <span>⚡ AI 초동 대응 플레이북</span>
+            <span class="tag crit">SOAR 자동화</span>
+          </h3>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">
+            침해 사고 유형에 맞추어 GenAI가 즉시 실행 가능한 격리 및 차단 명령을 자동 생성했습니다.
+          </p>
+          <div class="playbook-list" id="playbookContainer">
+            <!-- Populated by app.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW 3: TIMELINE & CRITERIA ==================== -->
+    <div id="view-timeline" style="display:none">
+      <div class="grid" style="gap:18px">
+        <div class="panel">
+          <h3>📊 다차원 상관분석 가중치 점수 <small>AI & 규칙 기반 판단 근거</small></h3>
+          <div class="criteria-grid" id="reasonsContainer">
+            <!-- Populated by app.js -->
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>⏱️ 다단계 공격 타임라인 <small>Kill Chain Sequence</small></h3>
+          <div class="timeline-steps" id="timelineContainer">
+            <!-- Populated by app.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW 4: NETWORK PATH MAP ==================== -->
+    <div id="view-network" style="display:none">
+      <div class="panel">
+        <h3>🌐 침해 및 감청 네트워크 홉(Hop) 토폴로지</h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:18px;">
+          공격자, 침해 단말, 게이트웨이, 점프서버, 데이터베이스 간의 패킷 이동 체인을 다차원으로 시각화합니다.
+        </p>
+        <div class="hop-flow" id="networkHopsContainer">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW 5: AI COPILOT ==================== -->
+    <div id="view-copilot" style="display:none">
+      <div class="panel chat-wrap">
+        <h3>
+          <span>💬 AI 보안 관제 Copilot</span>
+          <span class="tag ok">실시간 어시스턴트 연결됨</span>
+        </h3>
+        <p style="font-size:12px;color:var(--muted)">
+          선택된 침해사고 맥락을 바탕으로 보안 분석관의 질의에 신속히 답변하고 조치 스크립트를 생성합니다.
+        </p>
+
+        <!-- Chat History -->
+        <div class="chat-history" id="chatHistory">
+          <div class="chat-msg assistant">
+            🤖 <b>AI Copilot:</b> 안녕하세요! AI 보안 관제 코파일럿입니다. 현재 분석 중인 <b><span id="chatIncidentTitle">사건</span></b>에 대해 원인 분석이나 보고서 작성 요청이 있으시면 말씀해 주세요.
+          </div>
+        </div>
+
+        <!-- Preset Chips -->
+        <div class="chat-presets">
+          <div class="preset-chip" onclick="askCopilotPreset('가짜 AP 감청 위험이 왜 감지됐어?')">🔍 가짜 AP 판단 원인 분석</div>
+          <div class="preset-chip" onclick="askCopilotPreset('사용자에게 보낼 긴급 보안 알림 문구 작성해줘')">📱 사용자 발송 알림 요약문</div>
+          <div class="preset-chip" onclick="askCopilotPreset('VPN 강제 전환 및 세션 무효화 스크립트 작성해줘')">🔒 VPN 전환 & 세션 킬 스크립트</div>
+          <div class="preset-chip" onclick="askCopilotPreset('DB 접근 내역과 유출 위험 분석해줘')">💾 DB 쿼리 및 유출 분석</div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="chat-input-bar">
+          <input type="text" id="copilotInput" placeholder="AI 분석관에게 질문 입력... (예: '침해 공격 경로 요약해줘')" onkeydown="if(event.key==='Enter') sendCopilotQuestion()">
+          <button onclick="sendCopilotQuestion()">전송</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW 6: LIVE LOGS ==================== -->
+    <div id="view-logs" style="display:none">
+      <div class="panel">
+        <h3>📜 실시간 보안 이벤트 스트림 <small>수집 및 정규화 로그</small></h3>
+        <table>
+          <thead>
+            <tr><th>발생 시각</th><th>유형 / 공격명</th><th>출발지 IP / 위치</th><th>대상 포트</th><th>심각도</th><th>자동 대응</th></tr>
+          </thead>
+          <tbody id="fullLogTable">
+            <!-- Synced with events -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ==================== TOAST NOTIFICATION ==================== -->
+<div id="toast" class="toast">알림 메시지</div>
+
+<script src="app.js"></script>
+</body>
+</html>

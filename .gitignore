@@ -1,42 +1,59 @@
-# Byte-compiled / optimized / DLL files
+# ==============================================================================
+# GIGANG SecOps - Git Ignore Configuration
+# ==============================================================================
+
+# Python Bytecode & Cache
 __pycache__/
 *.py[cod]
 *$py.class
-*.class
+*.so
 .pytest_cache/
 
 # Virtual Environments
-.venv/
 venv/
-ENV/
+.venv/
 env/
+ENV/
+env.bak/
+venv.bak/
 
-# IDE files
+# Environment Variables & Secrets (CRITICAL: Never commit API keys)
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+credentials.json
+!.env.example
+
+# IDE & Editor Configuration
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# OS files
+# Operating System Files
 .DS_Store
 Thumbs.db
+Desktop.ini
+ehthumbs.db
 
-# Executables & Scripts
-*.bat
-*.ps1
-*.exe
+# Presentation & Large Binary Files (Store in Drive/Notion to prevent Git bloat)
+*.pptx
+*.ppt
+*.pdf
+*.zip
+*.tar.gz
+*.7z
 
-# Databases & Logs
-*.db
-*.sqlite3
+# Dynamic Logs & Simulation Artifacts
 *.log
-launcher-logs/
+!data/raw_logs/sample_*.log
+data/generated_logs.json
 
-# Sensitive Environment files
-.env
-.env.*
-!.env.example
+# Web Temporary Backups
+web/*_backup_*
 
-# Images (exclude temp, allow docs/screenshots)
-*.png
-!docs/screenshots/*.png
+# Streamlit Local Secrets
+.streamlit/secrets.toml

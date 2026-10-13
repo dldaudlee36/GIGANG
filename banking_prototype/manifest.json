@@ -1,0 +1,20 @@
+{
+  "name": "OK저축은행",
+  "short_name": "OK저축은행",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F5F6F8",
+  "theme_color": "#F5F6F8",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23F05A22'/><text x='50' y='62' font-size='42' font-weight='bold' font-family='sans-serif' text-anchor='middle' fill='white'>OK</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23F05A22'/><text x='50' y='62' font-size='42' font-weight='bold' font-family='sans-serif' text-anchor='middle' fill='white'>OK</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

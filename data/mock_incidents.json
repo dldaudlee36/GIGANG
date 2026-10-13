@@ -1,0 +1,236 @@
+[
+  {
+    "incident_id": "INC-20260831-003",
+    "title": "공공 Wi-Fi(Rogue AP) 중간자 감청 감지 및 제로 트러스트 자동 차단",
+    "severity": "CRITICAL",
+    "status": "OPEN",
+    "created_at": "2026-08-31T10:30:00Z",
+    "target_user": "minji.kim@company.com",
+    "primary_src_ip": "172.20.10.4 (Starbucks_Guest_Free)",
+    "correlation_score": 11.5,
+    "reasons": [
+      { "criteria": "비정상 DNS 응답 변조 감지", "score": 4.0, "description": "인증 서버(auth.corp.com) 질의 시 비공식 사설 IP(192.168.1.99)로 응답 반환" },
+      { "criteria": "SSL 인증서 위조/Stripping 시도", "score": 4.0, "description": "신뢰할 수 없는 사설 CA(Untrusted Self-Signed Certificate) 감청 프록시 포착" },
+      { "criteria": "네트워크 RTT 이상 급증", "score": 2.0, "description": "게이트웨이 응답 지연 시간이 평소(15ms) 대비 180ms로 비정상 증가" },
+      { "criteria": "제로 트러스트 PDP 정책 위반", "score": 1.5, "description": "미인증 오픈 Wi-Fi 환경에서 사내 핵심 금융/결제 API 직접 접근 시도" }
+    ],
+    "attack_timeline": [
+      {
+        "step": 1,
+        "timestamp": "2026-08-31T10:28:10Z",
+        "source": "endpoint",
+        "stage": "Untrusted AP Association",
+        "description": "사용자 단말이 외부 공공 Wi-Fi (SSID: 'Starbucks_Guest_Free')에 자동 연결됨",
+        "raw_log_id": "LOG-WIFI-0102"
+      },
+      {
+        "step": 2,
+        "timestamp": "2026-08-31T10:28:45Z",
+        "source": "endpoint",
+        "stage": "DNS Spoofing Detected",
+        "description": "DNS 캐시 포이즈닝으로 auth.corp.com 요청이 공격자 프록시(192.168.1.99)로 우회됨",
+        "raw_log_id": "LOG-DNS-4091"
+      },
+      {
+        "step": 3,
+        "timestamp": "2026-08-31T10:29:15Z",
+        "source": "endpoint",
+        "stage": "MitM SSL Interception",
+        "description": "공격자 프록시가 가짜 SSL 인증서를 주입하여 HTTPS 평문 패킷 감청 시도",
+        "raw_log_id": "LOG-SSL-8812"
+      },
+      {
+        "step": 4,
+        "timestamp": "2026-08-31T10:29:40Z",
+        "source": "server",
+        "stage": "Zero Trust PDP Block",
+        "description": "사내 API 게이트웨이가 클라이언트 위험 점수 95점 판정 후 금융 API 접근 즉시 거부",
+        "raw_log_id": "LOG-GW-9011"
+      }
+    ],
+    "network_path": [
+      { "from_node": "모바일 단말 (172.20.10.4)", "to_node": "가짜 AP / 프록시 (192.168.1.99)", "port": 80, "protocol": "HTTP/MitM", "status": "INTERCEPTED" },
+      { "from_node": "가짜 AP (192.168.1.99)", "to_node": "사내 API GW (10.0.0.5)", "port": 443, "protocol": "HTTPS", "status": "BLOCKED" }
+    ],
+    "ai_analysis": {
+      "summary": "사용자가 카페 오픈 Wi-Fi 환경에 접속한 상태에서 악의적인 중간자 공격자(Rogue AP)에 의해 DNS 변조 및 SSL 가짜 인증서 주입이 탐지되었습니다. 제로 트러스트 PDP 정책에 따라 중요 API 접근이 즉시 차단되었으며, 안전한 사내 VPN 터널링으로 강제 전환이 요구됩니다.",
+      "mitre_tactics": [
+        "T1557.002 (Man-in-the-Middle: ARP Poisoning / DNS Spoofing)",
+        "T1556 (Modify Authentication Process)",
+        "T1040 (Network Sniffing)"
+      ],
+      "confidence": 0.98,
+      "recommended_playbook": [
+        {
+          "action": "단말 암호화 VPN 터널링 강제 전환",
+          "command": "mobile-agent-cli --enforce-vpn --profile corp-secure-vpn --strict",
+          "target": "Mobile Client Agent",
+          "status": "PENDING"
+        },
+        {
+          "action": "노출 위험 임시 세션 토큰 즉시 무효화",
+          "command": "redis-cli DEL session:token:minji.kim@company.com",
+          "target": "Auth Redis Cluster",
+          "status": "PENDING"
+        },
+        {
+          "action": "사용자 모바일 푸시 보안 경고 발송",
+          "command": "push-notify --user minji.kim '⚠️ 안전하지 않은 Wi-Fi 감지: 사내 VPN으로 자동 전환되었습니다.'",
+          "target": "Push Notification Service",
+          "status": "PENDING"
+        }
+      ]
+    }
+  },
+  {
+    "incident_id": "INC-20260831-001",
+    "title": "다단계 횡적이동 및 DB 대량 유출 의심 침해사고",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "created_at": "2026-08-31T10:15:30Z",
+    "target_user": "admin",
+    "primary_src_ip": "203.0.113.10",
+    "correlation_score": 12.0,
+    "reasons": [
+      { "criteria": "동일 사용자 계정", "score": 2.0, "description": "인증, 점프서버, DB 접속 계정이 'admin'으로 일치함" },
+      { "criteria": "IP 연결 및 네트워크 홉 체인", "score": 4.0, "description": "203.0.113.10 -> 10.0.0.10(Web) -> 10.0.0.20(Internal) -> 10.0.0.30(DB) 경로 연속성 확인" },
+      { "criteria": "시간적 인접성 (Time Window)", "score": 2.0, "description": "전체 공격 행위가 8분 20초 이내에 연속 발생" },
+      { "criteria": "공격 행동 순서 일치 (Kill Chain)", "score": 4.0, "description": "무차별 대입 -> 인증 성공 -> 내부 침투 -> DB 접근 -> 외부 비정상 송신 순서 부합" }
+    ],
+    "attack_timeline": [
+      {
+        "step": 1,
+        "timestamp": "2026-08-31T10:01:05Z",
+        "source": "auth",
+        "stage": "Initial Access Attempt",
+        "description": "외부 IP(203.0.113.10)에서 SSH admin 계정 로그인 실패 12회 연속 발생",
+        "raw_log_id": "LOG-AUTH-0891"
+      },
+      {
+        "step": 2,
+        "timestamp": "2026-08-31T10:02:10Z",
+        "source": "auth",
+        "stage": "Initial Access Success",
+        "description": "외부 IP(203.0.113.10)에서 SSH admin 로그인 성공 (웹서버 10.0.0.10)",
+        "raw_log_id": "LOG-AUTH-0902"
+      },
+      {
+        "step": 3,
+        "timestamp": "2026-08-31T10:04:22Z",
+        "source": "firewall",
+        "stage": "Lateral Movement",
+        "description": "Web(10.0.0.10) -> Internal Jump Server(10.0.0.20) 포트 22 허용 통신",
+        "raw_log_id": "LOG-FW-3401"
+      },
+      {
+        "step": 4,
+        "timestamp": "2026-08-31T10:06:45Z",
+        "source": "server",
+        "stage": "Internal Pivot",
+        "description": "Internal Server(10.0.0.20)에서 DB Client 툴 실행 및 관리자 권한 상승",
+        "raw_log_id": "LOG-SRV-1120"
+      },
+      {
+        "step": 5,
+        "timestamp": "2026-08-31T10:07:30Z",
+        "source": "db",
+        "stage": "Data Access",
+        "description": "DB Server(10.0.0.30) 포트 3306 접근 및 `customers_pii` 테이블 50,000건 SELECT 쿼리 실행",
+        "raw_log_id": "LOG-DB-7811"
+      },
+      {
+        "step": 6,
+        "timestamp": "2026-08-31T10:09:25Z",
+        "source": "firewall",
+        "stage": "Exfiltration Attempt",
+        "description": "Internal(10.0.0.20) -> 외부 비인가 IP(198.51.100.77:8080)로 125MB 대용량 이상 송신 감지",
+        "raw_log_id": "LOG-FW-3599"
+      }
+    ],
+    "network_path": [
+      { "from_node": "Attacker (203.0.113.10)", "to_node": "Web Server (10.0.0.10)", "port": 22, "protocol": "SSH", "status": "COMPROMISED" },
+      { "from_node": "Web Server (10.0.0.10)", "to_node": "Internal Jump (10.0.0.20)", "port": 22, "protocol": "SSH", "status": "LATERAL_MOVE" },
+      { "from_node": "Internal Jump (10.0.0.20)", "to_node": "DB Server (10.0.0.30)", "port": 3306, "protocol": "MySQL", "status": "DATA_ACCESS" },
+      { "from_node": "Internal Jump (10.0.0.20)", "to_node": "Exfil Target (198.51.100.77)", "port": 8080, "protocol": "TCP", "status": "EXFILTRATION" }
+    ],
+    "ai_analysis": {
+      "summary": "공격자 IP(203.0.113.10)가 admin 계정 무차별 대입 공격 성공 후 웹서버를 거점으로 내부 점프서버로 횡적이동(Lateral Movement)을 수행했습니다. 최종적으로 3306 포트를 통해 고객 개인정보 테이블을 조회하고 외부 C2/유출 서버로 데이터 전송을 시도한 고위험 다단계 침해사고입니다.",
+      "mitre_tactics": [
+        "T1110 (Brute Force)",
+        "T1078 (Valid Accounts)",
+        "T1021.004 (Remote Services: SSH)",
+        "T1005 (Data from Local System)",
+        "T1041 (Exfiltration Over C2 Channel)"
+      ],
+      "confidence": 0.96,
+      "recommended_playbook": [
+        {
+          "action": "공격자 및 유출지 IP 차단",
+          "command": "iptables -A INPUT -s 203.0.113.10 -j DROP && iptables -A OUTPUT -d 198.51.100.77 -j DROP",
+          "target": "Firewall / Gateway",
+          "status": "PENDING"
+        },
+        {
+          "action": "침해 계정 'admin' 세션 강제 종료 및 임시 잠금",
+          "command": "pkill -u admin && usermod -L admin",
+          "target": "Web & Internal Server",
+          "status": "PENDING"
+        },
+        {
+          "action": "DB 활성 악성 연결 즉시 종료",
+          "command": "mysqladmin -u root processlist | grep admin | awk '{print $1}' | xargs -I {} mysqladmin kill {}",
+          "target": "DB Server (10.0.0.30)",
+          "status": "PENDING"
+        }
+      ]
+    }
+  },
+  {
+    "incident_id": "INC-20260831-002",
+    "title": "단일 웹 엔드포인트 비정상 SQL 인젝션 시도",
+    "severity": "MEDIUM",
+    "status": "CONTAINED",
+    "created_at": "2026-08-31T09:40:10Z",
+    "target_user": "anonymous",
+    "primary_src_ip": "198.51.100.44",
+    "correlation_score": 6.0,
+    "reasons": [
+      { "criteria": "동일 출발지 IP", "score": 2.0, "description": "198.51.100.44에서 연속 웹 취약점 스캔 요청" },
+      { "criteria": "행동 순서 일치", "score": 4.0, "description": "URI 파라미터 내 `UNION SELECT` 삽입 후 WAF 차단 기록 확인" }
+    ],
+    "attack_timeline": [
+      {
+        "step": 1,
+        "timestamp": "2026-08-31T09:38:00Z",
+        "source": "server",
+        "stage": "Reconnaissance",
+        "description": "공격자 IP(198.51.100.44)에서 웹 엔드포인트 /api/products?id=1' OR '1'='1 스캔 시도",
+        "raw_log_id": "LOG-SRV-0980"
+      },
+      {
+        "step": 2,
+        "timestamp": "2026-08-31T09:39:15Z",
+        "source": "firewall",
+        "stage": "WAF Block",
+        "description": "WAF에서 공격 IP 차단 룰 발동 (403 Forbidden 응답)",
+        "raw_log_id": "LOG-FW-3200"
+      }
+    ],
+    "network_path": [
+      { "from_node": "Attacker (198.51.100.44)", "to_node": "WAF / Gateway (10.0.0.5)", "port": 443, "protocol": "HTTPS", "status": "BLOCKED" }
+    ],
+    "ai_analysis": {
+      "summary": "단일 외부 IP에서 발생한 자동화된 SQL 인젝션 스캔 시도입니다. WAF에 의해 즉시 차단되어 내부 시스템 침투에는 실패했습니다.",
+      "mitre_tactics": ["T1190 (Exploit Public-Facing Application)"],
+      "confidence": 0.88,
+      "recommended_playbook": [
+        {
+          "action": "공격자 IP 24시간 임시 밴 목록 추가",
+          "command": "fail2ban-client set nginx-sqli banip 198.51.100.44",
+          "target": "WAF Gateway",
+          "status": "EXECUTED"
+        }
+      ]
+    }
+  }
+]

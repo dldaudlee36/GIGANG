@@ -1,0 +1,88 @@
+2026-09-04T06:21:28Z mysqld[1200]: [Query] app_user@10.0.0.20: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=8
+2026-09-04T06:21:53Z mysqld[1200]: [Query] app_user@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=2
+2026-09-04T06:22:13Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=1
+2026-09-04T06:22:27Z mysqld[1200]: [Query] app_user@10.0.0.10: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=14
+2026-09-04T06:22:54Z mysqld[1200]: [Query] app_user@10.0.0.20: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=13
+2026-09-04T06:23:48Z mysqld[1200]: [Query] api_service@10.0.0.10: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=2
+2026-09-04T06:24:33Z mysqld[1200]: [Query] api_service@10.0.0.20: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=15
+2026-09-04T06:25:07Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=12
+2026-09-04T06:25:10Z mysqld[1200]: [Query] worker@10.0.0.20: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=3
+2026-09-04T06:25:42Z mysqld[1200]: [Query] app_user@10.0.0.10: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=20
+2026-09-04T06:26:12Z mysqld[1200]: [Query] app_user@10.0.0.20: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=16
+2026-09-04T06:26:46Z mysqld[1200]: [Query] app_user@10.0.0.20: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=11
+2026-09-04T06:28:00Z mysqld[1200]: [Query] api_service@10.0.0.20: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=15
+2026-09-04T06:28:18Z mysqld[1200]: [Query] app_user@10.0.0.20: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=3
+2026-09-04T06:31:18Z mysqld[1200]: [Query] app_user@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=1
+2026-09-04T06:31:58Z mysqld[1200]: [Query] api_service@10.0.0.10: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=4
+2026-09-04T06:32:40Z mysqld[1200]: [Query] worker@10.0.0.10: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=15
+2026-09-04T06:33:02Z mysqld[1200]: [Query] worker@10.0.0.20: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=17
+2026-09-04T06:33:08Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=15
+2026-09-04T06:33:51Z mysqld[1200]: [Query] worker@10.0.0.10: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=3
+2026-09-04T06:34:31Z mysqld[1200]: [Query] worker@10.0.0.20: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=3
+2026-09-04T06:39:02Z mysqld[1200]: [Query] worker@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=17
+2026-09-04T06:42:03Z mysqld[1200]: [Query] worker@10.0.0.20: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=17
+2026-09-04T06:42:42Z mysqld[1200]: [Query] app_user@10.0.0.20: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=8
+2026-09-04T06:42:51Z mysqld[1200]: [Query] app_user@10.0.0.10: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=15
+2026-09-04T06:43:12Z mysqld[1200]: [Query] api_service@10.0.0.20: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=11
+2026-09-04T06:43:40Z mysqld[1200]: [Query] app_user@10.0.0.20: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=9
+2026-09-04T06:44:04Z mysqld[1200]: [Query] api_service@10.0.0.20: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=18
+2026-09-04T06:44:36Z mysqld[1200]: [Query] worker@10.0.0.10: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=8
+2026-09-04T06:44:51Z mysqld[1200]: [Query] app_user@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=11
+2026-09-04T06:45:08Z mysqld[1200]: [Query] api_service@10.0.0.20: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=17
+2026-09-04T06:45:26Z mysqld[1200]: [Query] app_user@10.0.0.20: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=8
+2026-09-04T06:47:08Z mysqld[1200]: [Query] worker@10.0.0.20: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=14
+2026-09-04T06:48:30Z mysqld[1200]: [Query] worker@10.0.0.20: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=5
+2026-09-04T06:48:31Z mysqld[1200]: [Query] worker@10.0.0.10: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=3
+2026-09-04T06:49:59Z mysqld[1200]: [Query] worker@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=11
+2026-09-04T06:50:10Z mysqld[1200]: [Query] app_user@10.0.0.20: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=7
+2026-09-04T06:50:17Z mysqld[1200]: [Query] api_service@10.0.0.20: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=4
+2026-09-04T06:52:33Z mysqld[1200]: [Query] worker@10.0.0.10: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=18
+2026-09-04T06:53:54Z mysqld[1200]: [Query] worker@10.0.0.20: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=6
+2026-09-04T06:54:27Z mysqld[1200]: [Query] worker@10.0.0.10: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=10
+2026-09-04T06:54:36Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=10
+2026-09-04T06:54:51Z mysqld[1200]: [Query] api_service@10.0.0.20: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=16
+2026-09-04T06:55:21Z mysqld[1200]: [Query] api_service@10.0.0.20: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=10
+2026-09-04T06:55:22Z mysqld[1200]: [Query] app_user@10.0.0.10: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=14
+2026-09-04T06:55:39Z mysqld[1200]: [Query] api_service@10.0.0.20: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=19
+2026-09-04T06:57:55Z mysqld[1200]: [Query] worker@10.0.0.20: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=20
+2026-09-04T06:58:29Z mysqld[1200]: [Query] worker@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=13
+2026-09-04T06:58:43Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=19
+2026-09-04T06:59:16Z mysqld[1200]: [Query] api_service@10.0.0.20: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=1
+2026-09-04T06:59:29Z mysqld[1200]: [Query] worker@10.0.0.10: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=5
+2026-09-04T06:59:40Z mysqld[1200]: [Query] api_service@10.0.0.20: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=16
+2026-09-04T07:00:26Z mysqld[1200]: [Query] worker@10.0.0.10: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=18
+2026-09-04T07:02:51Z mysqld[1200]: [Query] worker@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=6
+2026-09-04T07:04:28Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=14
+2026-09-04T07:05:08Z mysqld[1200]: [Query] app_user@10.0.0.10: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=19
+2026-09-04T07:07:26Z mysqld[1200]: [Query] worker@10.0.0.20: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=10
+2026-09-04T07:07:35Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=15
+2026-09-04T07:07:57Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=5
+2026-09-04T07:08:42Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=17
+2026-09-04T07:09:23Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=18
+2026-09-04T07:09:55Z mysqld[1200]: [Query] app_user@10.0.0.10: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=12
+2026-09-04T07:10:35Z mysqld[1200]: [Query] worker@10.0.0.20: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=2
+2026-09-04T07:13:00Z mysqld[1200]: [Query] app_user@10.0.0.20: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=17
+2026-09-04T07:15:10Z mysqld[1200]: [Query] app_user@10.0.0.20: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=18
+2026-09-04T07:15:43Z mysqld[1200]: [Query] worker@10.0.0.20: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=7
+2026-09-04T07:18:47Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=17
+2026-09-04T07:18:48Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=10
+2026-09-04T07:20:31Z mysqld[1200]: [Query] api_service@10.0.0.10: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=19
+2026-09-04T07:20:46Z mysqld[1200]: [Query] api_service@10.0.0.10: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=19
+2026-09-04T07:21:15Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=13
+2026-09-04T07:21:35Z mysqld[1200]: [Query] app_user@10.0.0.20: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=2
+2026-09-04T07:22:27Z mysqld[1200]: [Query] worker@10.0.0.20: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=12
+2026-09-04T07:22:39Z mysqld[1200]: [Query] worker@10.0.0.10: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=16
+2026-09-04T07:23:47Z mysqld[1200]: [Query] api_service@10.0.0.20: SELECT id, name FROM products WHERE category = 'electronics' LIMIT 20; rows_sent=13
+2026-09-04T07:25:05Z mysqld[1200]: [Query] app_user@10.0.0.20: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=18
+2026-09-04T07:25:22Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=9
+2026-09-04T07:25:41Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=10
+2026-09-04T07:26:34Z mysqld[1200]: [Query] worker@10.0.0.10: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=9
+2026-09-04T07:26:52Z mysqld[1200]: [Query] worker@10.0.0.20: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=11
+2026-09-04T07:27:22Z mysqld[1200]: [Query] api_service@10.0.0.20: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=17
+2026-09-04T07:27:39Z mysqld[1200]: [Query] api_service@10.0.0.10: SELECT count(*) FROM orders WHERE status = 'pending'; rows_sent=2
+2026-09-04T07:27:59Z mysqld[1200]: [Query] app_user@10.0.0.20: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=13
+2026-09-04T07:28:30Z mysqld[1200]: [Query] worker@10.0.0.20: SELECT * FROM notices ORDER BY created_at DESC LIMIT 5; rows_sent=16
+2026-09-04T07:29:01Z mysqld[1200]: [Query] app_user@10.0.0.10: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=4
+2026-09-04T07:30:22Z mysqld[1200]: [Query] app_user@10.0.0.10: SELECT price FROM item_prices WHERE item_code = 'A102'; rows_sent=9
+2026-09-04T07:30:44Z mysqld[1200]: [Query] app_user@10.0.0.20: UPDATE users SET last_login = NOW() WHERE user_id = 42; rows_sent=14
+2026-09-04T07:33:08Z mysqld[1200]: [Query] admin@10.0.0.20: SELECT * FROM customers_pii LIMIT 50000; rows_sent=50000

@@ -1,0 +1,4 @@
+2026-09-04T07:32:30Z api-gateway[pdp]: PDP_DECISION user='minji.kim@company.com' client_ip='172.20.10.4' risk_score=95 ACTION=ENFORCE_VPN_BLOCK_API
+2026-09-04T07:33:49Z nginx-access: 198.51.100.44 - [403] 'GET /api/products?id=1' UNION SELECT username, password FROM users -- HTTP/1.1' agent='sqlmap/1.5'
+2026-09-04T07:34:07Z api-gateway[pdp]: PDP_DECISION user='minji.kim@company.com' client_ip='172.20.10.4' risk_score=95 ACTION=ENFORCE_VPN_BLOCK_API
+2026-09-04T07:34:26Z nginx-access: 198.51.100.44 - [403] 'GET /api/products?id=1' UNION SELECT username, password FROM users -- HTTP/1.1' agent='sqlmap/1.5'
