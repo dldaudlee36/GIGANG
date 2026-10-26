@@ -1,16 +1,16 @@
-# 🛡️ GIGANG (Zero Trust Security Platform)
-### Zero Trust 기반 다기종 로그 상관분석 & 섀도우 AI 거버넌스 플랫폼 (v3.1)
+# 🛡️ GIGANG (Zero Trust SecOps Platform)
+### Zero Trust 기반 엔드포인트-DB-웹 다기종 로그 상관분석 & 섀도우 AI 거버넌스 플랫폼 (v3.9 Integrated Edition)
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)
-![Chrome Extension](https://img.shields.io/badge/Chrome_Extension-v3.2_Manifest_V3-brightgreen.svg)
-![Windows Agent](https://img.shields.io/badge/Windows_Agent-v3.1.0-orange.svg)
+![Chrome Extension](https://img.shields.io/badge/Chrome_Extension-v3.9_Manifest_V3-brightgreen.svg)
+![Windows Agent](https://img.shields.io/badge/Windows_Agent-v3.9.0-orange.svg)
 ![AI Model](https://img.shields.io/badge/AI-Google_Gemini_Flash-purple.svg)
 ![UI Framework](https://img.shields.io/badge/Dashboard-Streamlit_Responsive-ff4b4b.svg)
 
 > **"업무는 자유롭게, 기밀은 안전하게"**  
 > 기존 SIEM처럼 데이터가 다 유출된 뒤에야 울리는 **'사후 약방문'**도, DLP처럼 모든 접근을 막아 업무를 마비시키는 **'무조건 차단'**도 아닙니다.  
-> **GIGANG**은 사내 기밀 DB 접근부터 단말기 행위, 웹 브라우저를 통한 외부 AI 전송까지 **3차원 인과관계 상관분석**을 수행하여, **'선제 감시(WATCH) ➔ 실제 유출 시 즉시 대응(HIGH) ➔ 정상 업무 시 스스로 정상화(30분 자가 치유)'**하는 차세대 지능형 보안관제(SecOps) 플랫폼입니다.
+> **GIGANG(기강)**은 사내 기밀 DB 접근부터 단말기 행위(클립보드, 화면 캡처/OCR, 파일 복사), 웹 브라우저를 통한 외부 미승인 AI/SaaS 유출까지 **3차원 인과관계 상관분석**을 수행하여, **'선제 감시(WATCH) ➔ 실제 유출 시 즉시 대응(HIGH) ➔ 정상 업무 시 스스로 정상화(30분 자가 치유)'**하는 차세대 지능형 보안관제(SecOps) 플랫폼입니다.
 
 ---
 
@@ -50,7 +50,7 @@ stateDiagram-v2
         • 아직 전송 전이므로 차단하지 않음
     end note
 
-    WATCH --> HIGH: [Step 2] 48MB 대용량 파일 첨부 또는 민감 패턴 대량 붙여넣기 발생
+    WATCH --> HIGH: [Step 2] 대용량 파일 첨부 또는 민감 패턴 대량 붙여넣기 발생
     note right of HIGH
         • 위험도 92점 폭발
         • 3-Hop 킬체인 연결
@@ -58,13 +58,13 @@ stateDiagram-v2
         • 1-Click 격리 대응 활성화
     end note
 
-    WATCH --> NORMAL: [Step 3] 30분간 추가 전송 행위 없음 (단순 질의)
+    WATCH --> NORMAL: [Step 3] 30분간 추가 전송 행위 없음 (단순 업무 질의)
     note left of NORMAL
         • 자가 치유 (Self-Healing)
-        • 오탐 자동 제거
+        • 오탐(False Positive) 자동 제거
     end note
 
-    NORMAL --> HIGH: [우회 방어] 과거 WATCH 이력 보유 직원이 시간차 지연 유출 시도
+    NORMAL --> HIGH: [우회 방어] 과거 WATCH 이력 보유 단말이 시간차 지연 유출 시도
     note right of NORMAL
         • 잠복형 유출 방어 소급 분석
     end note
@@ -72,27 +72,28 @@ stateDiagram-v2
 
 - **[Step 1] 선제 감시 (WATCH)**: 기밀 DB 조회 후 30분 이내 AI 사이트 접속 시 즉시 위험도 68점 승격 및 30분 타이머 가동 (전송 전 단계 선제 감시).
   ![05_sim_step1_watch](docs/screenshots/05_sim_step1_watch.png)
-- **[Step 2] 침해사고 확정 (HIGH)**: 48MB 대용량 파일 첨부 포착 시 위험도 92점 폭발, 3-Hop 킬체인 연결, Gemini AI 브리핑 자동 연동.
+- **[Step 2] 침해사고 확정 (HIGH)**: 대용량 파일 첨부나 민감정보 붙여넣기 포착 시 위험도 92점 폭발, 3-Hop 킬체인 연결, Gemini AI 브리핑 자동 연동.
   ![06_sim_step2_high](docs/screenshots/06_sim_step2_high.png)
-- **[Step 3] 자가 치유 검증 (Self-Healing)**: 30분 동안 추가 유출이 없으면 스스로 NORMAL 상태로 환원되어 오탐(False Positive)을 100% 제거.
+- **[Step 3] 자가 치유 검증 (Self-Healing)**: 30분 동안 추가 유출이 없으면 스스로 NORMAL 상태로 환원되어 오탐(False Positive)을 원천 차단.
   ![07_sim_step3_selfhealing](docs/screenshots/07_sim_step3_selfhealing.png)
 
 ### 2. 본문 미수집 원칙 (Zero Payload Ingestion)
 - **철저한 프라이버시 보호**: 단말 브라우저나 클립보드에서 텍스트 본문이나 파일 원본을 서버로 절대 수집/전송하지 않습니다.
-- **메타데이터 기반 판정**: 글자 수, 주민번호/계좌번호 등 민감 패턴 매칭 카운트, 파일 크기(바이트), 타임스탬프, 도메인 해시만을 분석하여 개인정보 침해 우려를 원천 차단합니다.
+- **메타데이터 기반 판정**: 글자 수, 주민번호/계좌번호 등 민감 패턴 매칭 건수, 파일 크기(바이트), 타임스탬프, 도메인 해시만을 분석하여 개인정보 침해 우려를 원천 차단합니다.
 
-### 3. 맥락 기반 Shadow AI 거버넌스 & Gemini AI Copilot
+### 3. Image Guard & OCR 시각 유출 차단
+- 화면 캡처나 클립보드 이미지 복사 후 외부 AI 웹으로 드래그앤드롭/붙여넣기 시, 단말 에이전트 내 광학 문자 인식(OCR)을 통해 텍스트 본문 노출 없이 민감 데이터 패턴 건수를 산출하여 우회 유출을 차단합니다.
+
+### 4. 맥락 기반 Shadow AI 거버넌스 & Gemini AI Copilot
 - **정밀 진단**: 단순 도메인 URL뿐 아니라 사내 누적 트래픽, 사용자 수 등의 텔레메트리를 AI 프롬프트에 주입하여 상황 맞춤형 평가를 수행합니다.
 - **SQLite 영구 캐싱 & 로컬 Fallback**: 기존 평가 도메인은 1ms 캐시로 비용을 절감하며, API 키 부재나 네트워크 단절 시에도 로컬 룰베이스로 무중단 자동 전환됩니다.
 - **Human-in-the-Loop**: AI는 분석 및 권고안을 제시하며, 최종 격리/차단 결정은 관제사의 1-Click 승인을 통해 실행됩니다.
 
-### 4. 부서별 탐지 기준 (v3.2, 진행 중)
-- **잡을지는 기밀 DB가, 얼마나 위험한지는 데이터 종류 + 부서가 정합니다.** AI 접속 시간창 안의 기밀 DB 복사·화면 캡처를 출발점으로, 복사한 글자를 PC 안에서 5개 규칙(전화·이메일·주민·계좌·카드)으로 검사하고 건수만 보냅니다.
-- 부서 표(고객지원·인사·재무·개발)에 따라 정상 업무는 '기록만', 이상 신호는 WATCH로 판정하고, 판정 사유에 규칙 번호(CS-2, SS-1 등)를 남깁니다.
-- 설계와 진행 상황: [`GIGANG_수정계획.md`](./GIGANG_수정계획.md) (9장: 진행 상황·바뀐 결정·남은 일)
+### 5. 부서별 맞춤 정책 (Department Policy Engine)
+- 고객지원(CS), 인사(HR), 재무(FIN), 개발(DEV) 등 부서별 업무 특성에 따라 정상 업무는 '기록만', 권한 외 이상 신호는 즉시 WATCH로 판정하고 규칙 번호(CS-2, SS-1 등)를 근거로 보존합니다.
 
-> 📖 **더 자세한 시스템 메커니즘 분석**:  
-> 시스템 아키텍처 및 상세 이론은 [`docs/GIGANG_Operational_Mechanism_Analysis.md`](./docs/GIGANG_Operational_Mechanism_Analysis.md) 문서를 참고하십시오.
+### 6. 능동 차단 및 SOAR (Active Defense)
+- 관리자 콘솔에서 1-Click 차단 승인 시, 중앙 정책이 단말 에이전트(Windows hosts 격리) 및 Chrome 확장 프로그램(보안 안내 화면 즉시 전환)으로 동시 배포되어 실시간 유출을 차단합니다.
 
 ---
 
@@ -100,23 +101,23 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TB
-    subgraph Tier1["1. 분산 수집 센서 (Endpoint & Telemetry Sensors)"]
-        A["🌐 Chrome Extension v3.2<br/>(파일 첨부·끌어다 놓기 / 텍스트·이미지 붙여넣기 감지)"]
-        B["🖥️ Windows Agent v3.1<br/>(DNS 캐시 폴링 / 기밀 DB 복사·화면 캡처 감지)"]
-        C["🗄️ MySQL DB Audit Logger<br/>(customer_vault 기밀 조회 감시)"]
+    subgraph Tier1["1. 분산 수집 센서 (Distributed Sensors)"]
+        A["🌐 Chrome Extension v3.9<br/>(파일 첨부·D&D 감지 / 붙여넣기 모니터링 / 웹 차단)"]
+        B["🖥️ Windows Agent v3.9<br/>(DNS 폴링 / 클립보드·화면캡처 감지 / Image OCR / hosts 격리)"]
+        C["🗄️ MySQL DB Audit Stream<br/>(고객 기밀 DB 실시간 감사 로그 파이프라인)"]
     end
 
-    subgraph Tier2["2. 중앙 인제스천 & 상관분석 엔진 (Central Pipeline & Engine)"]
-        D["⚙️ FastAPI Ingestion Server<br/>(이벤트 정규화 & 디바운싱)"]
-        E["🧠 동적 상관분석 FSM 엔진<br/>(NORMAL ➔ WATCH ➔ HIGH ➔ 자가치유)"]
+    subgraph Tier2["2. 중앙 인제스천 & 상관분석 엔진 (Ingestion & Engine)"]
+        D["⚙️ Normalizer Pipeline<br/>(표준 JSON 스키마 변환 & 이벤트 디바운싱)"]
+        E["🧠 3-Hop 인과관계 상관분석 FSM<br/>(NORMAL ➔ WATCH ➔ HIGH ➔ Self-Healing)"]
         F["🔍 잠복형 유출 소급 분석기<br/>(Historical Retroactive Correlation)"]
-        G["🤖 Shadow AI 거버넌스 엔진<br/>(Gemini Flash + SQLite Cache)"]
+        G["🤖 Shadow AI 거버넌스 엔진<br/>(Gemini Flash + SQLite 영구 캐시 + 로컬 Fallback)"]
     end
 
-    subgraph Tier3["3. 통합 관제 콘솔 (Streamlit Dashboard & SOAR)"]
-        H["📊 실시간 Bento Grid 관제 콘솔"]
-        I["🕸️ 3-Hop 동적 킬체인 토폴로지"]
-        J["🛡️ 1-Click 긴급 격리 대응 (SOAR)"]
+    subgraph Tier3["3. 통합 관제 콘솔 (SOC Console & SOAR)"]
+        H["📊 실시간 Bento 관제 대시보드 (Streamlit)"]
+        I["🕸️ 3-Hop 원형 토폴로지 공격 경로 시각화"]
+        J["🛡️ 1-Click SOAR 실시간 격리 대응"]
     end
 
     Tier1 --> Tier2
@@ -129,49 +130,49 @@ flowchart TB
 
 ```text
 GIGANG/
-├── app.py                             # Streamlit 대시보드 실행 엔트리포인트
+├── app.py                             # Streamlit 대시보드 메인 엔트리포인트
+├── run-dashboard.bat                  # 관제 대시보드 전용 원클릭 실행 스크립트
+├── start-all.bat                      # 전체 시스템(Agent + Dashboard) 통합 실행 스크립트
+├── stop-all.bat                       # 전체 시스템 안전 종료 및 격리 해제 스크립트
+├── ADMIN_START.bat / ADMIN_STOP.bat   # 관리자 대시보드 전용 실행/종료 스크립트
+├── USER_START.bat / USER_STOP.bat     # 사용자 단말 에이전트 전용 실행/종료 스크립트
+├── RUN_ALL_TESTS.bat                  # 전체 단위 테스트 일괄 실행 스크립트
+├── VERSION.txt                        # 시스템 통합 버전 명세서
+├── 실행방법.txt                        # 런처 스크립트 및 설치/실행 상세 가이드
+├── requirements.txt                   # 필수 파이썬 의존성 패키지 목록
 ├── run_demo.py                        # E2E 파이프라인 검증 및 모의 시뮬레이션
-├── requirements.txt                   # 필수 파이썬 라이브러리 목록
-├── GIGANG_수정계획.md                  # 부서별 탐지 기준 수정 계획 + 진행 상황 (9장)
-├── test_dedup.py                      # 이벤트 중복 수집 방지 검증 테스트
-├── test_paste.py                      # 클립보드 붙여넣기 및 FSM 전이 테스트
-├── test_pattern_falsepositive.js      # 패턴 매칭 정밀도 검증 (Node.js, 옛 확장 기준)
-├── test_rules.py                      # Agent 규칙 5개 오탐·미탐 테스트
-├── test_clipboard.py                  # 기밀 DB 복사 감지 테스트
-├── test_screenshot.py                 # 기밀 DB 화면 캡처 감지 테스트
-├── test_image_paste.py                # 이미지 붙여넣기·끌어다 놓기 테스트
-├── test_policy.py                     # 부서별 판정(규칙 번호) 테스트
 │
-├── browser_extension/                 # Chrome 확장 프로그램 v3.2 (Manifest V3)
+├── browser_extension/                 # Chrome 확장 프로그램 v3.9 (Manifest V3)
 │   ├── manifest.json
 │   ├── background.js                  # 서비스 워커 (이벤트 디바운싱 & 인제스천)
 │   ├── content.js                     # 웹 폼 붙여넣기 및 파일 드래그앤드롭 감지
 │   ├── popup.html & popup.js          # 센서 상태 확인 팝업 UI
-│   └── README.md
+│   └── blocked.html & blocked.js      # 정책 차단 시 표시되는 보안 안내 화면
 │
 ├── gigang/                            # 핵심 백엔드 패키지
 │   ├── collectors/                    # 다기종 로그 수집 및 정규화
 │   ├── engine/                        # 동적 상관분석 FSM & AI 거버넌스 엔진
-│   │   ├── policy.py                  # 기밀 DB 복사·캡처 부서별 판정 (규칙 번호)
-│   │   └── department_policy.json     # 부서별 정책 임시값 (Railway 표가 없을 때)
 │   ├── generators/                    # 시뮬레이션 모의 로그 생성기
-│   ├── schemas/                       # 이벤트 및 인시던트 데이터 모델
+│   ├── schemas/                       # 표준 이벤트 및 인시던트 데이터 모델
 │   ├── storage/                       # 메모리 스토어 및 SQLite 캐시
 │   └── ui/                            # Streamlit 대시보드 UI 컴포넌트
 │
-├── source/
-│   ├── agent/agent.py                 # Windows 에이전트 (DNS 폴링, 기밀 DB 복사·화면 캡처 감지)
-│   ├── agent/rules.py                 # 복사한 글자 규칙 검사 (PC 안에서만, 건수만 반환)
-│   └── railway_server/                # 중앙 수집 클라우드 서버
-│       └── policy_tables.sql          # 부서별 정책 테이블 2개 (아직 Railway에 미반영)
+├── guard/                             # 차세대 보안 보호 서브시스템
+│   ├── agent/                         # Image Guard, OCR, 클립보드 감시, 사이트 접근 제어
+│   └── browser_extension/             # 실시간 매칭 및 차단 강화 확장 프로그램
+│
+├── GIGANG_User_Client/                # 사용자 단말 배포용 독립 실행 클라이언트 패키지
 │
 ├── data/
+│   ├── activity.log                   # 런타임 텔레메트리 활동 로그
 │   └── mysql_audit_log.csv            # 사내 기밀 DB 샘플 감사 로그
 │
 └── docs/
-    ├── GIGANG_Operational_Mechanism_Analysis.md # 시스템 운영 메커니즘 상세 분석 보고서
-    ├── GIGANG_Midterm_Presentation_Pack.md     # 중간 발표 패키지 (대본/Q&A/명세)
-    └── screenshots/                             # 고해상도 대시보드 실화면 증적 (01~07)
+    ├── GIGANG_DB_Test_Guide.md                 # DB 감사 로그 연동 규격 및 테스트 가이드
+    ├── GIGANG_Operational_Mechanism_Analysis.md # 3-Hop 및 FSM 아키텍처 상세 분석 보고서
+    ├── GIGANG_Emergency_Meeting_Feedback.md    # 아키텍처 피드백 및 엔지니어링 분석
+    ├── GIGANG_Improvement_Specification_v2.md  # 차세대 보안관제 개선 기획서 v2.0
+    └── screenshots/                            # 고해상도 대시보드 실화면 증적 (01~07)
 ```
 
 ---
@@ -180,7 +181,8 @@ GIGANG/
 
 ### 1. 환경 준비
 - **Python 3.10 이상** 설치
-- Google Gemini API Key (선택: 미설정 시 내장 룰베이스 엔진으로 무중단 자동 전환)
+- Google Chrome 브라우저
+- Google Gemini API Key (선택 사항: 미설정 시 내장 룰베이스 엔진으로 무중단 자동 전환)
 
 ### 2. 저장소 클론 및 패키지 설치
 ```bash
@@ -193,37 +195,45 @@ pip install -r requirements.txt
 ```
 
 ### 3. 환경 변수 설정 (선택 사항)
-`.env` 파일에 Gemini API 키를 설정합니다:
+프로젝트 루트의 `.env` 파일에 Gemini API 키를 설정합니다:
 ```bash
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-### 4. 무결성 검증 테스트 실행
+### 4. 원클릭 실행 (Recommended)
+원하는 용도에 맞는 배치 스크립트를 더블 클릭하거나 명령 프롬프트에서 실행합니다:
+
+* **대시보드만 바로 실행**: `run-dashboard.bat` (또는 `streamlit run app.py`)
+  * 브라우저에서 `http://localhost:8501`로 즉시 연결됩니다.
+* **전체 시스템(Agent + 대시보드) 시연**: `start-all.bat` (관리자 권한 실행 권장)
+* **종료 시**: `stop-all.bat`을 실행하면 구동 중인 프로세스 종료 및 hosts 격리가 안전하게 원복됩니다.
+
+### 5. Chrome 확장 프로그램 설치 (센서 연동 시)
+1. Chrome 브라우저에서 `chrome://extensions`로 이동합니다.
+2. 우측 상단의 **'개발자 모드'**를 활성화합니다.
+3. **'압축해제된 확장 프로그램을 로드합니다'** 버튼을 클릭하고 본 저장소의 `browser_extension` 폴더를 선택합니다.
+
+### 6. 무결성 검증 테스트
 ```bash
+# 전체 테스트 일괄 실행
+RUN_ALL_TESTS.bat
+
+# 또는 주요 단위 테스트 개별 실행
 python run_demo.py
 python test_dedup.py
-python test_paste.py
 python test_rules.py
 python test_policy.py
-python test_image_paste.py
-python test_clipboard.py     # 실제 클립보드를 잠깐 바꿨다가 되돌림 (Windows)
-python test_screenshot.py    # 실제 클립보드·키보드 후크 사용 (Windows)
 ```
-> ⚠ `test_paste.py`, `test_image_paste.py`, `test_policy.py` 는 로컬 `gigang.db` 의 위험 상태·이력을 지웁니다.
-
-### 5. 통합 관제 대시보드 실행
-```bash
-streamlit run app.py
-```
-브라우저에서 `http://localhost:8501`로 접속하면 GIGANG 보안관제 센터가 구동됩니다.
 
 ---
 
-## 👥 팀원 역할 분담 (R&R)
-- **팀원 1 (Collector)**: Chrome Extension v3.1 Web Sentry 개발, 시나리오 정의 및 텔레메트리 연동
-- **팀원 2 (Infra)**: Windows Agent 3.0.0 (DNS 캐시 폴링) 및 Railway 중앙 인제스천 서버 구축
-- **팀원 3 (Database)**: 사내 기밀 DB 구축, 웹 포털 연동 및 접속 감사 로그(Audit Log) 파이프라인
-- **팀원 4 (Engine & UI)**: 3단계 동적 FSM 상관분석 엔진, Google Gemini AI 연동, Streamlit 관제 콘솔 개발
+## 👥 팀원 역할 분담 (R&R) 및 Git 브랜치 전략
+GIGANG은 4대 핵심 도메인별 기능 브랜치를 기반으로 독립적이고 체계적인 협업을 수행합니다:
+
+* **`feat/collector` [팀원 1]**: Chrome Extension Web Sentry 센서, 파일/클립보드 텔레메트리 수집
+* **`feat/normalizer` [팀원 2]**: 이기종 다기종 로그 정규화(`common_schema.json`), 인제스천 파이프라인
+* **`feat/engine` [팀원 3]**: 3단계 동적 FSM 상관분석 엔진, 3-Hop 인과관계 추적, Gemini AI 거버넌스
+* **`feat/ui` [팀원 4]**: Streamlit 종합 관제 콘솔, 3-Hop 킬체인 시각화, AI SOC Copilot 대시보드
 
 ---
 *GIGANG Security Operations Platform — "업무는 자유롭게, 기밀은 안전하게"*
