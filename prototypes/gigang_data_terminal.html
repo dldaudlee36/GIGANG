@@ -1490,30 +1490,121 @@
       opacity: 1;
     }
 
-    /* Clean zero-flash instant transition (반짝임 및 깜빡임 완전 제거) */
-    @keyframes stageFadeUp {
-      from { opacity: 1; transform: none; }
-      to { opacity: 1; transform: none; }
+    /* =========================================================================
+       Zero-Fatigue Eye-Friendly Motion System (시각 피로 최소화 벨벳 모션 시스템)
+       1) 스트로브/암전 없는 부드러운 안착 모션 (0% 출발 배제, 88% 출발 160ms 벨벳 글라이드)
+       2) 애플/에밀 코발스키 햅틱 물리 버튼 피드백 (Hover -1px 리프트, Active 0.97 컴프레션)
+       3) 60fps GPU 가속 레이아웃 리플로우 방지 (transform & opacity 전용)
+       ========================================================================= */
+    @keyframes softVelvetSettle {
+      0% {
+        opacity: 0.88;
+        transform: translateY(3px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
-    .stage-animate .term-canvas > *,
-    .stage-animate .sheet-stage > *,
-    .stage-animate .oled-canvas > *,
-    .stage-animate .ledger-main > *,
-    .term-canvas > * {
-      animation: none !important;
-      opacity: 1 !important;
-      transform: none !important;
-      transition: none !important;
+    .soft-settle {
+      animation: softVelvetSettle 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+      will-change: opacity, transform;
     }
-    button, input, select, textarea, a, .term-btn, .neo-nav-item {
+
+    button, input, select, textarea, a, .term-btn, .neo-nav-item, .term-rail-btn {
       -webkit-tap-highlight-color: transparent !important;
       -webkit-touch-callout: none !important;
+      outline: none !important;
     }
     button:focus, button:active, .term-btn:focus, .term-btn:active, .neo-nav-item:focus, .neo-nav-item:active {
       outline: none !important;
     }
-    .neo-nav-item, .v-terminal.neo .term-btn, .v-terminal.neo .term-btn::before, .neo-nav-item::after {
-      transition: none !important;
+
+    /* Buttons: Tactile micro-interaction with high-end spring curve */
+    .term-btn, .v-terminal.neo .term-btn {
+      transition: transform 140ms cubic-bezier(0.2, 0, 0, 1),
+                  background-color 140ms ease,
+                  border-color 140ms ease,
+                  box-shadow 140ms ease,
+                  color 140ms ease !important;
+      will-change: transform;
+    }
+    .term-btn:hover, .v-terminal.neo .term-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 201, 186, 0.16);
+    }
+    .term-btn:active, .v-terminal.neo .term-btn:active {
+      transform: scale(0.97) !important;
+      transition: transform 70ms cubic-bezier(0.2, 0, 0, 1) !important;
+    }
+
+    /* Left Nav Items: Gentle slide & soft active tactile feedback */
+    .neo-nav-item, .term-rail-btn {
+      transition: transform 140ms cubic-bezier(0.2, 0, 0, 1),
+                  background-color 150ms ease,
+                  color 150ms ease,
+                  box-shadow 150ms ease !important;
+      will-change: transform;
+    }
+    .neo-nav-item:hover, .term-rail-btn:hover {
+      transform: translateX(2px);
+      background: rgba(var(--color-accent-code), 0.08);
+    }
+    .neo-nav-item:active, .term-rail-btn:active {
+      transform: scale(0.98) !important;
+      transition: transform 70ms cubic-bezier(0.2, 0, 0, 1) !important;
+    }
+    .neo-nav-item::after {
+      transition: opacity 160ms cubic-bezier(0.2, 0, 0, 1),
+                  transform 160ms cubic-bezier(0.2, 0, 0, 1) !important;
+    }
+
+    /* Interactive Cards & Forensic Windows: Soft hover elevation */
+    .term-panel, .cw-incident-card, .neo-window {
+      transition: transform 180ms cubic-bezier(0.2, 0, 0, 1),
+                  box-shadow 180ms cubic-bezier(0.2, 0, 0, 1),
+                  border-color 160ms ease,
+                  background-color 160ms ease !important;
+      will-change: transform;
+    }
+    .cw-incident-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      border-color: rgba(var(--color-accent-code), 0.45);
+    }
+    .cw-incident-card:active {
+      transform: scale(0.99) !important;
+      transition: transform 70ms cubic-bezier(0.2, 0, 0, 1) !important;
+    }
+
+    /* Table Rows: Smooth eye-resting hover highlight */
+    tr.interactive-row, .case-row {
+      transition: background-color 120ms ease, transform 120ms cubic-bezier(0.2, 0, 0, 1) !important;
+    }
+    tr.interactive-row:hover, .case-row:hover {
+      background-color: rgba(var(--color-accent-code), 0.05) !important;
+    }
+    tr.interactive-row:active, .case-row:active {
+      transform: scale(0.998) !important;
+      transition: transform 60ms ease !important;
+    }
+
+    /* Sidebar Smooth Rail Motion */
+    .neo-side {
+      transition: width 220ms cubic-bezier(0.16, 1, 0.3, 1),
+                  padding 220ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+      will-change: width;
+    }
+    .neo-brand-toggle {
+      transition: transform 160ms cubic-bezier(0.2, 0, 0, 1),
+                  background-color 160ms ease !important;
+    }
+    .neo-brand-toggle:hover {
+      transform: scale(1.06);
+    }
+    .neo-brand-toggle:active {
+      transform: scale(0.94) !important;
+      transition: transform 70ms cubic-bezier(0.2, 0, 0, 1) !important;
     }
 
     /* Interactive 3-Hop SVG Smooth Zoom & Zero-Latency Drag */
@@ -5443,9 +5534,13 @@
       `;
     }
 
-    function renderStage({ animate = false } = {}) {
+    function renderStage({ animate = true } = {}) {
       if (!stage) return;
       stage.innerHTML = renderVariantTerminal();
+      const canvas = stage.querySelector('.term-canvas');
+      if (canvas && animate) {
+        canvas.classList.add('soft-settle');
+      }
       bindTopologyInteractions();
     }
 
