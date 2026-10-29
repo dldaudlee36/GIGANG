@@ -1490,37 +1490,31 @@
       opacity: 1;
     }
 
-    /* Stage & Staggered Card Entrance Choreography (Gated on pointer/replay, skipped on keyboard 1-4) */
+    /* Clean zero-flash instant transition (반짝임 및 깜빡임 완전 제거) */
     @keyframes stageFadeUp {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 1; transform: none; }
+      to { opacity: 1; transform: none; }
     }
     .stage-animate .term-canvas > *,
     .stage-animate .sheet-stage > *,
     .stage-animate .oled-canvas > *,
-    .stage-animate .ledger-main > * {
-      animation: stageFadeUp 220ms var(--ease-out) both;
+    .stage-animate .ledger-main > *,
+    .term-canvas > * {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
     }
-    .stage-animate .term-canvas > *:nth-child(1),
-    .stage-animate .sheet-stage > *:nth-child(1),
-    .stage-animate .oled-canvas > *:nth-child(1),
-    .stage-animate .ledger-main > *:nth-child(1) { animation-delay: 0ms; }
-    .stage-animate .term-canvas > *:nth-child(2),
-    .stage-animate .sheet-stage > *:nth-child(2),
-    .stage-animate .oled-canvas > *:nth-child(2),
-    .stage-animate .ledger-main > *:nth-child(2) { animation-delay: 35ms; }
-    .stage-animate .term-canvas > *:nth-child(3),
-    .stage-animate .sheet-stage > *:nth-child(3),
-    .stage-animate .oled-canvas > *:nth-child(3),
-    .stage-animate .ledger-main > *:nth-child(3) { animation-delay: 70ms; }
-    .stage-animate .term-canvas > *:nth-child(4),
-    .stage-animate .sheet-stage > *:nth-child(4),
-    .stage-animate .oled-canvas > *:nth-child(4),
-    .stage-animate .ledger-main > *:nth-child(4) { animation-delay: 105ms; }
-    .stage-animate .term-canvas > *:nth-child(5),
-    .stage-animate .sheet-stage > *:nth-child(5),
-    .stage-animate .oled-canvas > *:nth-child(5),
-    .stage-animate .ledger-main > *:nth-child(5) { animation-delay: 140ms; }
+    button, input, select, textarea, a, .term-btn, .neo-nav-item {
+      -webkit-tap-highlight-color: transparent !important;
+      -webkit-touch-callout: none !important;
+    }
+    button:focus, button:active, .term-btn:focus, .term-btn:active, .neo-nav-item:focus, .neo-nav-item:active {
+      outline: none !important;
+    }
+    .neo-nav-item, .v-terminal.neo .term-btn, .v-terminal.neo .term-btn::before, .neo-nav-item::after {
+      transition: none !important;
+    }
 
     /* Interactive 3-Hop SVG Smooth Zoom & Zero-Latency Drag */
     #topo-svg-group {
@@ -5449,13 +5443,9 @@
       `;
     }
 
-    function renderStage({ animate = true } = {}) {
+    function renderStage({ animate = false } = {}) {
       if (!stage) return;
       stage.innerHTML = renderVariantTerminal();
-      const rootNode = stage.firstElementChild;
-      if (rootNode && animate) {
-        rootNode.classList.add('stage-animate');
-      }
       bindTopologyInteractions();
     }
 
@@ -5470,11 +5460,7 @@
 
     // Standalone Data Terminal Initialization
     window.replay = function() {
-      const node = stage.firstElementChild;
-      if (!node) return;
-      node.classList.remove('stage-animate');
-      void node.offsetWidth;
-      node.classList.add('stage-animate');
+      renderStage();
     };
 
     // Break-UI Dev Dataset Toggle (Demo -> Worst-Case -> Empty -> Demo)
