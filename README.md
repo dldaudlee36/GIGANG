@@ -1,4 +1,4 @@
-# 🛡️ GIGANG (Zero Trust SecOps Platform)
+﻿# 🛡️ GIGANG (Zero Trust SecOps Platform)
 ### Zero Trust 기반 엔드포인트-DB-웹 다기종 로그 상관분석 & 섀도우 AI 거버넌스 플랫폼 (v3.9 Integrated Edition)
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
@@ -186,36 +186,43 @@ flowchart TB
 GIGANG/
 ├── app.py                             # Streamlit 대시보드 메인 엔트리포인트
 ├── run-dashboard.bat                  # 관제 대시보드 전용 원클릭 실행 스크립트
-├── start-all.bat                      # 전체 시스템(Agent + Dashboard) 통합 실행 스크립트
-├── stop-all.bat                       # 전체 시스템 안전 종료 및 격리 해제 스크립트
+├── run_beta_terminal.bat              # Cyber OS 관제 터미널 원클릭 실행 스크립트
 ├── ADMIN_START.bat / ADMIN_STOP.bat   # 관리자 대시보드 전용 실행/종료 스크립트
 ├── USER_START.bat / USER_STOP.bat     # 사용자 단말 에이전트 전용 실행/종료 스크립트
 ├── RUN_ALL_TESTS.bat                  # 전체 단위 테스트 일괄 실행 스크립트
+├── GIGANG_Data_Terminal_Beta.html     # 독립 구동형 Neo-Tactical 관제 터미널
 ├── VERSION.txt                        # 시스템 통합 버전 명세서
-├── 실행방법.txt                        # 런처 스크립트 및 설치/실행 상세 가이드
 ├── requirements.txt                   # 필수 파이썬 의존성 패키지 목록
 ├── run_demo.py                        # E2E 파이프라인 검증 및 모의 시뮬레이션
+├── compare_engines.py                 # FSM 상관분석 엔진 벤치마크
 │
-├── browser_extension/                 # Chrome 확장 프로그램 v3.9 (Manifest V3)
-│   ├── manifest.json
-│   ├── background.js                  # 서비스 워커 (이벤트 디바운싱 & 인제스천)
-│   ├── content.js                     # 웹 폼 붙여넣기 및 파일 드래그앤드롭 감지
-│   ├── popup.html & popup.js          # 센서 상태 확인 팝업 UI
-│   └── blocked.html & blocked.js      # 정책 차단 시 표시되는 보안 안내 화면
+├── guard/                             # 단말 보안 센서 및 수집 서브시스템
+│   ├── agent/                         # Windows 에이전트 (Image Guard, OCR, 클립보드 감시, 사이트 접근 제어)
+│   └── browser_extension/             # Chrome 확장 프로그램 (v3.9 Manifest V3, 웹 차단, 이미지/텍스트 감지)
 │
-├── gigang/                            # 핵심 백엔드 패키지
-│   ├── collectors/                    # 다기종 로그 수집 및 정규화
-│   ├── engine/                        # 동적 상관분석 FSM & AI 거버넌스 엔진
+├── gigang/                            # 핵심 백엔드 및 관제 패키지
+│   ├── collectors/                    # 다기종 로그 수집 및 Railway 연동
+│   ├── engine/                        # 3단계 동적 상관분석 FSM & AI 거버넌스 엔진
 │   ├── generators/                    # 시뮬레이션 모의 로그 생성기
 │   ├── schemas/                       # 표준 이벤트 및 인시던트 데이터 모델
 │   ├── storage/                       # 메모리 스토어 및 SQLite 캐시
 │   └── ui/                            # Streamlit 대시보드 UI 컴포넌트
 │
-├── guard/                             # 차세대 보안 보호 서브시스템
-│   ├── agent/                         # Image Guard, OCR, 클립보드 감시, 사이트 접근 제어
-│   └── browser_extension/             # 실시간 매칭 및 차단 강화 확장 프로그램
+├── source/railway_server/             # 중앙 인제스천 클라우드 서버 (FastAPI/Railway)
+│   ├── Dockerfile
+│   ├── app.py
+│   ├── policy_tables.sql
+│   └── site_access.py
 │
-├── GIGANG_User_Client/                # 사용자 단말 배포용 독립 실행 클라이언트 패키지
+├── tools/                             # 런타임 제어 툴킷
+│   ├── launch.py                      # 관리자/사용자 프로세스 오케스트레이터
+│   ├── stop.py                        # 프로세스 정리 및 격리 해제
+│   └── lifecycle.py                   # 서비스 수명주기 관리
+│
+├── prototypes/                        # 신규 UI/UX 다각화 시안 및 프로토타입
+│   ├── gigang_multipage_candidates.html # 4대 핵심 탭 반응형 멀티페이지 마스터 프로토타입
+│   ├── gigang_data_terminal.html      # 다크 테크니컬 터미널 뷰
+│   └── gigang_5themes_prototype.html  # 5대 테마 인터랙티브 스위처
 │
 ├── data/
 │   ├── activity.log                   # 런타임 텔레메트리 활동 로그
