@@ -1414,6 +1414,7 @@
 
     /* Non-blocking Sonner-style Toast Stack (CSS Transitions + @starting-style, zero keyframes) */
     .toast-stack {
+      display: none !important;
       position: fixed;
       top: 16px;
       right: 20px;
@@ -3266,23 +3267,8 @@
     }
 
     function showToast(title, desc) {
-      triggerHaptic(10);
-      const stack = document.getElementById('toast-stack');
-      if (!stack) return;
-      const item = document.createElement('div');
-      item.className = 'toast-item';
-      item.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;">
-          <span style="font-weight:600;color:#ffffff;">${title}</span>
-          <span class="mono" style="font-size:11px;color:#8e8e96;">NOW</span>
-        </div>
-        <div style="font-size:13px;color:#b8b8c0;line-height:1.4;">${desc}</div>
-      `;
-      stack.appendChild(item);
-      setTimeout(() => {
-        item.classList.add('is-leaving');
-        setTimeout(() => item.remove(), 200);
-      }, 3200);
+      // 팝업 완전 비활성화 (사용자 요청: 토스트/알림 팝업 차단)
+      return;
     }
 
     function formatTTL(sec) {
