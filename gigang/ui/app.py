@@ -138,7 +138,7 @@ _ensure_vivid_search_highlight()
 
 # 1. 페이지 기본 설정
 st.set_page_config(
-    page_title="GIGANG | 통합 보안 관제",
+    page_title="GIGANG | 통합 보안 관제 OS",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -1800,15 +1800,6 @@ with st.sidebar:
     if "nav_radio" not in st.session_state or st.session_state.nav_radio not in menu_options:
         st.session_state.nav_radio = "종합 관제"
 
-    menu = st.radio(
-        "네비게이션",
-        menu_options,
-        key="nav_radio",
-        label_visibility="collapsed"
-    )
-
-    st.markdown("---")
-
     ui_mode = st.radio(
         "🎨 대시보드 뷰 모드",
         ["⚡ 차세대 사이버 OS (메인)", "📋 클래식 레거시 뷰"],
@@ -1817,6 +1808,24 @@ with st.sidebar:
         label_visibility="visible",
         help="차세대 고밀도 테크니컬 블랙 관제 UI 또는 클래식 파이썬 스트림릿 위젯 뷰를 전환합니다."
     )
+
+    st.markdown("---")
+
+    if ui_mode == "📋 클래식 레거시 뷰":
+        menu = st.radio(
+            "네비게이션",
+            menu_options,
+            key="nav_radio",
+            label_visibility="collapsed"
+        )
+    else:
+        menu = "종합 관제"
+        st.markdown('''
+        <div style="padding:10px 12px;background:rgba(37,201,186,0.08);border-left:3px solid #25c9ba;border-radius:4px;font-size:11.5px;color:#94a3b8;line-height:1.5;">
+            <b style="color:#25c9ba;">🛡️ 차세대 사이버 OS 활성화</b><br>
+            메인 터미널 좌측 독의 6개 뷰 버튼과 상단 5대 테마/폰트 컨트롤러를 직접 조작할 수 있습니다.
+        </div>
+        ''', unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -1928,9 +1937,8 @@ with st.sidebar:
     
     st.markdown("<br><div style='color:#566981; font-size:11px; text-align:center;'>SKT ALEPH 캡스톤 4조 GIGANG v1.0</div>", unsafe_allow_html=True)
 
-
-def render_cyber_os_terminal(target_page="overview"):
-    terminal_path = _root_dir / "prototypes" / "gigang_multipage_candidates.html"
+def render_cyber_os_terminal():
+    terminal_path = _root_dir / "prototypes" / "gigang_data_terminal.html"
     if not terminal_path.exists():
         terminal_path = _root_dir / "GIGANG_Data_Terminal_Beta.html"
     
@@ -1940,21 +1948,8 @@ def render_cyber_os_terminal(target_page="overview"):
         
     html_content = terminal_path.read_text(encoding="utf-8")
     
-    # 🌟 타깃 페이지 동적 주입 (Overview, Killchain, Governance, Pipeline)
-    html_content = html_content.replace("page: 'overview',", f"page: '{target_page}',")
-    html_content = html_content.replace(
-        "select(initial, { pushUrl: false, animate: false });",
-        f"select(initial, {{ pushUrl: false, animate: false }}); setTimeout(() => {{ if (window.setPage) window.setPage('{target_page}'); }}, 60);"
-    )
-    
-    # 프로덕션 관제 화면에서 하단 프로토타입 피커 바 숨김 처리 (완전 몰입형)
-    html_content = html_content.replace(
-        '<nav class="proto-picker"',
-        '<nav class="proto-picker" style="display:none !important;"'
-    )
-    
     # Streamlit 풀블리드 반응형 CSS 오버라이드
-    st.markdown("""
+    st.markdown('''
     <style>
         .block-container {
             padding-top: 0.2rem !important;
@@ -1969,27 +1964,20 @@ def render_cyber_os_terminal(target_page="overview"):
             border-radius: 8px !important;
         }
     </style>
-    """, unsafe_allow_html=True)
+    ''', unsafe_allow_html=True)
     
     components.html(html_content, height=1050, scrolling=True)
 
 
-PAGE_ID_MAP = {
-    "종합 관제": "overview",
-    "킬체인 분석": "killchain",
-    "AI·IT 거버넌스": "governance",
-    "중앙 서버 파이프라인": "pipeline"
-}
-
-# 🚀 차세대 사이버 OS UI를 메인 기본 뷰로 마운트
+# 🚀 차세대 사이버 OS UI를 메인 기본 뷰로 장착
 if st.session_state.get("ui_view_mode", "⚡ 차세대 사이버 OS (메인)") == "⚡ 차세대 사이버 OS (메인)":
-    target_page_id = PAGE_ID_MAP.get(menu, "overview")
-    render_cyber_os_terminal(target_page_id)
+    render_cyber_os_terminal()
     st.stop()
 
 
+
 # ==========================================
-# VIEW 1: 대시보드 종합 관제 (Overview - Classic Legacy)
+# VIEW 1: 대시보드 종합 관제 (Overview)
 # ==========================================
 # 동적 SVG 생성 (가로 900px 와이드 뷰박스 지원 및 모든 인시던트별 맞춤형 고품질 토폴로지)
 def generate_dynamic_network_svg(inc: Incident) -> str:
@@ -3764,4 +3752,4 @@ elif menu == "중앙 서버 파이프라인":
     render_live_pipeline()
 
 
-# (Old Beta block removed: Cyber OS is now the default main interface)
+# (Old Beta slot cleanly retired: Cyber OS Terminal is now the default main interface)
