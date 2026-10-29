@@ -37,7 +37,8 @@
       overscroll-behavior-y: none;
     }
     html, body {
-      height: 100%;
+      min-height: 100%;
+      height: auto;
       width: 100%;
       background: #08080a;
       color: #f4f4f6;
@@ -443,7 +444,7 @@
       z-index: 40;
     }
     .v-terminal .term-canvas {
-      padding: 24px 32px 100px;
+      padding: 24px 32px 160px;
       max-width: 100%;
       width: 100%;
       margin: 0;
@@ -2162,7 +2163,7 @@
       --pill-warn-ink: #a35f00;
     }
     .v-terminal.neo .term-canvas {
-      padding: 24px 32px 100px;
+      padding: 24px 32px 160px;
       max-width: 100%;
       width: 100%;
       margin: 0;
@@ -5580,6 +5581,10 @@
         canvas.classList.add('soft-settle');
       }
       bindTopologyInteractions();
+      try {
+        const fullHeight = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight, 1100);
+        window.parent.postMessage({ type: 'gigang:resize', height: fullHeight }, '*');
+      } catch (e) {}
     }
 
     // Live TTL Countdown Ticker (Updates DOM nodes with data-ttl-display without re-rendering inputs)
@@ -5787,9 +5792,18 @@
       window.addEventListener('touchcancel', endPull, { passive: true });
     })();
 
-    const initialData = new URL(location.href).searchParams.get('data');
+    const initialUrl = new URL(location.href);
+    const initialData = initialUrl.searchParams.get('data');
     if (initialData === 'worst' || initialData === 'empty') {
       window.setDataMode(initialData);
+    }
+    const initialPage = initialUrl.searchParams.get('page');
+    if (initialPage && ['overview', 'active_incidents', 'cases', 'killchain', 'governance', 'pipeline'].includes(initialPage)) {
+      state.page = initialPage;
+    }
+    const initialSidebar = initialUrl.searchParams.get('sidebar');
+    if (initialSidebar === 'collapsed') {
+      state.sidebarCollapsed = true;
     }
     // Initialize Stage directly
     renderStage({ animate: false });
