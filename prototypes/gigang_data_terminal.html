@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-font="geist">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
@@ -1896,8 +1896,8 @@
        5 COLOR THEMES & 5 FONTS SYSTEM (NEO-TACTICAL SUITE)
        ========================================================================= */
     :root {
-      --active-font: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-      --active-mono: "IBM Plex Mono", monospace;
+      --active-font: "Geist", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      --active-mono: "Geist Mono", monospace;
     }
     :root[data-font="pretendard"] {
       --active-font: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
@@ -2529,6 +2529,7 @@
        1. AUTHENTIC GIGANG STORE & STATE (app.py + site_access.py + governance.py)
        ========================================================================= */
     const state = {
+      fontTheme: 'geist',
       // Page: Case Management Store (Prompt 1)
             // Page: Active Incidents Store (Prompt 2)
       incidentFilterMode: 'ALL',
@@ -3873,7 +3874,7 @@
       };
 
       return `
-        <div style="width:100%;min-height:100%;display:flex;flex-direction:column;gap:18px;color:#f6f7f8;font-family:'Pretendard', -apple-system, sans-serif;">
+        <div style="width:100%;min-height:100%;display:flex;flex-direction:column;gap:18px;color:#f6f7f8;font-family:var(--active-font);">
           
           <!-- ① 상단 KPI 4분할 카드 배너 (GIGANG 실측 메트릭 기반) -->
           <section style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px;">
@@ -4245,7 +4246,7 @@
       };
 
       return `
-        <div style="width:100%;min-height:100%;display:flex;flex-direction:column;gap:20px;color:#f6f7f8;font-family:'Pretendard', -apple-system, sans-serif;">
+        <div style="width:100%;min-height:100%;display:flex;flex-direction:column;gap:20px;color:#f6f7f8;font-family:var(--active-font);">
           
           <!-- ① 상단 페이지 헤더 (높이 50px) -->
           <header style="height:50px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(var(--color-accent-code),0.2);padding-bottom:8px;">
@@ -5423,11 +5424,11 @@
             <div style="display:flex;align-items:center;gap:6px;">
               <span style="font-size:11.5px;font-weight:700;color:var(--color-secondary-text);letter-spacing:0.02em;">🔤 폰트:</span>
               <select onchange="window.setFontFamily(this.value)" style="height:28px;padding:0 10px;border-radius:9999px;font-size:11.5px;font-weight:600;background:rgba(var(--color-background-code),0.85);color:var(--color-accent);border:1px solid rgba(var(--color-accent-code),0.45);outline:none;cursor:pointer;font-family:inherit;">
-                <option value="pretendard" ${(!state.fontTheme || state.fontTheme === 'pretendard') ? 'selected' : ''}>1. Pretendard (표준 UI)</option>
+                <option value="pretendard" ${state.fontTheme === 'pretendard' ? 'selected' : ''}>1. Pretendard (표준 UI)</option>
                 <option value="ibm" ${state.fontTheme === 'ibm' ? 'selected' : ''}>2. IBM Plex Sans/Mono (엔지니어링)</option>
                 <option value="jetbrains" ${state.fontTheme === 'jetbrains' ? 'selected' : ''}>3. JetBrains Mono + SUIT (개발자)</option>
                 <option value="jakarta" ${state.fontTheme === 'jakarta' ? 'selected' : ''}>4. Plus Jakarta Sans (시원·모던)</option>
-                <option value="geist" ${state.fontTheme === 'geist' ? 'selected' : ''}>5. Geist / Geist Mono (하이엔드)</option>
+                <option value="geist" ${(!state.fontTheme || state.fontTheme === 'geist') ? 'selected' : ''}>5. Geist / Geist Mono (하이엔드)</option>
               </select>
             </div>
 
