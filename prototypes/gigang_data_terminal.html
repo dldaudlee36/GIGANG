@@ -2319,10 +2319,19 @@
       background: var(--color-card-dark) !important; color: var(--muted); border-bottom: 1px solid var(--border) !important;
       font-size: 11px; letter-spacing: 0.02em; padding: 11px 16px;
     }
+    .v-terminal.neo table.data-table th:not(:last-child),
+    .v-terminal.neo .case-table th:not(:last-child) {
+      border-right: 1px solid rgba(var(--color-accent-code), 0.22);
+    }
     .v-terminal.neo table.data-table td { border-bottom: 1px solid var(--rule); font-size: 13px; font-weight: 300; padding: 13px 16px; }
     .v-terminal.neo table.data-table tr.selected-row td { background: rgba(var(--color-accent-code), 0.08); }
     @media (hover: hover) and (pointer: fine) {
       .v-terminal.neo table.data-table tr:hover td { background: rgba(var(--color-accent-code), 0.04); }
+      .v-terminal.neo table.data-table th:hover,
+      .v-terminal.neo .case-table th:hover {
+        background: rgba(var(--color-accent-code), 0.09);
+        color: #ffffff;
+      }
     }
     .v-terminal.neo .pill {
       border-radius: 999px; font-size: 11px; font-weight: 400;
@@ -4489,7 +4498,7 @@
 
             <!-- 테이블 헤더 + 본문 테이블 (가로 스크롤 및 고정 컬럼 비율 적용) -->
             <div style="width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;">
-              <table style="width:100%;min-width:1240px;border-collapse:collapse;text-align:left;table-layout:fixed;">
+              <table class="case-table" style="width:100%;min-width:1240px;border-collapse:collapse;text-align:left;table-layout:fixed;">
                 <colgroup>
                   <col style="width:150px;">
                   <col style="width:auto;">
@@ -4503,15 +4512,15 @@
                 </colgroup>
                 <thead>
                   <tr style="height:40px;background:rgba(3,16,22,0.7);font-size:11.5px;font-weight:600;color:rgba(255,255,255,0.85);white-space:nowrap;">
-                    <th onclick="window.toggleCaseSort('id')" style="padding-left:16px;cursor:pointer;user-select:none;" title="케이스 ID 정렬">케이스 ID ${getSortIcon('id')}</th>
-                    <th onclick="window.toggleCaseSort('title')" style="padding:0 12px;cursor:pointer;user-select:none;" title="제목 정렬">제목 및 세부 설명 ${getSortIcon('title')}</th>
-                    <th onclick="window.toggleCaseSort('severity')" style="text-align:center;cursor:pointer;user-select:none;" title="심각도 정렬">심각도 ${getSortIcon('severity')}</th>
-                    <th onclick="window.toggleCaseSort('status')" style="text-align:center;cursor:pointer;user-select:none;" title="상태 정렬">상태 ${getSortIcon('status')}</th>
-                    <th onclick="window.toggleCaseSort('asset')" style="padding:0 12px;cursor:pointer;user-select:none;" title="영향 자산 정렬">영향 자산 ${getSortIcon('asset')}</th>
-                    <th onclick="window.toggleCaseSort('assignee')" style="padding:0 12px;cursor:pointer;user-select:none;" title="담당자 정렬">담당 ${getSortIcon('assignee')}</th>
-                    <th onclick="window.toggleCaseSort('createdAt')" style="text-align:center;cursor:pointer;user-select:none;" title="생성일 정렬">생성일 ${getSortIcon('createdAt')}</th>
-                    <th onclick="window.toggleCaseSort('updatedAt')" style="text-align:center;cursor:pointer;user-select:none;" title="수정일 정렬">수정일 ${getSortIcon('updatedAt')}</th>
-                    <th onclick="window.toggleCaseSort('elapsed')" style="text-align:center;padding-right:16px;cursor:pointer;user-select:none;" title="경과 시간 정렬">경과 ${getSortIcon('elapsed')}</th>
+                    <th onclick="window.toggleCaseSort('id')" style="padding:0 12px 0 16px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="케이스 ID 정렬">케이스 ID ${getSortIcon('id')}</th>
+                    <th onclick="window.toggleCaseSort('title')" style="padding:0 12px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="제목 정렬">제목 및 세부 설명 ${getSortIcon('title')}</th>
+                    <th onclick="window.toggleCaseSort('severity')" style="text-align:center;padding:0 8px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="심각도 정렬">심각도 ${getSortIcon('severity')}</th>
+                    <th onclick="window.toggleCaseSort('status')" style="text-align:center;padding:0 8px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="상태 정렬">상태 ${getSortIcon('status')}</th>
+                    <th onclick="window.toggleCaseSort('asset')" style="padding:0 12px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="영향 자산 정렬">영향 자산 ${getSortIcon('asset')}</th>
+                    <th onclick="window.toggleCaseSort('assignee')" style="padding:0 12px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="담당자 정렬">담당 ${getSortIcon('assignee')}</th>
+                    <th onclick="window.toggleCaseSort('createdAt')" style="text-align:center;padding:0 8px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="생성일 정렬">생성일 ${getSortIcon('createdAt')}</th>
+                    <th onclick="window.toggleCaseSort('updatedAt')" style="text-align:center;padding:0 8px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="수정일 정렬">수정일 ${getSortIcon('updatedAt')}</th>
+                    <th onclick="window.toggleCaseSort('elapsed')" style="text-align:center;padding:0 16px 0 8px;cursor:pointer;user-select:none;transition:background 0.15s, color 0.15s;" title="경과 시간 정렬">경과 ${getSortIcon('elapsed')}</th>
                   </tr>
                   <!-- 1px 시안 발광선 -->
                   <tr>
