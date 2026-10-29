@@ -14,6 +14,60 @@
 
 ---
 
+## 🚀 [NEW] 차세대 전술 사이버 OS 관제 단말기 (Beta Terminal v4.0.0-beta)
+
+새롭게 설계된 **Neo-Tactical Cyber OS Window System** 기반의 고밀도 보안 관제 단말기가 베타 버전으로 공식 탑재되었습니다.
+
+![Beta Overview](screenshots/beta_terminal_page1_overview.png)
+
+### 🌟 베타 단말기 핵심 특징 (Key Highlights)
+- **5개 전술 컬러 테마 실시간 전환**:
+  - `🌊 Deep Ocean Cyan` (심해 흑청 & 일렉트릭 시안 기본 테마)
+  - `🔮 Obsidian Violet` (흑요석 보라)
+  - `🍃 Stealth Emerald` (스텔스 에메랄드)
+  - `🌌 Midnight Cobalt` (미드나잇 코발트)
+  - `⚙️ Monolithic Carbon` (모놀리식 카본)
+- **5개 엔터프라이즈 타이포그래피 지원**: Pretendard, IBM Plex, JetBrains Mono + SUIT, Plus Jakarta Sans, Geist
+- **6개 핵심 전술 관제 뷰 완비**:
+  1. **종합 관제 (Overview)**: 6대 전술 KPI 지표, 긴급 알림 및 실시간 위협 요약
+  2. **활성 인시던트 (Active Incidents)**: 4대 KPI 서머리 배너 및 11개 상관분석 인시던트 카드 덱
+  3. **전체 케이스 목록 (Case Management)**: 9개 전술 열 다각도 실시간 정렬 테이블 및 필터 패널
+  4. **3-Hop 공격 킬체인 분석 (Kill Chain)**: DB ➔ 단말 ➔ 외부 AI 경로 추적 및 상관 이벤트 타임라인
+  5. **Shadow AI 거버넌스 (Governance)**: 실시간 도메인 차단/승인 제어 및 Gemini AI 위험 진단
+  6. **멀티소스 로그 파이프라인 (Pipeline)**: 인증·방화벽·단말·DB 4대 이기종 파이프라인 실시간 수집 스트림
+- **인체공학적 UX 설계**:
+  - 원클릭 사이드바 접기/펼치기 (`:::`, `Ctrl+B`)
+  - 레이아웃 리플로우 없는 60fps GPU 가속 모션 (`stageFadeUp`, `prefers-reduced-motion`)
+  - 촌스러운 주황색 테두리를 완전 배제한 정교한 1px 인셋 시안 광채 (`box-shadow: 0 0 0 1px rgba(37,201,186,0.22) inset`)
+  - 전체 텍스트 WCAG 2.1 AA (4.5:1 이상) 명도 대비 100% 충족
+
+### 📸 차세대 사이버 OS 단말기 화면 갤러리 (Beta Terminal Gallery)
+| 1. 종합 관제 (Overview) | 2. 활성 인시던트 (Active Incidents) |
+|---|---|
+| ![Overview](screenshots/beta_terminal_page1_overview.png) | ![Active Incidents](screenshots/beta_terminal_page2_active_incidents.png) |
+
+| 3. 전체 케이스 목록 (Cases) | 4. 3-Hop 킬체인 분석 (Kill Chain) |
+|---|---|
+| ![Cases](screenshots/beta_terminal_page3_cases.png) | ![Kill Chain](screenshots/beta_terminal_page4_killchain.png) |
+
+| 5. Shadow AI 거버넌스 (Governance) | 6. 멀티소스 로그 파이프라인 (Pipeline) |
+|---|---|
+| ![Governance](screenshots/beta_terminal_page5_governance.png) | ![Pipeline](screenshots/beta_terminal_page6_pipeline.png) |
+
+| 7. 인체공학적 사이드바 접힘 모드 (Collapsed Sidebar) |
+|---|
+| ![Sidebar Collapsed](screenshots/beta_terminal_page7_sidebar_collapsed.png) |
+
+### 🖥️ 베타 단말기 실행 방법
+1. **단독 브라우저 실행 (Zero-Dependency)**:
+   - 저장소 루트의 `GIGANG_Data_Terminal_Beta.html` 파일을 더블 클릭하여 즉시 실행
+   - 또는 `run_beta_terminal.bat` 더블 클릭
+2. **Streamlit 대시보드 내부 연동**:
+   - `python -m streamlit run app.py` (또는 `run-dashboard.bat`) 실행
+   - 사이드바 내비게이션 메뉴에서 `🚀 차세대 사이버 OS (Beta)` 선택
+
+---
+
 ## 📸 프로젝트 핵심 화면 (Screenshots Showcase)
 
 ### 1. 종합 관제 대시보드 (Overview Dashboard)

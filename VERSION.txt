@@ -1,5 +1,1 @@
-GIGANG 3.9.0 (Integrated Edition)
-- v3.8.3 Infrastructure: Image Guard / OCR, SiteAccess Whitelist, Lifecycle & Launchers
-- GIGANG-main Core Engine: Department Policies (CS/HR/FIN/DEV), Dynamic Scoring, DL-1~3, SS-1~3, Incident Timeline UI
-Agent: 3.9.0; Chrome Extension: 3.9.0
-Dashboard: http://127.0.0.1:8501
+4.0.0-beta

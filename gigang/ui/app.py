@@ -1780,7 +1780,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    menu_options = ["종합 관제", "킬체인 분석", "AI·IT 거버넌스", "중앙 서버 파이프라인"]
+    menu_options = ["종합 관제", "킬체인 분석", "AI·IT 거버넌스", "중앙 서버 파이프라인", "🚀 차세대 사이버 OS (Beta)"]
     
     # 🌟 URL Query Parameter 지원 (?page=overview, killchain, governance, pipeline)
     qp = getattr(st, "query_params", None)
@@ -1790,7 +1790,8 @@ with st.sidebar:
             "overview": "종합 관제", "관제": "종합 관제",
             "killchain": "킬체인 분석", "킬체인": "킬체인 분석",
             "governance": "AI·IT 거버넌스", "거버넌스": "AI·IT 거버넌스",
-            "pipeline": "중앙 서버 파이프라인", "파이프라인": "중앙 서버 파이프라인"
+            "pipeline": "중앙 서버 파이프라인", "파이프라인": "중앙 서버 파이프라인",
+            "beta": "🚀 차세대 사이버 OS (Beta)", "terminal": "🚀 차세대 사이버 OS (Beta)"
         }
         if url_page:
             mapped = page_map.get(str(url_page).lower(), url_page)
@@ -3692,3 +3693,29 @@ elif menu == "중앙 서버 파이프라인":
             st.warning("수집된 사내 DB 감사 활동 로그가 없습니다.")
 
     render_live_pipeline()
+
+
+if menu == "🚀 차세대 사이버 OS (Beta)":
+    terminal_path = _root_dir / "prototypes" / "gigang_data_terminal.html"
+    if not terminal_path.exists():
+        terminal_path = _root_dir / "GIGANG_Data_Terminal_Beta.html"
+    
+    if terminal_path.exists():
+        html_content = terminal_path.read_text(encoding="utf-8")
+        st.markdown("""
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding:12px 18px;background:#021c26;border-radius:8px;box-shadow:0 0 0 1px rgba(37,201,186,0.22) inset;">
+            <div>
+                <span style="font-size:16px;font-weight:700;color:#f6f7f8;letter-spacing:0.04em;">🛡️ GIGANG Neo-Tactical Cyber OS Terminal (Beta)</span>
+                <span style="font-size:11px;color:#25c9ba;margin-left:8px;font-weight:600;padding:2px 8px;border-radius:12px;background:rgba(37,201,186,0.15);">v4.0.0-beta</span>
+                <p style="font-size:12px;color:#94a3b8;margin:4px 0 0 0;">차세대 보안 관제(SOC/SASE) 전술 OS 윈도우 시스템 · 5개 전술 컬러 테마 & 5개 폰트 실시간 전환 · 6개 핵심 관제 뷰 완비</p>
+            </div>
+            <div>
+                <a href="GIGANG_Data_Terminal_Beta.html" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:6px;background:linear-gradient(-135deg, #008fec, #25c9ba);color:#ffffff;font-size:12px;font-weight:600;text-decoration:none;">
+                    ↗ 단독 전체화면 열기
+                </a>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        components.html(html_content, height=920, scrolling=True)
+    else:
+        st.error("Beta Terminal HTML 파일을 찾을 수 없습니다.")

@@ -32,3 +32,8 @@ walkthroughs/
 !.env.example
 backups/
 tools/git/
+
+# Agent and utility caches
+.agents/
+graphify-out/
+scripts/
