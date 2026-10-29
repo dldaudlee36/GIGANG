@@ -138,11 +138,52 @@ _ensure_vivid_search_highlight()
 
 # 1. 페이지 기본 설정
 st.set_page_config(
-    page_title="GIGANG | 통합 보안 관제 OS",
+    page_title="GIGANG | 차세대 사이버 OS",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# 2. 차세대 사이버 OS 풀스크린 단독 마운트 (왼쪽 토글창/사이드바 완전 배제, 테마1·폰트5 고정)
+def render_cyber_os_terminal():
+    terminal_path = _root_dir / "prototypes" / "gigang_data_terminal.html"
+    if not terminal_path.exists():
+        terminal_path = _root_dir / "GIGANG_Data_Terminal_Beta.html"
+    
+    if not terminal_path.exists():
+        st.error("Cyber OS Terminal HTML 파일을 찾을 수 없습니다.")
+        return
+        
+    html_content = terminal_path.read_text(encoding="utf-8")
+    
+    # 완전히 사이드바 및 헤더 숨김 처리 (완전 몰입형 순수 차세대 사이버 OS)
+    st.markdown('''
+    <style>
+        [data-testid="stSidebar"],
+        [data-testid="collapsedControl"],
+        header[data-testid="stHeader"],
+        footer {
+            display: none !important;
+        }
+        .block-container {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+        }
+        iframe {
+            width: 100% !important;
+            height: 100vh !important;
+            min-height: 980px !important;
+            border: none !important;
+        }
+    </style>
+    ''', unsafe_allow_html=True)
+    
+    components.html(html_content, height=1050, scrolling=True)
+
+# 🚀 모든 기능은 차세대 사이버 OS로 대체: 메인에서 즉시 렌더링 후 완료
+render_cyber_os_terminal()
+st.stop()
 
 # 2. 다크 테마 및 인터랙티브 툴팁 CSS
 st.markdown("""
@@ -1937,42 +1978,7 @@ with st.sidebar:
     
     st.markdown("<br><div style='color:#566981; font-size:11px; text-align:center;'>SKT ALEPH 캡스톤 4조 GIGANG v1.0</div>", unsafe_allow_html=True)
 
-def render_cyber_os_terminal():
-    terminal_path = _root_dir / "prototypes" / "gigang_data_terminal.html"
-    if not terminal_path.exists():
-        terminal_path = _root_dir / "GIGANG_Data_Terminal_Beta.html"
-    
-    if not terminal_path.exists():
-        st.error("Cyber OS Terminal HTML 파일을 찾을 수 없습니다.")
-        return
-        
-    html_content = terminal_path.read_text(encoding="utf-8")
-    
-    # Streamlit 풀블리드 반응형 CSS 오버라이드
-    st.markdown('''
-    <style>
-        .block-container {
-            padding-top: 0.2rem !important;
-            padding-bottom: 0rem !important;
-            padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
-            max-width: 100% !important;
-        }
-        iframe {
-            width: 100% !important;
-            border: none !important;
-            border-radius: 8px !important;
-        }
-    </style>
-    ''', unsafe_allow_html=True)
-    
-    components.html(html_content, height=1050, scrolling=True)
-
-
-# 🚀 차세대 사이버 OS UI를 메인 기본 뷰로 장착
-if st.session_state.get("ui_view_mode", "⚡ 차세대 사이버 OS (메인)") == "⚡ 차세대 사이버 OS (메인)":
-    render_cyber_os_terminal()
-    st.stop()
+# (Legacy fallback blocks preserved below)
 
 
 
