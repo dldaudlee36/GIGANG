@@ -172,14 +172,23 @@ def render_cyber_os_terminal():
         }
         iframe {
             width: 100% !important;
-            height: 100vh !important;
-            min-height: 980px !important;
+            min-height: 100vh !important;
             border: none !important;
         }
     </style>
+    <script>
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'gigang:resize' && e.data.height) {
+                const iframes = window.parent.document.querySelectorAll('iframe');
+                iframes.forEach(function(f) {
+                    f.style.minHeight = (e.data.height + 24) + 'px';
+                });
+            }
+        });
+    </script>
     ''', unsafe_allow_html=True)
     
-    components.html(html_content, height=1050, scrolling=True)
+    components.html(html_content, height=1600, scrolling=True)
 
 # 🚀 모든 기능은 차세대 사이버 OS로 대체: 메인에서 즉시 렌더링 후 완료
 render_cyber_os_terminal()
