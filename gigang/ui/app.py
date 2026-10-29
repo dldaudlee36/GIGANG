@@ -138,10 +138,10 @@ _ensure_vivid_search_highlight()
 
 # 1. 페이지 기본 설정
 st.set_page_config(
-    page_title="GIGANG | 통합 보안 관제",
+    page_title="GIGANG | 통합 보안 관제 OS",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # 2. 다크 테마 및 인터랙티브 툴팁 CSS
@@ -1780,7 +1780,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    menu_options = ["종합 관제", "킬체인 분석", "AI·IT 거버넌스", "중앙 서버 파이프라인", "🚀 차세대 사이버 OS (Beta)"]
+    menu_options = ["종합 관제", "킬체인 분석", "AI·IT 거버넌스", "중앙 서버 파이프라인"]
     
     # 🌟 URL Query Parameter 지원 (?page=overview, killchain, governance, pipeline)
     qp = getattr(st, "query_params", None)
@@ -1790,8 +1790,7 @@ with st.sidebar:
             "overview": "종합 관제", "관제": "종합 관제",
             "killchain": "킬체인 분석", "킬체인": "킬체인 분석",
             "governance": "AI·IT 거버넌스", "거버넌스": "AI·IT 거버넌스",
-            "pipeline": "중앙 서버 파이프라인", "파이프라인": "중앙 서버 파이프라인",
-            "beta": "🚀 차세대 사이버 OS (Beta)", "terminal": "🚀 차세대 사이버 OS (Beta)"
+            "pipeline": "중앙 서버 파이프라인", "파이프라인": "중앙 서버 파이프라인"
         }
         if url_page:
             mapped = page_map.get(str(url_page).lower(), url_page)
@@ -1801,12 +1800,32 @@ with st.sidebar:
     if "nav_radio" not in st.session_state or st.session_state.nav_radio not in menu_options:
         st.session_state.nav_radio = "종합 관제"
 
-    menu = st.radio(
-        "네비게이션",
-        menu_options,
-        key="nav_radio",
-        label_visibility="collapsed"
+    ui_mode = st.radio(
+        "🎨 대시보드 뷰 모드",
+        ["⚡ 차세대 사이버 OS (메인)", "📋 클래식 레거시 뷰"],
+        index=0,
+        key="ui_view_mode",
+        label_visibility="visible",
+        help="차세대 고밀도 테크니컬 블랙 관제 UI 또는 클래식 파이썬 스트림릿 위젯 뷰를 전환합니다."
     )
+
+    st.markdown("---")
+
+    if ui_mode == "📋 클래식 레거시 뷰":
+        menu = st.radio(
+            "네비게이션",
+            menu_options,
+            key="nav_radio",
+            label_visibility="collapsed"
+        )
+    else:
+        menu = "종합 관제"
+        st.markdown('''
+        <div style="padding:10px 12px;background:rgba(37,201,186,0.08);border-left:3px solid #25c9ba;border-radius:4px;font-size:11.5px;color:#94a3b8;line-height:1.5;">
+            <b style="color:#25c9ba;">🛡️ 차세대 사이버 OS 활성화</b><br>
+            메인 터미널 좌측 독의 6개 뷰 버튼과 상단 5대 테마/폰트 컨트롤러를 직접 조작할 수 있습니다.
+        </div>
+        ''', unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -1917,6 +1936,44 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     st.markdown("<br><div style='color:#566981; font-size:11px; text-align:center;'>SKT ALEPH 캡스톤 4조 GIGANG v1.0</div>", unsafe_allow_html=True)
+
+def render_cyber_os_terminal():
+    terminal_path = _root_dir / "prototypes" / "gigang_data_terminal.html"
+    if not terminal_path.exists():
+        terminal_path = _root_dir / "GIGANG_Data_Terminal_Beta.html"
+    
+    if not terminal_path.exists():
+        st.error("Cyber OS Terminal HTML 파일을 찾을 수 없습니다.")
+        return
+        
+    html_content = terminal_path.read_text(encoding="utf-8")
+    
+    # Streamlit 풀블리드 반응형 CSS 오버라이드
+    st.markdown('''
+    <style>
+        .block-container {
+            padding-top: 0.2rem !important;
+            padding-bottom: 0rem !important;
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+            max-width: 100% !important;
+        }
+        iframe {
+            width: 100% !important;
+            border: none !important;
+            border-radius: 8px !important;
+        }
+    </style>
+    ''', unsafe_allow_html=True)
+    
+    components.html(html_content, height=1050, scrolling=True)
+
+
+# 🚀 차세대 사이버 OS UI를 메인 기본 뷰로 장착
+if st.session_state.get("ui_view_mode", "⚡ 차세대 사이버 OS (메인)") == "⚡ 차세대 사이버 OS (메인)":
+    render_cyber_os_terminal()
+    st.stop()
+
 
 
 # ==========================================
@@ -3695,27 +3752,4 @@ elif menu == "중앙 서버 파이프라인":
     render_live_pipeline()
 
 
-if menu == "🚀 차세대 사이버 OS (Beta)":
-    terminal_path = _root_dir / "prototypes" / "gigang_data_terminal.html"
-    if not terminal_path.exists():
-        terminal_path = _root_dir / "GIGANG_Data_Terminal_Beta.html"
-    
-    if terminal_path.exists():
-        html_content = terminal_path.read_text(encoding="utf-8")
-        st.markdown("""
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding:12px 18px;background:#021c26;border-radius:8px;box-shadow:0 0 0 1px rgba(37,201,186,0.22) inset;">
-            <div>
-                <span style="font-size:16px;font-weight:700;color:#f6f7f8;letter-spacing:0.04em;">🛡️ GIGANG Neo-Tactical Cyber OS Terminal (Beta)</span>
-                <span style="font-size:11px;color:#25c9ba;margin-left:8px;font-weight:600;padding:2px 8px;border-radius:12px;background:rgba(37,201,186,0.15);">v4.0.0-beta</span>
-                <p style="font-size:12px;color:#94a3b8;margin:4px 0 0 0;">차세대 보안 관제(SOC/SASE) 전술 OS 윈도우 시스템 · 5개 전술 컬러 테마 & 5개 폰트 실시간 전환 · 6개 핵심 관제 뷰 완비</p>
-            </div>
-            <div>
-                <a href="GIGANG_Data_Terminal_Beta.html" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:6px;background:linear-gradient(-135deg, #008fec, #25c9ba);color:#ffffff;font-size:12px;font-weight:600;text-decoration:none;">
-                    ↗ 단독 전체화면 열기
-                </a>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        components.html(html_content, height=920, scrolling=True)
-    else:
-        st.error("Beta Terminal HTML 파일을 찾을 수 없습니다.")
+# (Old Beta slot cleanly retired: Cyber OS Terminal is now the default main interface)
