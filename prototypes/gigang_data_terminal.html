@@ -2442,6 +2442,7 @@
 
     /* Neo-Tactical Control Dock (Mobile Optimized) */
     .neo-control-dock {
+      display: none !important;
       position: fixed;
       top: 16px;
       right: 20px;
@@ -5404,42 +5405,7 @@
 
       return `
         <div class="v-terminal neo">
-          <!-- Neo-Tactical Interactive Control Dock: 5 Color Themes & 5 Fonts -->
-          <div class="neo-control-dock">
-            <!-- 🎨 5 Color Themes Selector -->
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:11.5px;font-weight:700;color:var(--color-secondary-text);letter-spacing:0.02em;">🎨 테마:</span>
-              <select onchange="window.setColorTheme(this.value)" style="height:28px;padding:0 10px;border-radius:9999px;font-size:11.5px;font-weight:600;background:rgba(var(--color-background-code),0.85);color:var(--color-accent);border:1px solid rgba(var(--color-accent-code),0.45);outline:none;cursor:pointer;font-family:inherit;">
-                <option value="ocean" ${(!state.colorTheme || state.colorTheme === 'ocean') ? 'selected' : ''}>1. 🌊 Deep Ocean (심해 틸)</option>
-                <option value="violet" ${state.colorTheme === 'violet' ? 'selected' : ''}>2. 🔮 Obsidian Violet (네뷸라)</option>
-                <option value="emerald" ${state.colorTheme === 'emerald' ? 'selected' : ''}>3. 🌲 Stealth Emerald (에메랄드)</option>
-                <option value="cobalt" ${state.colorTheme === 'cobalt' ? 'selected' : ''}>4. 🌌 Midnight Cobalt (코발트)</option>
-                <option value="carbon" ${state.colorTheme === 'carbon' ? 'selected' : ''}>5. ⚙️ Titanium Carbon (카본)</option>
-              </select>
-            </div>
-
-            <span style="width:1px;height:16px;background:rgba(var(--color-accent-code),0.25);"></span>
-
-            <!-- 🔤 5 Fonts Selector -->
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="font-size:11.5px;font-weight:700;color:var(--color-secondary-text);letter-spacing:0.02em;">🔤 폰트:</span>
-              <select onchange="window.setFontFamily(this.value)" style="height:28px;padding:0 10px;border-radius:9999px;font-size:11.5px;font-weight:600;background:rgba(var(--color-background-code),0.85);color:var(--color-accent);border:1px solid rgba(var(--color-accent-code),0.45);outline:none;cursor:pointer;font-family:inherit;">
-                <option value="pretendard" ${state.fontTheme === 'pretendard' ? 'selected' : ''}>1. Pretendard (표준 UI)</option>
-                <option value="ibm" ${state.fontTheme === 'ibm' ? 'selected' : ''}>2. IBM Plex Sans/Mono (엔지니어링)</option>
-                <option value="jetbrains" ${state.fontTheme === 'jetbrains' ? 'selected' : ''}>3. JetBrains Mono + SUIT (개발자)</option>
-                <option value="jakarta" ${state.fontTheme === 'jakarta' ? 'selected' : ''}>4. Plus Jakarta Sans (시원·모던)</option>
-                <option value="geist" ${(!state.fontTheme || state.fontTheme === 'geist') ? 'selected' : ''}>5. Geist / Geist Mono (하이엔드)</option>
-              </select>
-            </div>
-
-            <span style="width:1px;height:16px;background:rgba(var(--color-accent-code),0.25);"></span>
-
-            <!-- 다크/라이트 모드 버튼 -->
-            <button type="button" onclick="window.setNeoTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light')" style="height:28px;padding:0 10px;border-radius:9999px;font-size:11.5px;font-weight:600;background:rgba(var(--color-background-code),0.6);border:1px solid rgba(var(--color-accent-code),0.35);color:var(--color-accent);cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
-              ${isDark ? ico.moon : ico.sun}
-              <span>${isDark ? 'Dark' : 'Light'}</span>
-            </button>
-          </div>
+<!-- Control Dock removed: Locked to Theme 1 (Deep Ocean) & Font 5 (Geist) -->
 
           <aside class="neo-side ${state.sidebarCollapsed ? 'collapsed' : ''}" aria-label="메인 메뉴">
             <div class="neo-brand">
