@@ -171,9 +171,14 @@ def render_cyber_os_terminal():
             max-width: 100% !important;
         }
         iframe {
-            width: 100% !important;
-            min-height: 100vh !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
             border: none !important;
+            z-index: 999999 !important;
         }
     </style>
     <script>
@@ -188,7 +193,7 @@ def render_cyber_os_terminal():
     </script>
     ''', unsafe_allow_html=True)
     
-    components.html(html_content, height=1600, scrolling=True)
+    components.html(html_content, height=1000, scrolling=True)
 
 # 🚀 모든 기능은 차세대 사이버 OS로 대체: 메인에서 즉시 렌더링 후 완료
 render_cyber_os_terminal()
