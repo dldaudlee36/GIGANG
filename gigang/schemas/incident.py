@@ -30,12 +30,10 @@ class RiskState(str, Enum):
     WATCH    : 선제 감시. 유출 '준비' 정황은 보이지만 아직 데이터는 안 나갔다.
                ★ 이 단계가 GIGANG의 차별점. 기존 보안 장비는 여기서 아무것도 안 한다.
     HIGH     : 실제로 데이터가 나갔다. 침해사고 확정
-    CRITICAL : HIGH보다 심각한 경우 (대규모 유출 등)
     """
     NORMAL = "NORMAL"
     WATCH = "WATCH"
     HIGH = "HIGH"
-    CRITICAL = "CRITICAL"
 
 
 class UserRiskRecord(BaseModel):
@@ -57,7 +55,6 @@ class UserRiskRecord(BaseModel):
 
 class Severity(str, Enum):
     """인시던트의 심각도 등급. 대시보드에서 색상 구분에도 쓰인다."""
-    CRITICAL = "CRITICAL"   # 빨강 - 즉시 대응
     HIGH = "HIGH"           # 주황 - 긴급
     MEDIUM = "MEDIUM"       # 노랑 - 주의
     LOW = "LOW"             # 초록 - 참고

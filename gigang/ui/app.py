@@ -2692,7 +2692,7 @@ if menu == "종합 관제":
 
     # 위험도별 인시던트 목록 분할 (WATCH: MEDIUM / NORMAL: LOW)
     all_incident_ids = [inc.incident_id for inc in incidents]
-    crit_high_ids = [inc.incident_id for inc in incidents if inc.severity in [Severity.CRITICAL, Severity.HIGH]]
+    crit_high_ids = [inc.incident_id for inc in incidents if inc.severity == Severity.HIGH]
     watch_ids = [inc.incident_id for inc in incidents if inc.severity == Severity.MEDIUM]
     normal_ids = [inc.incident_id for inc in incidents if inc.severity == Severity.LOW]
 
@@ -2702,8 +2702,8 @@ if menu == "종합 관제":
     elif "selected_incident_id" not in st.session_state or st.session_state.selected_incident_id not in all_incident_ids:
         st.session_state.selected_incident_id = all_incident_ids[0]
 
-    # 위험도 우선순위 정렬: CRITICAL -> HIGH -> MEDIUM (WATCH) -> LOW (NORMAL) (동일 등급 내 점수 내림차순)
-    sev_order = {Severity.CRITICAL: 0, Severity.HIGH: 1, Severity.MEDIUM: 2, Severity.LOW: 3}
+    # 위험도 우선순위 정렬: HIGH -> MEDIUM (WATCH) -> LOW (NORMAL) (동일 등급 내 점수 내림차순)
+    sev_order = {Severity.HIGH: 0, Severity.MEDIUM: 1, Severity.LOW: 2}
     sorted_incidents = sorted(
         incidents,
         key=lambda x: (sev_order.get(x.severity, 99), -x.score)
@@ -2715,9 +2715,7 @@ if menu == "종합 관제":
         inc = ctx.correlation_engine.get_incident(inc_id)
         if not inc:
             return inc_id
-        if inc.severity == Severity.CRITICAL:
-            badge = f"🔴 [치명 {inc.score}점]"
-        elif inc.severity == Severity.HIGH:
+        if inc.severity == Severity.HIGH:
             badge = f"🔴 [고위험 {inc.score}점]"
         elif inc.severity == Severity.MEDIUM:
             badge = f"🟡 [관찰 {inc.score}점]"
@@ -2834,7 +2832,7 @@ if menu == "종합 관제":
                     <div style="font-size:12px; color:#94a3b8; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">즉시 차단 요구 인시던트</div>
                 </div>
                 <div style="flex-shrink:0; width:68px; height:68px; display:flex; align-items:center; justify-content:center;">
-                    <span style="font-size:10.5px; font-weight:700; color:#ff8591; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); padding:5px 10px; border-radius:9999px; letter-spacing:0.5px; white-space:nowrap;">CRITICAL</span>
+                    <span style="font-size:10.5px; font-weight:700; color:#ff8591; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); padding:5px 10px; border-radius:9999px; letter-spacing:0.5px; white-space:nowrap;">HIGH</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -2982,22 +2980,7 @@ if menu == "종합 관제":
         selected_inc = ctx.correlation_engine.get_incident(st.session_state.selected_incident_id)
         if selected_inc:
             # 🌟 사용자 요청: 위험도 색상을 카드 테두리, 발광, 텍스트, 뱃지 전반에 반영하여 시인성 향상
-            if selected_inc.severity == Severity.CRITICAL:
-                card_theme = {
-                    "border": "rgba(239, 68, 68, 0.5)",
-                    "border_left": "#f87171",
-                    "glow": "rgba(239, 68, 68, 0.25)",
-                    "bg": "linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0%, rgba(239, 68, 68, 0.08) 100%)",
-                    "header_color": "#f87171",
-                    "header_label": "🚨 [치명적 침해사고 긴급 격리 대상] 인시던트 종합 정보",
-                    "dot_glow": "#ef4444",
-                    "badge": '<span class="badge badge-critical" style="font-size:13px; padding:5px 12px; background:#dc2626; color:#ffffff; font-weight:800; border-radius:6px;">치명</span>',
-                    "score_color": "#ff4d61",
-                    "actor_color": "#fca5a5",
-                    "target_color": "#f87171",
-                    "inner_border": "rgba(239, 68, 68, 0.25)",
-                }
-            elif selected_inc.severity == Severity.HIGH:
+            if selected_inc.severity == Severity.HIGH:
                 card_theme = {
                     "border": "rgba(244, 63, 94, 0.5)",
                     "border_left": "#fb7185",
@@ -3134,7 +3117,6 @@ elif menu == "킬체인 분석":
             if not inc:
                 return inc_id
             sev_badge = {
-                Severity.CRITICAL: "🔴 [CRITICAL]",
                 Severity.HIGH: "🔴 [HIGH]",
                 Severity.MEDIUM: "🟡 [WATCH]",
                 Severity.LOW: "🟢 [NORMAL]"
@@ -3161,14 +3143,12 @@ elif menu == "킬체인 분석":
 
         # 🌟 인시던트 위험도에 따른 동적 설명창 테마
         summary_class = {
-            Severity.CRITICAL: "inc-summary-critical",
             Severity.HIGH: "inc-summary-high",
             Severity.MEDIUM: "inc-summary-medium",
             Severity.LOW: "inc-summary-low"
         }.get(target_inc.severity, "inc-summary-high")
 
         badge_meta = {
-            Severity.CRITICAL: {"label": "🔴 CRITICAL", "bg": "rgba(220, 38, 38, 0.35)", "border": "#dc2626", "color": "#fecaca"},
             Severity.HIGH: {"label": "🔴 HIGH", "bg": "rgba(239, 68, 68, 0.35)", "border": "#ef4444", "color": "#fee2e2"},
             Severity.MEDIUM: {"label": "🟡 WATCH", "bg": "rgba(245, 158, 11, 0.3)", "border": "#f59e0b", "color": "#fef08a"},
             Severity.LOW: {"label": "🟢 NORMAL", "bg": "rgba(16, 185, 129, 0.3)", "border": "#10b981", "color": "#a7f3d0"}
@@ -3349,7 +3329,7 @@ elif menu == "AI·IT 거버넌스":
         if col == "domain":
             return asset.domain.lower()
         elif col == "risk":
-            order = {Severity.CRITICAL: 0, Severity.HIGH: 1, Severity.MEDIUM: 2, Severity.LOW: 3}
+            order = {Severity.HIGH: 0, Severity.MEDIUM: 1, Severity.LOW: 2}
             return order.get(asset.risk_level, 4)
         elif col == "status":
             order = {SanctionStatus.UNAPPROVED: 0, SanctionStatus.BLOCKED: 1, SanctionStatus.APPROVED: 2}
@@ -3457,9 +3437,6 @@ elif menu == "AI·IT 거버넌스":
 
         for asset in sorted_assets:
             badge_style = "badge-high" if asset.risk_level == Severity.HIGH else ("badge-medium" if asset.risk_level == Severity.MEDIUM else "badge-low")
-            if asset.risk_level == Severity.CRITICAL:
-                badge_style = "badge-critical"
-                
             status_text = "정식 승인됨" if asset.sanction_status == SanctionStatus.APPROVED else ("명시적 차단" if asset.sanction_status == SanctionStatus.BLOCKED else "미승인 검토중")
             status_style = "badge-status-approved" if asset.sanction_status == SanctionStatus.APPROVED else ("badge-status-blocked" if asset.sanction_status == SanctionStatus.BLOCKED else "badge-status-unapproved")
 

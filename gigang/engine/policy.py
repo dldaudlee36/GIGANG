@@ -55,15 +55,18 @@ class Judgment:
 # 상관분석 배점. department_policy.json 의 "score" 가 없을 때만 쓴다.
 DEFAULT_SCORE = {
     "base": {"not_allowed": 60, "over_usual": 55, "no_department": 55, "capture": 60,
-             "uninspectable": 62, "zero": 50, "usual": 25},
+             "uninspectable": 62, "zero": 50, "usual": 25,
+             # 이벤트 규칙(FSM)이 쓰는 기본점. 값은 기존 하드코딩 그대로다 (배점 변경 없음).
+             "fsm_watch": 68, "image_watch": 70, "self_heal": 20,
+             "fsm_high_upload": 95, "fsm_high_transfer": 92,
+             "dormant_upload": 96, "dormant_transfer": 94,
+             "paste_transfer": 93, "image_match": 93, "dl3": 95, "com3": 93},
     "data": {"rrn": 12, "card": 12, "account": 9, "phone": 4, "email": 4},
     "count": [[30, 14], [10, 10], [3, 5]],
     "near_minutes": 5, "near": 6,
     "download": 5,
-    "dl3": 95,
-    "com3": 93,
     "min": {"WATCH": 60},
-    "max": {"RECORD": 59, "WATCH": 89, "HIGH": 99},
+    "max": {"NORMAL": 59, "RECORD": 59, "WATCH": 89, "HIGH": 99},
 }
 
 
@@ -84,7 +87,10 @@ def load_policy(path: Path = POLICY_PATH) -> Dict[str, Any]:
     policy.setdefault("departments", {})
     policy.setdefault("users", {})
     policy.setdefault("rows", [])
-    policy["score"] = {**DEFAULT_SCORE, **(policy.get("score") or {})}
+    custom = policy.get("score") or {}
+    policy["score"] = {**DEFAULT_SCORE, **custom}
+    for key in ("base", "data", "min", "max"):      # 일부만 적어도 나머지는 기본값을 쓴다
+        policy["score"][key] = {**DEFAULT_SCORE[key], **(custom.get(key) or {})}
     return policy
 
 
@@ -273,18 +279,19 @@ def judge(kind: str, event_time: datetime, user: str, extra: Dict[str, Any], sou
     return score_judgment(_apply_policy(user, extra, policy, context, prior), scored, minutes, False, policy)
 
 
-def score_judgment(result: Judgment, counts: Dict[str, int], minutes: Optional[float],
-                   download: bool, policy: Dict[str, Any]) -> Judgment:
+def compute_score(kind: str, level: str, s: Dict[str, Any], counts: Optional[Dict[str, int]] = None,
+                  minutes: Optional[float] = None, download: bool = False) -> Tuple[int, List[Tuple[str, int]], int]:
     """
-    상관분석 점수를 매기고 근거 줄을 덧붙인다. 배점은 정책의 "score" (department_policy.json).
+    GIGANG 의 유일한 점수 계산식. 정책 판정(policy.py)과 상태 전이(correlation.py)가 모두 이 함수를 쓴다.
 
-      기본점(판정 종류) + 가장 민감한 데이터 1종 + 건수 + AI 접속과 가까움 + 파일 다운로드
-      → 등급별 하한·상한(WATCH 60~89, 기록만 ~59, HIGH ~99). 기록만이 WATCH 점수를 넘지 않게.
+      기본점(kind) + 가장 민감한 데이터 1종 + 건수 + AI 접속과 가까움 + 파일 다운로드
+      → 등급별 하한·상한으로 자른다 (등급은 이벤트 규칙이 정하고, 점수는 같은 등급 안의 중요도만 나눈다).
       건수는 종류를 합치지 않고 가장 많은 종류의 건수로 센다 (고객 5명 = 전화 5 + 이메일 5 를 10건으로 부풀리지 않게).
+
+    돌려주는 값: (최종 점수, [(항목, 점수), ...], 자르기 전 합계)
     """
-    s = policy["score"]
-    parts = [(f"기본({result.rules[0] if result.rules else result.kind})", s["base"].get(result.kind, s["base"]["no_department"]))]
-    hit = [t for t, n in counts.items() if n]
+    parts = [(f"기본({kind})", s["base"].get(kind, s["base"]["no_department"]))]
+    hit = [t for t, n in (counts or {}).items() if n]
     if hit:
         top = max(hit, key=lambda t: s["data"].get(t, 0))
         parts.append((DATA_LABELS[top], s["data"].get(top, 0)))
@@ -297,9 +304,21 @@ def score_judgment(result: Judgment, counts: Dict[str, int], minutes: Optional[f
     if download:
         parts.append(("파일 다운로드", s["download"]))
     raw = sum(p for _, p in parts if p)
-    result.score = max(min(raw, s["max"].get(result.level, 99)), s.get("min", {}).get(result.level, 0))
-    cut = f" → 상한 {result.score}" if result.score < raw else f" → 하한 {result.score}" if result.score > raw else ""
-    result.reasons.append("상관분석 점수: " + " + ".join(f"{n} {p}" for n, p in parts if p) + f" = {raw}점{cut}")
+    final = max(min(raw, s["max"].get(level, 99)), s.get("min", {}).get(level, 0))
+    return final, parts, raw
+
+
+def explain_score(parts: List[Tuple[str, int]], raw: int, final: int) -> str:
+    """점수 근거 한 줄. 화면에 보이는 항목별 점수는 반드시 이 함수로 만든다 (문구에 점수를 직접 적지 않는다)."""
+    cut = f" → 상한 {final}" if final < raw else f" → 하한 {final}" if final > raw else ""
+    return "상관분석 점수: " + " + ".join(f"{n} {p}" for n, p in parts if p) + f" = {raw}점{cut}"
+
+
+def score_judgment(result: Judgment, counts: Dict[str, int], minutes: Optional[float],
+                   download: bool, policy: Dict[str, Any]) -> Judgment:
+    """판정 결과에 상관분석 점수를 매기고 근거 줄을 덧붙인다. 계산은 compute_score() 하나."""
+    result.score, parts, raw = compute_score(result.kind, result.level, policy["score"], counts, minutes, download)
+    result.reasons.append(explain_score(parts, raw, result.score))
     return result
 
 
@@ -341,11 +360,11 @@ def judge_upload(file_name: Optional[str], file_size: Optional[int], target: str
     if not source:
         return None
     when = f", {matched['time']:%m-%d %H:%M} 다운로드" if matched else ""
-    score = score_cfg["dl3"]
+    score, parts, raw = compute_score("dl3", "HIGH", score_cfg)
     return Judgment("HIGH", ["DL-3"], [
         f"[DL-3] 기밀 DB({source})에서 받은 파일을 생성형 AI({target})에 업로드 · 부서·상태 무관",
         f"업로드 파일: '{file_name}' ({_size(file_size)}) — 다운로드 파일과 이름·크기 일치{when}",
-        f"상관분석 점수: 기밀 DB 다운로드 → 생성형 AI 업로드 킬체인 확정 {score}점",
+        "킬체인 확정: 기밀 DB 다운로드 → 생성형 AI 업로드 · " + explain_score(parts, raw, score),
     ], score=score, kind="dl3")
 
 
@@ -369,10 +388,10 @@ def judge_paste_after_copy(copies: List[Dict[str, Any]], paste_time: datetime, p
     if match is None:
         return None
     gap = max((paste_time - match["time"]).total_seconds() / 60, 0)
-    score = policy["score"]["com3"]
+    score, parts, raw = compute_score("com3", "HIGH", policy["score"])
     rules = f" ({', '.join(match['rules'])})" if match.get("rules") else ""
     return Judgment("HIGH", ["COM-3"], [
         f"[COM-3] 기밀 DB({match['source']}) 복사{rules} {gap:.0f}분 뒤 생성형 AI({target})에 붙여넣기 · 부서·상태 무관",
         f"복사 {match['length']:,}자 ↔ 붙여넣기 {paste_length:,}자 (글자 수 일치로 같은 내용 판단, 원문은 보지 않음)",
-        f"상관분석 점수: 기밀 DB 복사 → 생성형 AI 입력 킬체인 확정 {score}점",
+        "킬체인 확정: 기밀 DB 복사 → 생성형 AI 입력 · " + explain_score(parts, raw, score),
     ], score=score, kind="com3")

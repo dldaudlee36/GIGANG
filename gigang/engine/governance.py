@@ -198,7 +198,7 @@ def analyze_domain_with_gemini(domain: str, api_key: Optional[str] = None, live_
 
         # LLM이 준 문자열("HIGH")을 프로그램이 쓰는 Severity 값으로 바꾼다
         r_level = data.get("risk_level", "MEDIUM").upper()
-        severity_map = {"CRITICAL": Severity.CRITICAL, "HIGH": Severity.HIGH, "MEDIUM": Severity.MEDIUM, "LOW": Severity.LOW}
+        severity_map = {"CRITICAL": Severity.HIGH, "HIGH": Severity.HIGH, "MEDIUM": Severity.MEDIUM, "LOW": Severity.LOW}
         return {
             "service_name": data.get("service_name", domain.capitalize()),
             "category": data.get("category", "외부 AI/SaaS 서비스"),
@@ -512,7 +512,7 @@ class ShadowAIGovernanceEngine:
         양성화/차단 등 승인 상태 변경
 
         관리자가 거버넌스 화면에서 '승인' 또는 '차단' 버튼을 누르면 호출된다.
-        승인하면 위험도를 LOW로, 차단하면 CRITICAL로 함께 바꾼다.
+        승인하면 위험도를 LOW로, 차단하면 HIGH로 함께 바꾼다.
         (차단된 도메인을 목록 맨 위에 띄워서 관리자가 바로 알아보게 하려는 것)
 
         ※ 상태 변경 이력은 남기지 않는다. 누가 언제 승인했는지 추적하려면 별도 기록이 필요하다.
@@ -522,7 +522,7 @@ class ShadowAIGovernanceEngine:
             if new_status == SanctionStatus.APPROVED:
                 self.assets[domain].risk_level = Severity.LOW
             elif new_status == SanctionStatus.BLOCKED:
-                self.assets[domain].risk_level = Severity.CRITICAL
+                self.assets[domain].risk_level = Severity.HIGH
             return self.assets[domain]
         return None
 
@@ -530,10 +530,10 @@ class ShadowAIGovernanceEngine:
         """
         위험도 높은 순서로 정렬하여 반환
 
-        Severity는 문자열이라 그냥 정렬하면 알파벳 순(CRITICAL, HIGH, LOW, MEDIUM)이 되어버린다.
+        Severity는 문자열이라 그냥 정렬하면 알파벳 순(HIGH, LOW, MEDIUM)이 되어버린다.
         그래서 각 등급에 번호를 매긴 표(severity_order)를 만들어 그 번호로 정렬한다.
         """
-        severity_order = {Severity.CRITICAL: 0, Severity.HIGH: 1, Severity.MEDIUM: 2, Severity.LOW: 3}
+        severity_order = {Severity.HIGH: 0, Severity.MEDIUM: 1, Severity.LOW: 2}
         return sorted(list(self.assets.values()), key=lambda x: severity_order.get(x.risk_level, 4))
 
     def analyze_and_register_domain(self, domain: str, api_key: Optional[str] = None, live_context: Optional[Dict[str, Any]] = None) -> ShadowAIAsset:

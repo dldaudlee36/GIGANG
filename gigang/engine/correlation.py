@@ -23,8 +23,8 @@ GIGANG는 그 전에 한 번 더 끊어서 본다.
 아직 돈을 건네지 않았어도 경비원은 이 사람을 요주의 인물로 등록해야 한다. 그게 WATCH다.
 
 [상태 전이 규칙 요약]
-  NORMAL ──(기밀DB 조회 + 15분 내 미승인 AI 접속)──▶ WATCH   68점
-  WATCH  ──(외부 전송 발생)────────────────────────▶ HIGH    92~95점
+  NORMAL ──(기밀DB 조회 + 15분 내 미승인 AI 접속)──▶ WATCH   기본 68점
+  WATCH  ──(외부 전송 발생)────────────────────────▶ HIGH    기본 92~95점
   WATCH  ──(30분간 전송 없음, TTL 만료)────────────▶ NORMAL  자가 치유
   NORMAL ──(단독 대용량 전송 + 과거 WATCH 이력)────▶ HIGH    잠복형 유출
 
@@ -59,7 +59,6 @@ TTL = {
     "NORMAL": timedelta(minutes=0),
     "WATCH": timedelta(minutes=30),       # 30분 경과 시 오탐 자동 해제 (NORMAL 복귀)
     "HIGH": timedelta(hours=24),          # 24시간 유지
-    "CRITICAL": timedelta(days=7)
 }
 
 # 기밀 테이블 목록 — 이 테이블을 조회하면 WATCH 승격 조건 A가 성립한다.
@@ -319,8 +318,8 @@ class CorrelationEngine:
         if event.action == EventAction.DB_IMAGE_CAPTURE:
             if (event.target.domain == 'desktop-oli.tail2bbbea.ts.net' and
                     (event.payload.extra or {}).get('detection_scope') == 'db_image_content' and
-                    old_state not in ('HIGH', 'CRITICAL')):
-                self._apply_state_transition(user, old_state, 'WATCH', 70,
+                    old_state not in ('HIGH',)):
+                self._apply_state_transition(user, old_state, 'WATCH', self._score('image_watch', 'WATCH'),
                     ['사내 DB 내용이 포함된 이미지 캡처가 감지되었습니다.', '내부자유출 의심 1단계 (외부 전송 아님)'], event)
             return
 
@@ -341,8 +340,8 @@ class CorrelationEngine:
                        f"출처: {link['source_domain']}{link.get('source_path', '')}",
                        f"대상: {event.target.domain}",
                        '내용 일치 감지이며 외부 전송 완료를 의미하지 않습니다.']
-            if old_state not in ('HIGH', 'CRITICAL'):
-                self._apply_state_transition(user, old_state, 'HIGH', 93, reasons, event)
+            if old_state not in ('HIGH',):
+                self._apply_state_transition(user, old_state, 'HIGH', self._score('image_match', 'HIGH'), reasons, event)
             self._record_matched_attempt(user, event, reasons)
             return
 
@@ -358,7 +357,7 @@ class CorrelationEngine:
             if old_state not in ('NORMAL', 'WATCH'):
                 return
             action_label = '고객 표 복사 시도' if event.action == EventAction.COPY_ATTEMPT else '고객 엑셀 다운로드 시도'
-            self._apply_state_transition(user, old_state, 'WATCH', 70,
+            self._apply_state_transition(user, old_state, 'WATCH', self._score('image_watch', 'WATCH'),
                 [f'사내 DB {action_label}', '사내 내부자유출 방지 정책에 따른 감시 단계 (유출 확정 아님)'], event)
             return
 
@@ -406,8 +405,8 @@ class CorrelationEngine:
                 inc = self._create_dynamic_incident(
                     user, event, event.payload.file_size or 0,
                     title_prefix="[DL-3 기밀 DB 다운로드 파일]",
-                    evidence_note=f"{result.reasons[0]} (+4점)")
-                new_state = old_state if old_state == "CRITICAL" else "HIGH"
+                    evidence_note=f"{result.reasons[0]}", score=result.score, kind="dl3")
+                new_state = "HIGH"
                 self._apply_state_transition(user, old_state, new_state, result.score, result.reasons, event, incident=inc)
                 if new_state == old_state:
                     # 이미 HIGH 이상이면 전이 기록이 남지 않으므로 근거를 따로 남긴다
@@ -461,7 +460,7 @@ class CorrelationEngine:
             #    유출 킬체인(기밀 조회 → AI 접속 → 전송)이 완성된 것이므로 바로 확정한다.
             if old_state == "WATCH":
                 new_state = "HIGH"
-                score = 95 if is_file_upload else 92
+                score = self._score("fsm_high_upload" if is_file_upload else "fsm_high_transfer", "HIGH")
                 if is_file_upload:
                     reasons = [
                         "사전 감시(WATCH) 등록 사용자의 브라우저 파일 업로드 시도 실시간 감지 (Chrome Extension)",
@@ -477,7 +476,8 @@ class CorrelationEngine:
                     ]
                 
                 # 동적 Incident 생성
-                inc = self._create_dynamic_incident(user, event, bytes_out, file_name=file_name, file_size=file_size)
+                inc = self._create_dynamic_incident(user, event, bytes_out, file_name=file_name, file_size=file_size,
+                                                    score=score, kind="fsm_high_upload" if is_file_upload else "fsm_high_transfer")
                 self._apply_state_transition(user, old_state, new_state, score, reasons, event, incident=inc)
                 return
             else:
@@ -490,7 +490,7 @@ class CorrelationEngine:
                 if has_prior_watch:
                     # 30분 만료(TTL) 후 지연 발생한 잠복형 유출(Dormant Exfiltration / Evasion) 포착 -> 즉시 HIGH 직행!
                     new_state = "HIGH"
-                    score = 96 if is_file_upload else 94
+                    score = self._score("dormant_upload" if is_file_upload else "dormant_transfer", "HIGH")
                     if is_file_upload:
                         reasons = [
                             "과거 기밀 DB 조회 및 WATCH 이력 보유자의 브라우저 파일 업로드 시도 감지",
@@ -507,7 +507,8 @@ class CorrelationEngine:
                         user, event, bytes_out,
                         file_name=file_name, file_size=file_size,
                         title_prefix="[잠복형 유출 의심]",
-                        evidence_note="과거 WATCH 이력 소급 분석: TTL 만료 후 발생한 지연 파일 업로드 유출(Evasion) 감지 (+4점)"
+                        score=score, kind="dormant_upload" if is_file_upload else "dormant_transfer",
+                        evidence_note="과거 WATCH 이력 소급 분석: TTL 만료 후 발생한 지연 파일 업로드 유출(Evasion) 감지"
                     )
                     self._apply_state_transition(user, old_state, new_state, score, reasons, event, incident=inc)
                     return
@@ -607,7 +608,7 @@ class CorrelationEngine:
             incident_id=self._next_incident_id('INC-MATCH'),
             title=f"사내 자료 내용 일치 외부 입력 시도 - {user}",
             category=IncidentCategory.INSIDER_DATA_THEFT,
-            severity=Severity.HIGH, score=93, status=IncidentStatus.ACTIVE,
+            severity=Severity.HIGH, score=self._score('image_match', 'HIGH'), status=IncidentStatus.ACTIVE,
             summary=('화면 OCR로 사내 DB 화면 내용과 일치하는 이미지가 발견되어 첨부 전 차단되었습니다. 외부 전송 완료를 의미하지 않습니다.' if is_image else '확장 프로그램이 사내 복사/붙여넣기 또는 다운로드/업로드 시도를 감지했습니다. 전송 완료는 확인되지 않았습니다.'),
             actor=user, target_asset=event.target.domain or 'external', created_at=event.timestamp,
             event_ids=[event.event_id], evidences=reasons + [
@@ -636,7 +637,7 @@ class CorrelationEngine:
         current_risk = self.store.get_active_risk(user)
         old_state = current_risk["state"] if current_risk else "NORMAL"
         # 이미 HIGH 이상이면 WATCH 로 내리지 않고 기록만 남긴다
-        if result.level == "WATCH" and old_state not in ("HIGH", "CRITICAL"):
+        if result.level == "WATCH" and old_state not in ("HIGH",):
             self._apply_state_transition(user, old_state, "WATCH", result.score, result.reasons, event)
             if old_state == "WATCH":
                 # 이미 WATCH 면 위 전이는 감시 시간만 늘리고 이력을 안 남긴다 (알림 중복 방지).
@@ -732,12 +733,12 @@ class CorrelationEngine:
             #    기밀 DB를 보고 → AI 사이트에 들어가 → 실제로 텍스트를 넣은 것이므로
             #    파일 업로드와 동일하게 '전송이 일어났다'고 판단한다.
             reasons = ["사전 감시(WATCH) 등록 사용자의 붙여넣기 전송 확인"] + base_reasons
-            self._apply_state_transition(user, old_state, "HIGH", 93, reasons, event)
+            self._apply_state_transition(user, old_state, "HIGH", self._score("paste_transfer", "HIGH"), reasons, event)
             return
 
         # COM-3: WATCH 가 아니어도(기록만으로 끝난 평소 업무 복사라도) 그 기밀 DB 복사 내용을 AI 에 붙여넣으면 HIGH.
         #   같은 내용인지는 글자 수로 맞춘다 (policy.judge_paste_after_copy).
-        if old_state not in ("HIGH", "CRITICAL") and is_generative_ai(target_domain):
+        if old_state not in ("HIGH",) and is_generative_ai(target_domain):
             result = dept_policy.judge_paste_after_copy(self.user_db_copies.get(user, []), event.timestamp,
                                                         text_length, target_domain, self.policy)
             if result is not None:
@@ -783,9 +784,19 @@ class CorrelationEngine:
         # (실제 발송 로직은 engine/respond.py 에 있다)
         on_risk_state_changed(user, old_state, new_state, reasons, incident)
 
+    def _score(self, kind: str, level: str) -> int:
+        """이벤트 규칙이 정한 등급(level)의 점수. 계산식은 policy.compute_score() 하나뿐이고, 배점은 정책 JSON 의 score 에 있다."""
+        return dept_policy.compute_score(kind, level, self.policy["score"])[0]
+
+    def _score_line(self, kind: str, level: str) -> str:
+        """증거 목록에 넣는 점수 근거 한 줄 (문구에 점수를 직접 적지 않고 계산 결과에서 만든다)."""
+        score, parts, raw = dept_policy.compute_score(kind, level, self.policy["score"])
+        return dept_policy.explain_score(parts, raw, score)
+
     def _create_dynamic_incident(self, user: str, event: SecurityEvent, bytes_out: int,
                                  file_name: Optional[str] = None, file_size: Optional[int] = None,
-                                 title_prefix: str = "", evidence_note: Optional[str] = None) -> Incident:
+                                 title_prefix: str = "", evidence_note: Optional[str] = None,
+                                 score: Optional[int] = None, kind: Optional[str] = None) -> Incident:
         """
         HIGH 확정 시 침해사고(Incident) 객체를 만들어 저장한다.
 
@@ -816,10 +827,10 @@ class CorrelationEngine:
             title = f"{prefix_str}사용자 '{user}' 미승인 서비스({target_domain})로 기밀 파일('{fname}') 업로드 유출 확정"
             summary = f"사용자 '{user}'({event.actor.src_ip})가 {target_domain}에 기밀 파일('{fname}', {size_kb:.1f} KB) 업로드를 시도하여 Chrome 확장 프로그램 및 에이전트에 의해 실시간 포착/차단되었습니다."
             evidences = [
-                f"Chrome 확장 프로그램(GIGANG Upload Detector) 실시간 첨부 감지: '{fname}' ({fsize:,} bytes) (+4점)",
-                f"단말 Windows Agent(GIGANGAgent.exe) 로컬 브릿지 연동 및 Railway 중앙 서버 실시간 전송 검증 (+2점)",
-                f"동일 사용자/단말({user} / {event.actor.src_ip}) 킬체인 100% 일치 (+2점)",
-                evidence_note or f"기밀 DB 조회 직후 15분 내 미승인 서비스({target_domain}) 파일 업로드 연계 (+2점)"
+                f"Chrome 확장 프로그램(GIGANG Upload Detector) 실시간 첨부 감지: '{fname}' ({fsize:,} bytes)",
+                f"단말 Windows Agent(GIGANGAgent.exe) 로컬 브릿지 연동 및 Railway 중앙 서버 실시간 전송 검증",
+                f"동일 사용자/단말({user} / {event.actor.src_ip}) 킬체인 100% 일치",
+                evidence_note or f"기밀 DB 조회 직후 15분 내 미승인 서비스({target_domain}) 파일 업로드 연계"
             ]
             network_hops = [
                 NetworkHop(from_node=f"User PC ({event.actor.src_ip})", to_node="Internal DB", port=3306, hop_type="db_access"),
@@ -835,10 +846,10 @@ class CorrelationEngine:
             title = f"{prefix_str}사용자 '{user}' 미승인 서비스({target_domain})를 통한 기밀 데이터 유출 확정"
             summary = f"기밀 DB 조회 후 미승인 사이트({target_domain})로 {bytes_out / (1024*1024):.2f}MB 대용량 외부 전송이 발생하여 2단계 상관분석으로 HIGH Incident 생성"
             evidences = [
-                f"동일 사용자/단말({user}) 행위 체인 100% 일치 (+2점)",
-                evidence_note or f"기밀 DB 조회 직후 15분 내 미승인 서비스({target_domain}) 접근 (+2점)",
-                f"위험 상태 기계: 외부 대용량 전송({bytes_out / 1024:.1f} KB) 감지 (+4점)",
-                "동적 2단계 유출 상관분석 시퀀스 최종 완성 (+2점)"
+                f"동일 사용자/단말({user}) 행위 체인 100% 일치",
+                evidence_note or f"기밀 DB 조회 직후 15분 내 미승인 서비스({target_domain}) 접근",
+                f"위험 상태 기계: 외부 대용량 전송({bytes_out / 1024:.1f} KB) 감지",
+                "동적 2단계 유출 상관분석 시퀀스 최종 완성"
             ]
             network_hops = [
                 NetworkHop(from_node=f"User PC ({event.actor.src_ip})", to_node="Internal DB", port=3306, hop_type="db_access"),
@@ -850,12 +861,15 @@ class CorrelationEngine:
                 "사내 보안팀 긴급 슬랙 알림 웹훅 발행 완료"
             ]
 
+        kind = kind or ("fsm_high_upload" if fname else "fsm_high_transfer")
+        score = score if score is not None else self._score(kind, "HIGH")
+        evidences.append(self._score_line(kind, "HIGH"))
         inc = Incident(
             incident_id=inc_id,
             title=title,
             category=IncidentCategory.SHADOW_AI_EXFILTRATION,
             severity=Severity.HIGH,
-            score=95 if fname else 92,
+            score=score,
             status=IncidentStatus.ACTIVE,
             summary=summary,
             actor=f"{event.actor.src_ip} ({user})",
@@ -887,7 +901,7 @@ class CorrelationEngine:
             title=f"사용자 '{user}' 미승인 AI 접속 및 기밀 반출 위험 선제 감시 (WATCH)",
             category=IncidentCategory.SHADOW_AI_EXFILTRATION,
             severity=Severity.MEDIUM,
-            score=68,
+            score=self._score("fsm_watch", "WATCH"),
             status=IncidentStatus.ACTIVE,
             summary=f"사내 기밀 DB({sc.get('table', 'vault')}) 조회 후 15분 내 미승인 서비스({sc.get('service', 'AI')}) 접속 포착 — 데이터 외부 반출 전 선제 감시(WATCH) 승격",
             actor=f"{sc.get('ip', '192.168.10.x')} ({user})",
@@ -895,9 +909,9 @@ class CorrelationEngine:
             created_at=now,
             event_ids=[f"EVT-WATCH-{int(now.timestamp())}"],
             evidences=[
-                f"사내 기밀 DB({sc.get('table', 'vault')}) SELECT 조회 선행 (+2점)",
-                f"15분 내 미승인 외부 서비스({sc.get('service', 'AI')}) 접속 (+2점)",
-                "위험 상태 기계: 1단계 사전 감시(WATCH) 승격 완료 (+4점)"
+                f"사내 기밀 DB({sc.get('table', 'vault')}) SELECT 조회 선행",
+                f"15분 내 미승인 외부 서비스({sc.get('service', 'AI')}) 접속",
+                "위험 상태 기계: 1단계 사전 감시(WATCH) 승격 완료"
             ],
             network_hops=[
                 NetworkHop(from_node=f"User PC ({sc.get('ip', '192.168.10.x')})", to_node="Internal DB", port=3306, hop_type="db_access"),
@@ -931,7 +945,7 @@ class CorrelationEngine:
             title=f"사용자 '{user}' 30분 무전송 만료(TTL)로 인한 정상(NORMAL) 자가 치유",
             category=IncidentCategory.INSIDER_DATA_THEFT,
             severity=Severity.LOW,
-            score=20,
+            score=self._score("self_heal", "NORMAL"),
             status=IncidentStatus.RESOLVED,
             summary=f"사전 감시(WATCH) 대상자였으나 30분간 추가 외부 데이터 전송이 발생하지 않아 정상(NORMAL) 상태로 안전하게 자가 치유(Self-healing) 완료",
             actor=f"Internal ({user})",
@@ -939,8 +953,8 @@ class CorrelationEngine:
             created_at=now,
             event_ids=[f"EVT-TTL-{int(now.timestamp())}"],
             evidences=[
-                "사전 감시 등록 후 30분간 외부 대용량 전송 무발생 (+0점)",
-                "Self-Healing TTL 정책에 따른 안전한 NORMAL 자동 복귀 (+0점)"
+                "사전 감시 등록 후 30분간 외부 대용량 전송 무발생",
+                "Self-Healing TTL 정책에 따른 안전한 NORMAL 자동 복귀"
             ],
             network_hops=[
                 NetworkHop(from_node=f"User PC ({user})", to_node="Internal Gateway", port=443, hop_type="normal")
