@@ -38,7 +38,7 @@ const MatchStore = (() => {
             observed >= x.observed && observed - x.observed <= TTL);
         if (!candidates.length) return {match_status: 'no_match'};
         const source = candidates[candidates.length - 1];
-        return {match_status: 'matched', match: {
+        return {match_status: 'matched', source_inspection:source.inspection || {}, match: {
             source_trace_id: source.trace_id,
             source_kind: kind === 'text' ? 'COPY_ATTEMPT' : 'DOWNLOAD_COMPLETED',
             source_domain: 'desktop-oli.tail2bbbea.ts.net',

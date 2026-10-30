@@ -1,4 +1,5 @@
 """Inspect new clipboard bitmaps locally; retain only expiring DB cell digests."""
+from rules import scan_text
 import base64
 import ctypes
 import hashlib
@@ -101,6 +102,7 @@ def monitor(recognize, base_event, send):
             if any(match_lines(result['lines'], seed, rows) for seed, rows in baselines):
                 event = base_event('DB_IMAGE_CAPTURE', 'desktop-oli.tail2bbbea.ts.net')
                 event.update(source='windows-agent', source_path='/db', detection_scope='db_image_content',
+                             inspectable=True, pattern_hits=scan_text('\n'.join(result['lines'])),
                              capture_source='clipboard_image', trace_id=str(uuid.uuid4()),
                              client_event_time=datetime.now(timezone.utc).isoformat())
                 send(event)

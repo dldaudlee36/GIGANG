@@ -23,6 +23,7 @@ from pathlib import Path
 from urllib.parse import urlsplit, parse_qs
 import requests
 
+from portal_inspection import inspect_content, metadata as inspection_metadata
 from rules import scan_text
 from files import inspect_file
 from link_metadata import link_metadata
@@ -31,7 +32,7 @@ import clipboard_watch
 from site_access import SiteAccess
 
 VERSION = '3.9.0'
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(os.environ.get('GIGANG_APP_ROOT', str(Path(__file__).resolve().parents[2])))
 
 try:
     from dotenv import load_dotenv
@@ -176,10 +177,10 @@ def sync_central_policy():
             raise ValueError('invalid policy payload')
         clean = save_blocklist(raw, payload.get('updated_at'))
         hosts_ok = apply_windows_blocklist(SITE_ACCESS.effective_domains(clean))
-        _policy_status.update(ok=True, last_success=datetime.now(timezone.utc).isoformat(), error=None)
+        _policy_status.update(ok=True, last_success=datetime.now(timezone.utc).isoformat(), error=None, detail=None)
         return hosts_ok
     except (requests.RequestException, ValueError, TypeError) as error:
-        _policy_status.update(ok=False, error=type(error).__name__)
+        _policy_status.update(ok=False, error=type(error).__name__, detail=str(error)[:800])
         apply_saved_policy()
         return False
 
@@ -247,10 +248,14 @@ def extension_event(path, data):
     target = data.get('target')
     if not isinstance(target, str) or not target.strip() or len(target) > 253:
         raise ValueError('Valid site hostname required')
-    kind = 'PASTE_ATTEMPT' if path == '/paste-event' else 'FILE_UPLOAD_ATTEMPT'
+    kind = 'COPY_ATTEMPT' if path == '/copy-event' else 'PASTE_ATTEMPT' if path == '/paste-event' else 'FILE_UPLOAD_ATTEMPT'
     result = base_event(kind, target)
     result['source'] = 'chrome-extension'
-    if kind == 'PASTE_ATTEMPT':
+    if kind == 'COPY_ATTEMPT':
+        if target != 'desktop-oli.tail2bbbea.ts.net' or data.get('source_path') != '/db' or data.get('detection_scope') != 'customer_table':
+            raise ValueError('Invalid portal copy')
+        result.update(source_path='/db', detection_scope='customer_table')
+    elif kind == 'PASTE_ATTEMPT':
         length = data.get('text_length')
         if type(length) is not int or not 0 <= length <= 100_000_000:
             raise ValueError('text_length must be a non-negative integer')
@@ -279,6 +284,7 @@ def extension_event(path, data):
 
     add_client_time(result, data)
     result.update(link_metadata(data, kind, target))
+    result.update(inspection_metadata(data))
     attach_authorization(result, data)
     return result
 
@@ -294,6 +300,17 @@ def attach_authorization(event, data):
 def download_event(data):
     if not isinstance(data, dict):
         raise ValueError('JSON object required')
+    if data.get('event_type') in ('DOWNLOAD_STARTED', 'DOWNLOAD_COMPLETED', 'DOWNLOAD_INTERRUPTED'):
+        if data.get('target') != 'desktop-oli.tail2bbbea.ts.net' or data.get('source_path') != '/db/download':
+            raise ValueError('Invalid portal download')
+        result = base_event(data['event_type'], data['target'])
+        result.update(source='chrome-extension', source_path='/db/download',
+                      download_id=data.get('download_id'), download_state=data.get('download_state'),
+                      file_name=data.get('file_name'), file_size=data.get('file_size'))
+        result.update(inspection_metadata(data))
+        result.update(link_metadata(data, data['event_type'], data['target']))
+        add_client_time(result, data)
+        return result
     urls = [data.get(key) for key in ('url', 'final_url', 'referrer')]
     if any(url is not None and (not isinstance(url, str) or len(url) > 4096) for url in urls):
         raise ValueError('Valid download URL required')
@@ -352,6 +369,7 @@ class ExtensionEventHandler(BaseHTTPRequestHandler):
                 'blocked_count': len(policy['blocked_domains']),
                 'central_policy_ok': _policy_status['ok'],
                 'central_policy_last_success': _policy_status['last_success'],
+                'central_policy_error': _policy_status.get('detail'),
                 'windows_blocking_ok': _hosts_status['ok'],
                 'windows_blocked_hostnames': _hosts_status['blocked_count'],
                 'device_id': SITE_ACCESS.device,
@@ -371,6 +389,20 @@ class ExtensionEventHandler(BaseHTTPRequestHandler):
             self.respond(404, {'error': 'Not found'})
 
     def do_POST(self):
+        if self.path == '/inspect-content':
+            if not re.fullmatch(r'chrome-extension://[a-p]{32}', self.headers.get('Origin', '')):
+                self.respond(403, {'error': 'EXTENSION_ORIGIN_REQUIRED'})
+                return
+            try:
+                count = int(self.headers.get('Content-Length', '0'))
+                if not 0 < count <= 28002000: raise ValueError('Invalid inspection size')
+                self.connection.settimeout(30)
+                data = json.loads(self.rfile.read(count).decode('utf-8'))
+                result = inspect_content(data)
+                self.respond(200, {'status': 'ok', **result})
+            except (ValueError, UnicodeError, OSError):
+                self.respond(400, {'error': 'INSPECTION_FAILED'})
+            return
         if self.path == '/active-tab':
             self.active_tab()
             return
@@ -400,6 +432,8 @@ class ExtensionEventHandler(BaseHTTPRequestHandler):
                     return
                 if self.path == '/image-ocr':
                     result = recognize_image(data)
+                    if result.get('status') == 'ok':
+                        result['inspection'] = {'inspectable':True,'pattern_hits':scan_text('\n'.join(result['lines']))}
                     self.respond(200 if result.get('status') == 'ok' else 422, result)
                     return
                 # /image-event
@@ -422,7 +456,7 @@ class ExtensionEventHandler(BaseHTTPRequestHandler):
                 self.respond(400, {'error': str(e)})
             return
 
-        if self.path not in ('/upload-event', '/paste-event', '/download-event'):
+        if self.path not in ('/copy-event', '/upload-event', '/paste-event', '/download-event'):
             self.respond(404, {'error': 'Not found'})
             return
 
@@ -646,7 +680,7 @@ def main():
     t_sync.start()
 
     # 2. 이미지 가드 클립보드 감시 시작
-    clipboard_watch.start(send_to_railway)
+    clipboard_watch.start(recognize_image, base_event, send_to_railway)
 
     # 3. 키보드 단축키 후크 (캡처 감지)
     if hasattr(ctypes, 'windll'):

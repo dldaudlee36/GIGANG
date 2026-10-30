@@ -38,5 +38,8 @@ tools/git/
 graphify-out/
 scripts/
 
-# 에이전트가 실행 중 만드는 로컬 차단 목록 (저장소에 올리지 않음)
+# Required local OCR implementation (other PowerShell scratch files stay ignored).
+!guard/agent/image_ocr.ps1
+
+# Local policy, logs and generated terminal component stay private.
 runtime/

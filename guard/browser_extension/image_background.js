@@ -26,7 +26,7 @@ const ImageGuardBackground = (() => {
         return {status:'ready',rows:rows.length};
     }
     async function logResult(message,site,result) {
-        const data={target:site.hostname,timestamp:new Date().toISOString(),trace_id:crypto.randomUUID(),
+        const data={...(result.inspection||{}),target:site.hostname,timestamp:new Date().toISOString(),trace_id:crypto.randomUUID(),
             file_name:message.file_name,file_size:message.file_size,event_type:'FILE_UPLOAD_ATTEMPT',
             image_guard:{outcome:result.status==='blocked'?'blocked_match':result.status==='allow'?'no_match':'held_error',
                 channel:message.channel,error:result.error || null,cache_hit:!!result.cache_hit},
@@ -61,7 +61,7 @@ const ImageGuardBackground = (() => {
             const rows=ImageMatch.validRows(saved.imageDB?.rows);
             const cache=(saved.imageBlockedCache||[]).filter(x=>Date.now()-x.observed<ImageMatch.TTL);
             const cached=cache.find(x=>x.hash===fileHash && Date.now()-new Date(x.evidence.source_time).getTime()<ImageMatch.TTL);
-            if(cached) result={status:'blocked',evidence:{...cached.evidence,
+            if(cached) result={status:'blocked',inspection:cached.inspection,evidence:{...cached.evidence,
                 age_seconds:Math.floor((Date.now()-new Date(cached.evidence.source_time).getTime())/1000)},cache_hit:true};
             else if(!rows.length) result={status:'hold',error:'DB_BASELINE_MISSING'};
             else {
@@ -69,9 +69,9 @@ const ImageGuardBackground = (() => {
                     body:JSON.stringify({image_base64:message.image_base64}),credentials:'omit',redirect:'error',signal:AbortSignal.timeout(30000)});
                 const ocr=await response.json();
                 if(!response.ok || ocr.status!=='ok') result={status:'hold',error:ocr.error||'OCR_FAILED'};
-                else result=await ImageMatch.match(ocr.lines,rows,await MatchStore.seed());
+                else { result=await ImageMatch.match(ocr.lines,rows,await MatchStore.seed());result.inspection=ocr.inspection; }
                 if(result.status==='blocked') await chrome.storage.session.set({imageBlockedCache:[...cache,
-                    {hash:fileHash,evidence:result.evidence,observed:Date.now()}].slice(-100)});
+                    {hash:fileHash,evidence:result.evidence,inspection:result.inspection,observed:Date.now()}].slice(-100)});
             }
         } catch { result={status:'hold',error:'LOCAL_INSPECTION_FAILED'}; }
         finally { inspecting=false; }
