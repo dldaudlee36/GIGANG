@@ -50,6 +50,7 @@ from gigang.schemas.incident import (
 from gigang.engine.respond import on_risk_state_changed
 from gigang.engine import policy as dept_policy
 from gigang.storage.sqlite_store import SQLiteStore
+from gigang.engine.slack_notify import notify_high
 
 # 상태별 만료 주기 (TTL)
 # 이 시간이 지나면 해당 상태는 조회에서 제외되어 자동으로 NORMAL로 취급된다.
@@ -616,6 +617,7 @@ class CorrelationEngine:
             network_hops=[], soar_actions=[])
         self.incidents[inc.incident_id] = inc
         self.store.save_incident(inc)
+        notify_high(inc, self.store.db_path)
 
     def _apply_db_export(self, user: str, event: SecurityEvent, ai_accesses: List[tuple]) -> Optional[str]:
         """policy.judge() 결과를 상태에 반영하고 등급("WATCH"/"RECORD")을 돌려준다. 시간창 밖이면 None."""
@@ -882,6 +884,7 @@ class CorrelationEngine:
         )
         self.incidents[inc_id] = inc
         self.store.save_incident(inc)
+        notify_high(inc, self.store.db_path)
         return inc
 
     def create_watch_incident(self, user: str, sc: Dict[str, Any]) -> Incident:
@@ -925,6 +928,7 @@ class CorrelationEngine:
         )
         self.incidents[inc_id] = inc
         self.store.save_incident(inc)
+        notify_high(inc, self.store.db_path)
         return inc
 
     def create_heal_incident(self, user: str) -> Incident:
@@ -966,6 +970,7 @@ class CorrelationEngine:
         )
         self.incidents[inc_id] = inc
         self.store.save_incident(inc)
+        notify_high(inc, self.store.db_path)
         return inc
 
     # ========================================================================
