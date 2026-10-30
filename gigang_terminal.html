@@ -2326,8 +2326,11 @@
     .v-terminal.neo .case-table th:not(:last-child) {
       border-right: 1px solid rgba(var(--color-accent-code), 0.22);
     }
-    .v-terminal.neo .case-table th { position: relative; }
-    .col-resizer { position: absolute; top: 0; right: -4px; bottom: 0; width: 9px; cursor: col-resize; z-index: 3; }
+    .v-terminal.neo .case-table th { position: relative; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* 열을 좁혀도 글자가 줄바꿈되지 않고 한 줄로 잘리게 한다 */
+    .v-terminal.neo .case-table td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .v-terminal.neo .case-table td button { white-space: nowrap; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+    .col-resizer { position: absolute; top: 0; right: 0; bottom: 0; width: 8px; cursor: col-resize; z-index: 3; }
     .col-resizer::after { content: ''; position: absolute; top: 25%; bottom: 25%; left: 4px; width: 1px; background: transparent; transition: background 0.15s; }
     .col-resizer:hover::after { background: rgba(var(--color-accent-code), 0.9); box-shadow: 0 0 6px rgba(var(--color-accent-code), 0.7); }
     .v-terminal.neo table.data-table td { border-bottom: 1px solid var(--rule); font-size: 13px; font-weight: 300; padding: 13px 16px; }
