@@ -6,6 +6,23 @@
     const LIMIT = 50 * 1024 * 1024;
     let pending = Promise.resolve();
     const enqueue = task => { pending = pending.then(task).catch(e => console.warn('[GIGANG]', e.name)); };
+    async function inspectPortal(payload) {
+        try {
+            const result = await chrome.runtime.sendMessage({type:'GIGANG_INSPECT_PORTAL', payload});
+            if (result?.status === 'ok') {
+                const {status, ...metadata} = result;
+                return metadata;
+            }
+        } catch {}
+        return {inspectable:false, reason:'LOCAL_INSPECTION_FAILED'};
+    }
+    async function inspectPortalFile(blob, name) {
+        if (blob.size > 20*1024*1024) return {inspectable:false,reason:'FILE_TOO_LARGE'};
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        let binary = '';
+        for(let i=0;i<bytes.length;i+=32768) binary += String.fromCharCode(...bytes.subarray(i,i+32768));
+        return inspectPortal({file_base64:btoa(binary),file_name:name});
+    }
     async function hashBytes(buffer) {
         return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', buffer)), b => b.toString(16).padStart(2, '0')).join('');
     }
@@ -39,8 +56,9 @@
         const timestamp = new Date().toISOString();
         enqueue(async () => {
             const digest = !event.defaultPrevented && text ? await hashText(text) : null;
+            const inspection = !event.defaultPrevented ? await inspectPortal({text}) : {inspectable:false,reason:'COPY_CANCELLED'};
             text = null;
-            await report('COPY_ATTEMPT',{timestamp,source_path:'/db',detection_scope:'customer_table'},digest);
+            await report('COPY_ATTEMPT',{timestamp,source_path:'/db',detection_scope:'customer_table',...inspection},digest);
         });
     },true);
     document.addEventListener('paste', event => {
@@ -49,11 +67,17 @@
         const target = event.composedPath?.()[0] || event.target;
         if (target?.closest?.('input[type="password"]')) return;
         let text = event.clipboardData.getData('text/plain') || '';
-        if (!text) return;
+        const images = Array.from(event.clipboardData.files || []).filter(file => file.type.startsWith('image/'));
+        if (!text && images.length === 0) return;
         const length = Array.from(text).length, timestamp = new Date().toISOString();
+        const meta = {timestamp, text_length: length};
+        if (images.length) {
+            meta.image_count = images.length;
+            meta.image_bytes = images.reduce((total, file) => total + file.size, 0);
+        }
         enqueue(async () => {
-            const digest = await hashText(text); text = null;
-            await report('PASTE_ATTEMPT',{timestamp,text_length:length},digest);
+            const digest = text ? await hashText(text) : null; text = null;
+            await report('PASTE_ATTEMPT', meta, digest);
         });
     },true);
     document.addEventListener('change', event => {
@@ -69,6 +93,19 @@
             });
         }
     },true);
+
+    document.addEventListener('drop', function (event) {
+        if (globalThis.GIGANGPaused?.()) return;
+        if (!event.isTrusted || !event.dataTransfer) return;
+        for (const file of Array.from(event.dataTransfer.files || [])) {
+            const timestamp = new Date().toISOString();
+            enqueue(async () => {
+                let digest = null;
+                try { if (crypto.subtle && file.size <= LIMIT) digest = await hashBytes(await file.arrayBuffer()); } catch {}
+                await report('FILE_UPLOAD_ATTEMPT', {timestamp, file_name: file.name, file_size: file.size, method: 'drop'}, digest);
+            });
+        }
+    }, true);
     function fileName(header) {
         const encoded = /filename\*=UTF-8''([^;]+)/i.exec(header || '');
         const plain = /filename="?([^";]+)/i.exec(header || '');
@@ -115,8 +152,9 @@
                 const blob=new Blob(chunks,{type:type||'application/octet-stream'});
                 const digest=await hashBytes(await blob.arrayBuffer());
                 const blobUrl=URL.createObjectURL(blob), name=fileName(response.headers.get('Content-Disposition'));
+                const inspection=await inspectPortalFile(blob,name);
                 const result=await chrome.runtime.sendMessage({type:'GIGANG_DOWNLOAD_PREPARED',
-                    blob_url:blobUrl,digest,file_name:name,file_size:blob.size});
+                    blob_url:blobUrl,digest,file_name:name,file_size:blob.size,inspection});
                 if(result?.status!=='ready'){URL.revokeObjectURL(blobUrl);throw new Error('SENSOR_NOT_READY');}
                 const anchor=document.createElement('a');anchor.href=blobUrl;anchor.download=name;
                 document.body.appendChild(anchor);anchor.click();anchor.remove();

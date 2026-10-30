@@ -16,7 +16,7 @@ GIGANG - 기밀 DB 반출 판정 (부서별 정책)
                        검사한 다운로드(DL-1)는 같은 표에 규칙 번호만 DL- 를 붙인다 (DL-CS-2, DL-COM-2 ...)
     5) 결과          → Judgment(등급, 규칙 번호, 사유)
 
-  judge_upload()  ←  DL-3: 기밀 DB에서 받은 파일(이름·크기 일치)을 AI에 올리면 HIGH (부서·상태·시간창 무관)
+  judge_upload()  ←  DL-3: 파일 이름·크기 연관성을 공통 반출 계산기로 평가 (내용 일치 아님)
 
 상태를 바꾸지는 않는다. 상태 저장·알림은 correlation.py 가 이 결과를 받아서 한다.
 그래서 이 함수만 따로 불러 오탐·미탐을 셀 수 있다.
@@ -45,7 +45,7 @@ DATA_LABELS = {
 
 @dataclass
 class Judgment:
-    level: str                                   # "WATCH" 또는 "RECORD"(기록만), DL-3 은 "HIGH"
+    level: str                                   # "WATCH" 또는 "RECORD"(기록만), 반출은 공통 계산기로 등급 결정
     rules: List[str] = field(default_factory=list)
     reasons: List[str] = field(default_factory=list)
     score: int = 0                               # 상관분석 점수 (score_judgment)
@@ -55,18 +55,15 @@ class Judgment:
 # 상관분석 배점. department_policy.json 의 "score" 가 없을 때만 쓴다.
 DEFAULT_SCORE = {
     "base": {"not_allowed": 60, "over_usual": 55, "no_department": 55, "capture": 60,
-             "uninspectable": 62, "zero": 50, "usual": 25,
-             # 이벤트 규칙(FSM)이 쓰는 기본점. 값은 기존 하드코딩 그대로다 (배점 변경 없음).
-             "fsm_watch": 68, "image_watch": 70, "self_heal": 20,
-             "fsm_high_upload": 95, "fsm_high_transfer": 92,
-             "dormant_upload": 96, "dormant_transfer": 94,
-             "paste_transfer": 93, "image_match": 93, "dl3": 95, "com3": 93},
+             "uninspectable": 62, "zero": 50, "usual": 25},
     "data": {"rrn": 12, "card": 12, "account": 9, "phone": 4, "email": 4},
     "count": [[30, 14], [10, 10], [3, 5]],
     "near_minutes": 5, "near": 6,
     "download": 5,
+    "outbound": {"base": 25, "destination": 10, "content": 30, "metadata": 10,
+                 "length": 3, "watch": 5, "watch_threshold": 40, "high_threshold": 65},
     "min": {"WATCH": 60},
-    "max": {"NORMAL": 59, "RECORD": 59, "WATCH": 89, "HIGH": 99},
+    "max": {"RECORD": 59, "WATCH": 89, "HIGH": 99},
 }
 
 
@@ -84,13 +81,11 @@ def load_policy(path: Path = POLICY_PATH) -> Dict[str, Any]:
     policy.setdefault("usual_count_minutes", 60)      # 평소 건수: 이 시간 안의 기밀 DB 복사·다운로드 건수를 누적해서 비교
     policy.setdefault("paste_match_minutes", 60)      # COM-3: 기밀 DB 복사 후 몇 분 안의 AI 붙여넣기를 볼지
     policy.setdefault("paste_match_tolerance", 0.15)  # COM-3: 복사·붙여넣기 글자 수 차이 허용 비율 (줄바꿈 CRLF·LF 차이 등)
+    policy.setdefault("portal_only", True)
     policy.setdefault("departments", {})
     policy.setdefault("users", {})
     policy.setdefault("rows", [])
-    custom = policy.get("score") or {}
-    policy["score"] = {**DEFAULT_SCORE, **custom}
-    for key in ("base", "data", "min", "max"):      # 일부만 적어도 나머지는 기본값을 쓴다
-        policy["score"][key] = {**DEFAULT_SCORE[key], **(custom.get(key) or {})}
+    policy["score"] = {**DEFAULT_SCORE, **(policy.get("score") or {})}
     return policy
 
 
@@ -279,46 +274,19 @@ def judge(kind: str, event_time: datetime, user: str, extra: Dict[str, Any], sou
     return score_judgment(_apply_policy(user, extra, policy, context, prior), scored, minutes, False, policy)
 
 
-def compute_score(kind: str, level: str, s: Dict[str, Any], counts: Optional[Dict[str, int]] = None,
-                  minutes: Optional[float] = None, download: bool = False) -> Tuple[int, List[Tuple[str, int]], int]:
-    """
-    GIGANG 의 유일한 점수 계산식. 정책 판정(policy.py)과 상태 전이(correlation.py)가 모두 이 함수를 쓴다.
-
-      기본점(kind) + 가장 민감한 데이터 1종 + 건수 + AI 접속과 가까움 + 파일 다운로드
-      → 등급별 하한·상한으로 자른다 (등급은 이벤트 규칙이 정하고, 점수는 같은 등급 안의 중요도만 나눈다).
-      건수는 종류를 합치지 않고 가장 많은 종류의 건수로 센다 (고객 5명 = 전화 5 + 이메일 5 를 10건으로 부풀리지 않게).
-
-    돌려주는 값: (최종 점수, [(항목, 점수), ...], 자르기 전 합계)
-    """
-    parts = [(f"기본({kind})", s["base"].get(kind, s["base"]["no_department"]))]
-    hit = [t for t, n in (counts or {}).items() if n]
-    if hit:
-        top = max(hit, key=lambda t: s["data"].get(t, 0))
-        parts.append((DATA_LABELS[top], s["data"].get(top, 0)))
-        most = max(counts.values())
-        bonus = next((pts for least, pts in s["count"] if most >= least), 0)
-        if bonus:
-            parts.append((f"{most}건", bonus))
-    if minutes is not None and abs(minutes) <= s["near_minutes"]:
-        parts.append((f"AI 접속 {s['near_minutes']}분 이내", s["near"]))
-    if download:
-        parts.append(("파일 다운로드", s["download"]))
-    raw = sum(p for _, p in parts if p)
-    final = max(min(raw, s["max"].get(level, 99)), s.get("min", {}).get(level, 0))
-    return final, parts, raw
-
-
-def explain_score(parts: List[Tuple[str, int]], raw: int, final: int) -> str:
-    """점수 근거 한 줄. 화면에 보이는 항목별 점수는 반드시 이 함수로 만든다 (문구에 점수를 직접 적지 않는다)."""
-    cut = f" → 상한 {final}" if final < raw else f" → 하한 {final}" if final > raw else ""
-    return "상관분석 점수: " + " + ".join(f"{n} {p}" for n, p in parts if p) + f" = {raw}점{cut}"
-
-
 def score_judgment(result: Judgment, counts: Dict[str, int], minutes: Optional[float],
                    download: bool, policy: Dict[str, Any]) -> Judgment:
-    """판정 결과에 상관분석 점수를 매기고 근거 줄을 덧붙인다. 계산은 compute_score() 하나."""
-    result.score, parts, raw = compute_score(result.kind, result.level, policy["score"], counts, minutes, download)
-    result.reasons.append(explain_score(parts, raw, result.score))
+    """
+    상관분석 점수를 매기고 근거 줄을 덧붙인다. 배점은 정책의 "score" (department_policy.json).
+
+      기본점(판정 종류) + 가장 민감한 데이터 1종 + 건수 + AI 접속과 가까움 + 파일 다운로드
+      → 등급별 하한·상한(WATCH 60~89, 기록만 ~59, HIGH ~99). 기록만이 WATCH 점수를 넘지 않게.
+      건수는 종류를 합치지 않고 가장 많은 종류의 건수로 센다 (고객 5명 = 전화 5 + 이메일 5 를 10건으로 부풀리지 않게).
+    """
+    s = policy["score"]
+    result.score, parts, raw = compute_score(result.kind, result.level, s, counts, minutes, download)
+    cut = f" → 상한 {result.score}" if result.score < raw else f" → 하한 {result.score}" if result.score > raw else ""
+    result.reasons.append("상관분석 점수: " + " + ".join(f"{n} {p}" for n, p in parts if p) + f" = {raw}점{cut}")
     return result
 
 
@@ -347,7 +315,7 @@ def _size(value: Any) -> str:
 def judge_upload(file_name: Optional[str], file_size: Optional[int], target: str, tagged_source: Optional[str],
                  downloads: List[Dict[str, Any]], score_cfg: Dict[str, Any] = DEFAULT_SCORE) -> Optional[Judgment]:
     """
-    DL-3: AI에 올린 파일이 기밀 DB에서 받은 파일이면 HIGH. 아니면 None.
+    DL-3: AI 업로드 파일의 이름·크기 연관성을 평가. 연결이 없으면 None.
 
     tagged_source : Agent 가 업로드 이벤트에 붙인 기밀 DB 주소 (Agent 가 이름·크기로 이미 맞춰 본 경우)
     downloads     : 엔진이 기억하는 이 사용자의 기밀 DB 다운로드 [{"name", "size", "source", "time"}, ...]
@@ -360,19 +328,20 @@ def judge_upload(file_name: Optional[str], file_size: Optional[int], target: str
     if not source:
         return None
     when = f", {matched['time']:%m-%d %H:%M} 다운로드" if matched else ""
-    score, parts, raw = compute_score("dl3", "HIGH", score_cfg)
-    return Judgment("HIGH", ["DL-3"], [
+    result = score_outbound(counts={}, relation="metadata", external=True, watched=False,
+                            policy={"score": score_cfg}, download=True)
+    score = result.score
+    return Judgment(result.level, ["DL-3"], [
         f"[DL-3] 기밀 DB({source})에서 받은 파일을 생성형 AI({target})에 업로드 · 부서·상태 무관",
         f"업로드 파일: '{file_name}' ({_size(file_size)}) — 다운로드 파일과 이름·크기 일치{when}",
-        "킬체인 확정: 기밀 DB 다운로드 → 생성형 AI 업로드 · " + explain_score(parts, raw, score),
-    ], score=score, kind="dl3")
+        f"상관분석 점수: 기밀 DB 다운로드 → 생성형 AI 업로드 연관성 평가 {score}점",
+    ] + result.reasons, score=score, kind="dl3")
 
 
 def judge_paste_after_copy(copies: List[Dict[str, Any]], paste_time: datetime, paste_length: int, target: str,
                            policy: Dict[str, Any]) -> Optional[Judgment]:
     """
-    COM-3: '기록만' 으로 끝난 기밀 DB 복사(평소 업무)라도, 그 내용을 생성형 AI 에 붙여넣으면 HIGH.
-    허용은 '복사' 까지만이고 AI 입력은 부서와 상관없이 HIGH 라는 원칙 (계획서 3장).
+    COM-3: 복사·붙여넣기 길이 유사성은 약한 연결로 평가하며 HIGH 근거로 쓰지 않는다.
 
     같은 내용인지는 원문 없이 글자 수로 맞춘다: paste_match_minutes 분 안의 기밀 DB 복사 중
     글자 수 차이가 paste_match_tolerance 이내인 것. 자기가 쓴 글을 붙여넣는 정상 사용은 길이가 달라 걸리지 않는다.
@@ -388,10 +357,87 @@ def judge_paste_after_copy(copies: List[Dict[str, Any]], paste_time: datetime, p
     if match is None:
         return None
     gap = max((paste_time - match["time"]).total_seconds() / 60, 0)
-    score, parts, raw = compute_score("com3", "HIGH", policy["score"])
+    result = score_outbound(counts={}, relation="length", external=True, watched=False, policy=policy, minutes=gap)
+    score = result.score
     rules = f" ({', '.join(match['rules'])})" if match.get("rules") else ""
-    return Judgment("HIGH", ["COM-3"], [
+    return Judgment(result.level, ["COM-3"], [
         f"[COM-3] 기밀 DB({match['source']}) 복사{rules} {gap:.0f}분 뒤 생성형 AI({target})에 붙여넣기 · 부서·상태 무관",
-        f"복사 {match['length']:,}자 ↔ 붙여넣기 {paste_length:,}자 (글자 수 일치로 같은 내용 판단, 원문은 보지 않음)",
-        "킬체인 확정: 기밀 DB 복사 → 생성형 AI 입력 · " + explain_score(parts, raw, score),
-    ], score=score, kind="com3")
+        f"복사 {match['length']:,}자 ↔ 붙여넣기 {paste_length:,}자 (글자 수 유사성만 확인, 내용 일치 미확인)",
+        f"상관분석 점수: 기밀 DB 복사 → 생성형 AI 입력 연관성 평가 {score}점",
+    ] + result.reasons, score=score, kind="com3")
+
+
+def score_outbound(*, counts, relation, external, watched, policy, minutes=None, download=False):
+    """반출 사건 공통 계산. 약한 연결/과거 상태만으로 HIGH를 만들지 않는다.
+
+    relation: content(센서 내용 일치), metadata(이름·크기), length(글자 수), none.
+    external은 미승인 AI/공유 또는 사내 원본과 다른 확인된 목적지일 때만 참이다.
+    """
+    cfg = {**DEFAULT_SCORE["outbound"], **policy["score"].get("outbound", {})}
+    if not external:
+        return Judgment("RECORD", ["OUTBOUND"], ["외부 반출 대상 근거 없음 또는 승인된 목적지"], kind="outbound")
+    result = Judgment("RECORD", ["OUTBOUND"], kind="outbound")
+    # 기존 score_judgment와 같은 민감도·건수·시간·다운로드 계산을 사용한다.
+    scoring = {**policy["score"], "base": {"outbound": cfg["base"], "no_department": cfg["base"]},
+               "min": {}, "max": {"RECORD": 100}}
+    result = score_judgment(result, counts, minutes, download, {**policy, "score": scoring})
+    parts = [("목적지", cfg["destination"])]
+    if relation in ("content", "metadata", "length"):
+        parts.append(("자료 연관성:" + relation, cfg[relation]))
+    if watched:
+        parts.append(("현재 WATCH 정황", cfg["watch"]))
+    result.score = max(0, min(100, result.score + sum(value for _, value in parts)))
+    has_context = relation != "none" or watched or any(counts.values())
+    result.level = ("HIGH" if result.score >= cfg["high_threshold"] and relation == "content"
+                    else "WATCH" if result.score >= cfg["watch_threshold"] and has_context else "RECORD")
+    result.reasons.append(" + ".join(f"{name} {value}" for name, value in parts)
+                          + f" → {result.score}점 ({result.level}); 정책 v3")
+    result.reasons.append("근거 신뢰도: " + {"content": "높음(센서 내용 일치)", "metadata": "중간(이름·크기)",
+                         "length": "낮음(글자 수)", "none": "낮음(자료 연결 없음)"}[relation])
+    return result
+
+
+def judge_portal(kind, user, extra, policy, prior=None):
+    """회사 사이트 동작은 AI 접속 여부와 무관하게 같은 부서·배점 정책으로 평가한다."""
+    counts = effective_counts(extra.get("pattern_hits") or {}, policy)
+    scored = {t: n + (prior or {}).get(t, 0) for t, n in counts.items() if n}
+    download = kind == "DOWNLOAD_STARTED"
+    if extra.get("inspectable") is not True:
+        result = Judgment("WATCH", ["PORTAL-UNINSPECTED"],
+            ["회사 자료 검사 불가/결과 미수신: " + str(extra.get("reason") or "INSPECTION_MISSING")],
+            kind="uninspectable")
+    elif kind == "DB_IMAGE_CAPTURE":
+        result = Judgment("WATCH", ["SS-1"], ["회사 DB 내용이 포함된 캡처 감지"], kind="capture")
+    else:
+        result = _apply_policy(user, extra, policy, ["회사 사이트 자료 동작 · 원문 중앙 전송 없음"], prior)
+    # AI 접속을 가정하거나 시간 보너스를 임의로 붙이지 않는다.
+    return score_judgment(result, scored, None, download, policy)
+
+
+def compute_score(kind: str, level: str, s: Dict[str, Any], counts: Optional[Dict[str, int]] = None,
+                  minutes: Optional[float] = None, download: bool = False) -> Tuple[int, List[Tuple[str, int]], int]:
+    """
+    회사 자료 취득 점수 계산식. 외부 입력·첨부는 별도의 증거 기반 score_outbound를 사용한다.
+
+      기본점(kind) + 가장 민감한 데이터 1종 + 건수 + AI 접속과 가까움 + 파일 다운로드
+      → 등급별 하한·상한으로 자른다 (등급은 이벤트 규칙이 정하고, 점수는 같은 등급 안의 중요도만 나눈다).
+      건수는 종류를 합치지 않고 가장 많은 종류의 건수로 센다 (고객 5명 = 전화 5 + 이메일 5 를 10건으로 부풀리지 않게).
+
+    돌려주는 값: (최종 점수, [(항목, 점수), ...], 자르기 전 합계)
+    """
+    parts = [(f"기본({kind})", s["base"].get(kind, s["base"]["no_department"]))]
+    hit = [t for t, n in (counts or {}).items() if n]
+    if hit:
+        top = max(hit, key=lambda t: s["data"].get(t, 0))
+        parts.append((DATA_LABELS[top], s["data"].get(top, 0)))
+        most = max(counts.values())
+        bonus = next((pts for least, pts in s["count"] if most >= least), 0)
+        if bonus:
+            parts.append((f"{most}건", bonus))
+    if minutes is not None and abs(minutes) <= s["near_minutes"]:
+        parts.append((f"AI 접속 {s['near_minutes']}분 이내", s["near"]))
+    if download:
+        parts.append(("파일 다운로드", s["download"]))
+    raw = sum(p for _, p in parts if p)
+    final = max(min(raw, s["max"].get(level, 99)), s.get("min", {}).get(level, 0))
+    return final, parts, raw

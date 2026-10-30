@@ -16,43 +16,238 @@
   "paste_match_tolerance": 0.15,
   "score": {
     "_설명": "상관분석 점수 = 기본점(판정 종류) + 가장 민감한 데이터 1종 + 건수(가장 많은 종류 기준) + AI 접속 near_minutes분 이내 + 파일 다운로드 → 등급별 하한·상한. 임시 배점 (계획서 7장)",
-    "base": {"not_allowed": 60, "over_usual": 55, "no_department": 55, "capture": 60, "uninspectable": 62, "zero": 50, "usual": 25,
-             "fsm_watch": 68, "image_watch": 70, "self_heal": 20,
-             "fsm_high_upload": 95, "fsm_high_transfer": 92,
-             "dormant_upload": 96, "dormant_transfer": 94,
-             "paste_transfer": 93, "image_match": 93, "dl3": 95, "com3": 93},
-    "data": {"rrn": 12, "card": 12, "account": 9, "phone": 4, "email": 4},
-    "count": [[30, 14], [10, 10], [3, 5]],
-    "near_minutes": 5, "near": 6,
+    "base": {
+      "not_allowed": 60,
+      "over_usual": 55,
+      "no_department": 55,
+      "capture": 60,
+      "uninspectable": 62,
+      "zero": 50,
+      "usual": 25,
+      "fsm_watch": 68,
+      "image_watch": 70,
+      "self_heal": 20,
+      "fsm_high_upload": 95,
+      "fsm_high_transfer": 92,
+      "dormant_upload": 96,
+      "dormant_transfer": 94,
+      "paste_transfer": 93,
+      "image_match": 93,
+      "dl3": 95,
+      "com3": 93
+    },
+    "data": {
+      "rrn": 12,
+      "card": 12,
+      "account": 9,
+      "phone": 4,
+      "email": 4
+    },
+    "count": [
+      [
+        30,
+        14
+      ],
+      [
+        10,
+        10
+      ],
+      [
+        3,
+        5
+      ]
+    ],
+    "near_minutes": 5,
+    "near": 6,
     "download": 5,
-    "min": {"WATCH": 60},
-    "max": {"NORMAL": 59, "RECORD": 59, "WATCH": 89, "HIGH": 99}
+    "outbound": {
+      "base": 25,
+      "destination": 10,
+      "content": 30,
+      "metadata": 10,
+      "length": 3,
+      "watch": 5,
+      "watch_threshold": 40,
+      "high_threshold": 65
+    },
+    "min": {
+      "WATCH": 60
+    },
+    "max": {
+      "RECORD": 59,
+      "WATCH": 89,
+      "HIGH": 99
+    }
   },
-  "departments": {"CS": "고객지원", "HR": "인사", "FIN": "재무·정산", "DEV": "개발"},
+  "portal_only": true,
+  "approved_outbound_domains": [],
+  "departments": {
+    "CS": "고객지원",
+    "HR": "인사",
+    "FIN": "재무·정산",
+    "DEV": "개발"
+  },
   "users": {},
   "rows": [
-    ["CS",  "phone",   true,  10, "CS-1",  "CS-2"],
-    ["CS",  "email",   true,  10, "CS-1",  "CS-2"],
-    ["CS",  "rrn",     false, 1,  null,    "CS-3"],
-    ["CS",  "account", false, 1,  null,    "CS-3"],
-    ["CS",  "card",    false, 1,  null,    "CS-3"],
-
-    ["HR",  "phone",   true,  10, "HR-1",  "HR-2"],
-    ["HR",  "email",   true,  10, "HR-1",  "HR-2"],
-    ["HR",  "rrn",     true,  10, "HR-1",  "HR-2"],
-    ["HR",  "account", true,  10, "HR-1",  "HR-2"],
-    ["HR",  "card",    false, 1,  null,    "HR-3"],
-
-    ["FIN", "account", true,  10, "FIN-1", "FIN-2"],
-    ["FIN", "card",    true,  10, "FIN-1", "FIN-2"],
-    ["FIN", "rrn",     false, 1,  null,    "FIN-3"],
-    ["FIN", "phone",   false, 3,  null,    "FIN-4"],
-    ["FIN", "email",   false, 3,  null,    "FIN-4"],
-
-    ["DEV", "phone",   false, 1,  null,    "DEV-1"],
-    ["DEV", "email",   false, 1,  null,    "DEV-1"],
-    ["DEV", "rrn",     false, 1,  null,    "DEV-1"],
-    ["DEV", "account", false, 1,  null,    "DEV-1"],
-    ["DEV", "card",    false, 1,  null,    "DEV-1"]
+    [
+      "CS",
+      "phone",
+      true,
+      10,
+      "CS-1",
+      "CS-2"
+    ],
+    [
+      "CS",
+      "email",
+      true,
+      10,
+      "CS-1",
+      "CS-2"
+    ],
+    [
+      "CS",
+      "rrn",
+      false,
+      1,
+      null,
+      "CS-3"
+    ],
+    [
+      "CS",
+      "account",
+      false,
+      1,
+      null,
+      "CS-3"
+    ],
+    [
+      "CS",
+      "card",
+      false,
+      1,
+      null,
+      "CS-3"
+    ],
+    [
+      "HR",
+      "phone",
+      true,
+      10,
+      "HR-1",
+      "HR-2"
+    ],
+    [
+      "HR",
+      "email",
+      true,
+      10,
+      "HR-1",
+      "HR-2"
+    ],
+    [
+      "HR",
+      "rrn",
+      true,
+      10,
+      "HR-1",
+      "HR-2"
+    ],
+    [
+      "HR",
+      "account",
+      true,
+      10,
+      "HR-1",
+      "HR-2"
+    ],
+    [
+      "HR",
+      "card",
+      false,
+      1,
+      null,
+      "HR-3"
+    ],
+    [
+      "FIN",
+      "account",
+      true,
+      10,
+      "FIN-1",
+      "FIN-2"
+    ],
+    [
+      "FIN",
+      "card",
+      true,
+      10,
+      "FIN-1",
+      "FIN-2"
+    ],
+    [
+      "FIN",
+      "rrn",
+      false,
+      1,
+      null,
+      "FIN-3"
+    ],
+    [
+      "FIN",
+      "phone",
+      false,
+      3,
+      null,
+      "FIN-4"
+    ],
+    [
+      "FIN",
+      "email",
+      false,
+      3,
+      null,
+      "FIN-4"
+    ],
+    [
+      "DEV",
+      "phone",
+      false,
+      1,
+      null,
+      "DEV-1"
+    ],
+    [
+      "DEV",
+      "email",
+      false,
+      1,
+      null,
+      "DEV-1"
+    ],
+    [
+      "DEV",
+      "rrn",
+      false,
+      1,
+      null,
+      "DEV-1"
+    ],
+    [
+      "DEV",
+      "account",
+      false,
+      1,
+      null,
+      "DEV-1"
+    ],
+    [
+      "DEV",
+      "card",
+      false,
+      1,
+      null,
+      "DEV-1"
+    ]
   ]
 }

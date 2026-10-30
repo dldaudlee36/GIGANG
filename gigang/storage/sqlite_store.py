@@ -42,7 +42,7 @@ from gigang.schemas.incident import (
 
 # DB 파일 위치: 프로젝트 최상위 폴더의 gigang.db (기존 gigang.db 호환 지원)
 # (이 파일 기준 storage → gigang → 프로젝트 루트, 이렇게 세 단계 위로 올라간다)
-_db_root = str(Path(__file__).resolve().parent.parent.parent)
+_db_root = os.environ.get("GIGANG_APP_ROOT", str(Path(__file__).resolve().parent.parent.parent))
 _gigang_db_path = os.path.join(_db_root, "gigang.db")
 _legacy_db_path = os.path.join(_db_root, "gigang.db")
 DEFAULT_DB_PATH = _gigang_db_path if (os.path.exists(_gigang_db_path) or not os.path.exists(_legacy_db_path)) else _legacy_db_path
@@ -357,7 +357,7 @@ class SQLiteStore:
                     incident_id=r["incident_id"],
                     title=r["title"],
                     category=IncidentCategory(r["category"]),
-                    severity=Severity(r["severity"]),
+                    severity=Severity("HIGH" if r["severity"] == "CRITICAL" else r["severity"]),
                     score=r["score"],
                     status=IncidentStatus(r["status"]),
                     summary=r["summary"],
@@ -388,7 +388,7 @@ class SQLiteStore:
                 incident_id=r["incident_id"],
                 title=r["title"],
                 category=IncidentCategory(r["category"]),
-                severity=Severity(r["severity"]),
+                severity=Severity("HIGH" if r["severity"] == "CRITICAL" else r["severity"]),
                 score=r["score"],
                 status=IncidentStatus(r["status"]),
                 summary=r["summary"],

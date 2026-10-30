@@ -610,6 +610,9 @@ def get_team_security_events() -> List[SecurityEvent]:
 
     # 1. Railway Agent & Chrome Extension 로그 변환
     for item in railway_logs:
+        # 중앙 API가 별도 컬럼으로 펼치지 않는 검사·출처 값도 raw_data에서 복원한다.
+        raw_info = _parse_raw_data(item.get("raw_data"))
+        item = {**raw_info, **{k:v for k,v in item.items() if v is not None}}
         dt = _parse_event_time(item.get("event_time"))
         user = item.get("user_name") or "User"
         pc = item.get("pc_name") or "DESKTOP-OF0CMDB"
@@ -653,7 +656,13 @@ def get_team_security_events() -> List[SecurityEvent]:
                 actor=Actor(user_id=user, src_ip=local_ip),
                 target=Target(domain=domain, hostname=pc),
                 action=EventAction(ev_type),
-                payload=PayloadMetadata(category="Internal_DB_Action", extra={
+                payload=PayloadMetadata(file_name=file_name, file_size=file_size, category="Internal_DB_Action", extra={
+                    "pattern_hits": item.get("pattern_hits") or {},
+                    "inspectable": item.get("inspectable") is True,
+                    "reason": item.get("reason"),
+                    "text_length": item.get("text_length") or 0,
+                    "file_name": file_name, "file_size": file_size,
+                    "trace_id": item.get("trace_id"),
                     "source_path": item.get("source_path"),
                     "detection_scope": item.get("detection_scope"),
                     "download_id": item.get("download_id"),
@@ -761,6 +770,8 @@ def get_team_security_events() -> List[SecurityEvent]:
                             "file_name": file_name,
                             "file_size": file_size,
                             "file_size_formatted": item.get("file_size_formatted", "-"),
+                            "pattern_hits": item.get("pattern_hits") or {},
+                            "inspectable": item.get("inspectable") is True,
                             "method": item.get("method") or "input",   # [추가됨] drop = 끌어다 놓기
                             # [추가됨] Agent 가 기밀 DB에서 받은 파일과 이름·크기가 같다고 표시한 경우 (DL-3)
                             "confidential_source": _parse_raw_data(item.get("raw_data")).get("confidential_source"),
