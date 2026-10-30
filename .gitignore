@@ -37,3 +37,6 @@ tools/git/
 .agents/
 graphify-out/
 scripts/
+
+# 에이전트가 실행 중 만드는 로컬 차단 목록 (저장소에 올리지 않음)
+runtime/

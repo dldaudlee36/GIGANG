@@ -1,12 +1,14 @@
 from pathlib import Path
 import sys
 from types import SimpleNamespace
-sys.path.insert(0,str(Path(__file__).parent.parent))
+sys.path.insert(0,str(Path(__file__).parent.parent.parent))
 from gigang.engine.correlation import CorrelationEngine
+from gigang.engine.policy import load_policy
 from gigang.schemas.event import EventAction
 
 engine=CorrelationEngine.__new__(CorrelationEngine)
 engine.store=SimpleNamespace(get_active_risk=lambda user:None)
+engine.policy=load_policy()
 changes=[];incidents=[]
 engine._apply_state_transition=lambda *args:changes.append(args)
 engine._record_matched_attempt=lambda *args:incidents.append(args)

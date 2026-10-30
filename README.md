@@ -168,6 +168,9 @@ GIGANG/
 ├── run_demo.py                        # 시뮬레이션 검증 스크립트
 ├── compare_engines.py                 # FSM 엔진 성능 비교
 │
+├── tests/                             # 단위 테스트 (python tests/test_*.py, 전체는 RUN_ALL_TESTS.bat)
+│   └── image_guard/                   # 이미지 OCR·대조 테스트
+│
 ├── guard/                             # 단말 센서 및 수집 서브시스템
 │   ├── agent/                         # Windows 단말 에이전트 (OCR, 클립보드, hosts 제어)
 │   └── browser_extension/             # Chrome 확장 프로그램 (웹 패킷 감시 및 차단)
@@ -249,9 +252,10 @@ RUN_ALL_TESTS.bat
 
 # 주요 테스트 개별 수행
 python run_demo.py
-python test_dedup.py
-python test_rules.py
-python test_policy.py
+python tests/test_dedup.py
+python tests/test_rules.py
+python tests/test_policy.py
+python tests/test_score_unify.py
 ```
 
 ---

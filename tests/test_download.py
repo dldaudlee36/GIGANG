@@ -19,8 +19,8 @@ import zipfile
 from datetime import datetime, timedelta
 from http.server import ThreadingHTTPServer
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(ROOT, 'source', 'agent'))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, 'guard', 'agent'))
 sys.path.insert(0, ROOT)
 
 try:

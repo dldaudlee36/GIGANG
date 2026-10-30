@@ -1,6 +1,6 @@
 """점수 계산식 일원화 검증: 배점은 그대로, 계산은 policy.compute_score() 하나, CRITICAL 제거."""
 import os, re, sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from datetime import datetime, timedelta
 from gigang.engine import policy as P
 from gigang.engine.correlation import CorrelationEngine
@@ -46,7 +46,7 @@ check("증거에 계산식 근거 포함", inc and any("상관분석 점수:" in
 check("가짜 (+N점) 문구 없음", inc and not any(re.search(r"\(\+\d점\)", x) for x in inc[-1].evidences))
 
 # 4) correlation.py 에 점수 숫자 하드코딩이 없다
-src = open("gigang/engine/correlation.py", encoding="utf-8").read()
+src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "gigang/engine/correlation.py"), encoding="utf-8").read()
 code = "\n".join(l for l in src.split("\n") if not l.strip().startswith("#"))
 check("score 하드코딩 없음", not re.search(r"score\s*=\s*\d+|, (?:'|\")(?:WATCH|HIGH)(?:'|\"), \d{2},", code))
 

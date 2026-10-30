@@ -5,7 +5,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 root=Path(__file__).parent
-spec=importlib.util.spec_from_file_location('image_ocr',root.parent/'guard/agent/image_ocr.py')
+spec=importlib.util.spec_from_file_location('image_ocr',root.parent.parent/'guard/agent/image_ocr.py')
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 font=ImageFont.truetype('C:/Windows/Fonts/malgun.ttf',36)
 image=Image.new('RGB',(1400,270),'white');draw=ImageDraw.Draw(image)

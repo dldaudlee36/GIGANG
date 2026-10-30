@@ -8,8 +8,8 @@ import os
 import sys
 from datetime import datetime, timedelta
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(ROOT, 'source', 'agent'))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, 'guard', 'agent'))
 sys.path.insert(0, ROOT)
 
 import agent
