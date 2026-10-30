@@ -2724,6 +2724,8 @@
         assignee: 'ALL',
         mlOnly: false,
         dateRange: '최근 7일',
+        dateFrom: '2026-10-20',
+        dateTo: '2026-10-26',
         pageSize: 20,
         page: 1
       },
@@ -3917,9 +3919,36 @@
       state.caseFilters.mlOnly = !state.caseFilters.mlOnly;
       renderStage();
     };
+    /* 생성일 필터. 기준 시각은 목업 데이터가 찍힌 시점이다. 백엔드를 붙일 때 서버 현재 시각으로 교체한다. */
+    const CASE_REF_NOW = new Date('2026-10-26T22:28:14');
+    const pad2 = n => String(n).padStart(2, '0');
+    const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+    const CASE_DATE_CHIPS = { '오늘': 0, '최근 24시간': 1, '최근 7일': 6, '최근 30일': 29 };
+
     window.setCaseDateRange = function(val) {
+      const back = CASE_DATE_CHIPS[val];
       state.caseFilters.dateRange = val;
+      state.caseFilters.dateTo = ymd(CASE_REF_NOW);
+      state.caseFilters.dateFrom = ymd(addDays(CASE_REF_NOW, -back));
+      state.caseFilters.page = 1;
       renderStage();
+    };
+    window.setCaseDateCustom = function(which, val) {
+      const f = state.caseFilters;
+      if (!val) return;
+      f[which === 'from' ? 'dateFrom' : 'dateTo'] = val;
+      if (f.dateFrom > f.dateTo) {               // 시작일이 종료일보다 늦으면 반대쪽을 맞춘다
+        if (which === 'from') f.dateTo = f.dateFrom; else f.dateFrom = f.dateTo;
+      }
+      f.dateRange = '직접 선택';
+      f.page = 1;
+      renderStage();
+    };
+    // 필터 구간(ms). '최근 24시간'은 날짜 단위가 아니라 기준 시각에서 24시간 전까지로 계산한다.
+    const caseDateBounds = f => {
+      if (f.dateRange === '최근 24시간') return [CASE_REF_NOW.getTime() - 24 * 3600 * 1000, CASE_REF_NOW.getTime()];
+      return [new Date(f.dateFrom + 'T00:00:00').getTime(), new Date(f.dateTo + 'T23:59:59.999').getTime()];
     };
     window.setCasePageSize = function(size) {
       state.caseFilters.pageSize = Number(size);
@@ -3995,6 +4024,8 @@
         assignee: 'ALL',
         mlOnly: false,
         dateRange: '최근 7일',
+        dateFrom: '2026-10-20',
+        dateTo: '2026-10-26',
         pageSize: 20,
         page: 1
       };
@@ -4334,17 +4365,24 @@
         assignee: 'ALL',
         mlOnly: false,
         dateRange: '최근 7일',
+        dateFrom: '2026-10-20',
+        dateTo: '2026-10-26',
         pageSize: 20,
         page: 1
       };
 
       if (!state.caseSort) state.caseSort = { col: 'createdAt', dir: 'desc' };
 
+      const dateBounds = (f.dateFrom && f.dateTo) ? caseDateBounds(f) : null;
       // Filter cases
       let filtered = (state.casesData || []).filter(item => {
         if (f.severity !== 'ALL' && item.severity !== f.severity) return false;
         if (f.status !== 'ALL' && item.status !== f.status) return false;
         if (f.assignee !== 'ALL' && item.assignee !== f.assignee) return false;
+        if (f.dateFrom && f.dateTo) {
+          const created = new Date(item.createdAt.replace(' ', 'T')).getTime();
+          if (created < dateBounds[0] || created > dateBounds[1]) return false;
+        }
         if (f.search && f.search.trim()) {
           const q = f.search.toLowerCase().trim();
           const matchId = item.id.toLowerCase().includes(q);
@@ -4509,7 +4547,11 @@
                   <label style="font-size:11px;color:#b6bbcc;font-weight:normal;">생성일</label>
                   <div style="position:relative;display:flex;align-items:center;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" style="position:absolute;left:12px;pointer-events:none;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    <input type="text" readonly value="2026-10-20 ~ 2026-10-26" style="width:340px;height:38px;padding-left:36px;padding-right:12px;background:rgba(13,45,60,0.7);color:#f6f7f8;font-size:13px;border-radius:6px;border:1px solid rgba(var(--color-accent-code),0.25);outline:none;font-family:'IBM Plex Mono', monospace;" />
+                    <div style="display:flex;align-items:center;gap:8px;padding-left:30px;">
+                      <input type="date" aria-label="시작일" value="${f.dateFrom || ''}" max="${f.dateTo || ''}" onchange="window.setCaseDateCustom('from', this.value)" style="width:150px;height:38px;padding:0 10px;background:rgba(13,45,60,0.7);color:#f6f7f8;font-size:13px;border-radius:6px;border:1px solid rgba(var(--color-accent-code),0.25);outline:none;font-family:'IBM Plex Mono', monospace;color-scheme:dark;cursor:pointer;" />
+                      <span style="color:#94a3b8;">~</span>
+                      <input type="date" aria-label="종료일" value="${f.dateTo || ''}" min="${f.dateFrom || ''}" onchange="window.setCaseDateCustom('to', this.value)" style="width:150px;height:38px;padding:0 10px;background:rgba(13,45,60,0.7);color:#f6f7f8;font-size:13px;border-radius:6px;border:1px solid rgba(var(--color-accent-code),0.25);outline:none;font-family:'IBM Plex Mono', monospace;color-scheme:dark;cursor:pointer;" />
+                    </div>
                   </div>
                 </div>
                 <!-- 빠른 선택 칩 버튼 그룹 -->
