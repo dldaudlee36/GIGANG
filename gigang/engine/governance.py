@@ -172,9 +172,9 @@ def analyze_domain_with_gemini(domain: str, api_key: Optional[str] = None, live_
 }}
 """
         # 모델명은 자주 폐기되므로 환경변수(GEMINI_MODELS, 쉼표 구분)로 바꿀 수 있게 하고,
-        # 기본값 끝에는 항상 최신으로 연결되는 별칭(gemini-flash-latest)을 둔다.
+        # 기본값 끝에는 항상 최신으로 연결되는 별칭(gemini-flash-lite-latest)을 둔다.
         models_to_try = [m.strip() for m in os.environ.get("GEMINI_MODELS", "").split(",") if m.strip()] \
-            or ["gemini-3.6-flash", "gemini-flash-latest"]
+            or ["gemini-3.6-flash-lite", "gemini-3.1-flash-lite", "gemini-flash-lite-latest"]
         response = None
         for m in models_to_try:
             try:
