@@ -31,7 +31,6 @@ WINDOWS_AGENT 또는 CHROME_EXTENSION 뿐이고 DNS는 없다는 점이었다.
 """
 
 from typing import Optional, TYPE_CHECKING
-from gigang.generators.dummy_logs import get_all_initial_events
 from gigang.schemas.event import LogSource
 
 # TYPE_CHECKING 은 '타입 힌트를 쓸 때만' import 하겠다는 뜻이다.
@@ -91,23 +90,10 @@ class AppContext:
             self.correlation_engine.ingest_events(
                 sorted(self.team_events, key=lambda e: e.timestamp)
             )
-            if not self.correlation_engine.get_all_incidents():
-                from gigang.generators import get_all_initial_events
-                fallback_events = get_all_initial_events()
-                for ev in fallback_events:
-                    self.governance_engine.process_dns_event(ev)
-                self.correlation_engine.ingest_events(
-                    sorted(fallback_events, key=lambda e: e.timestamp)
-                )
-        except Exception as e:
-            from gigang.generators import get_all_initial_events
-            fallback_events = get_all_initial_events()
-            for ev in fallback_events:
-                self.governance_engine.process_dns_event(ev)
-            self.correlation_engine.ingest_events(
-                sorted(fallback_events, key=lambda e: e.timestamp)
-            )
-            self.team_events = fallback_events
+        except Exception:
+            # 수집 서버·네트워크 장애 때 가짜 이벤트로 채우지 않는다. 빈 상태로 시작하고,
+            # 화면의 '동기화' 버튼 또는 자동 갱신이 다시 시도한다.
+            self.team_events = []
 
     @classmethod
     def get_instance(cls) -> "AppContext":

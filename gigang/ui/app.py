@@ -146,52 +146,53 @@ st.set_page_config(
 
 # 2. 차세대 사이버 OS 풀스크린 단독 마운트 (왼쪽 토글창/사이드바 완전 배제, 테마1·폰트5 고정)
 def render_cyber_os_terminal():
-    terminal_path = _root_dir / "gigang_terminal.html"
+    """터미널 화면을 양방향 컴포넌트로 띄운다. 데이터는 terminal_bridge 가 실제 백엔드에서 만든다."""
+    import os
+    from gigang.collectors import team_collector as _tc
+    from gigang.ui import terminal_bridge as bridge
 
+    terminal_path = _root_dir / "gigang_terminal.html"
     if not terminal_path.exists():
-        st.error("Cyber OS Terminal HTML 파일을 찾을 수 없습니다.")
+        st.error("gigang_terminal.html 파일을 찾을 수 없습니다.")
         return
-        
-    html_content = terminal_path.read_text(encoding="utf-8")
-    
-    # 완전히 사이드바 및 헤더 숨김 처리 (완전 몰입형 순수 차세대 사이버 OS)
+
+    # 컴포넌트는 폴더 단위라서 index.html 사본을 runtime/ 아래에 만든다 (원본이 바뀌면 자동 갱신).
+    comp_dir = _root_dir / "runtime" / "terminal_component"
+    comp_dir.mkdir(parents=True, exist_ok=True)
+    src = terminal_path.read_text(encoding="utf-8")
+    dst = comp_dir / "index.html"
+    if not dst.exists() or dst.read_text(encoding="utf-8") != src:
+        dst.write_text(src, encoding="utf-8")
+    terminal = components.declare_component("gigang_terminal", path=str(comp_dir))
+
     st.markdown('''
     <style>
-        [data-testid="stSidebar"],
-        [data-testid="collapsedControl"],
-        header[data-testid="stHeader"],
-        footer {
-            display: none !important;
-        }
-        .block-container {
-            padding: 0 !important;
-            margin: 0 !important;
-            max-width: 100% !important;
-        }
+        [data-testid="stSidebar"], [data-testid="collapsedControl"],
+        header[data-testid="stHeader"], footer { display: none !important; }
+        .block-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
         iframe {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            height: 100dvh !important;
-            border: none !important;
-            z-index: 999999 !important;
+            position: fixed !important; top: 0 !important; left: 0 !important;
+            width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+            border: none !important; z-index: 999999 !important;
         }
     </style>
-    <script>
-        window.addEventListener('message', function(e) {
-            if (e.data && e.data.type === 'gigang:resize' && e.data.height) {
-                const iframes = window.parent.document.querySelectorAll('iframe');
-                iframes.forEach(function(f) {
-                    f.style.minHeight = (e.data.height + 24) + 'px';
-                });
-            }
-        });
-    </script>
     ''', unsafe_allow_html=True)
-    
-    components.html(html_content, height=1000, scrolling=True)
+
+    ctx = get_context()
+    ui = st.session_state.setdefault("term_ui", {"collect": True, "gemini": bool(os.getenv("GEMINI_API_KEY"))})
+    if "term_snap" not in st.session_state:
+        _tc.set_railway_collection_enabled(ui["collect"])
+        bridge.refresh(ctx, force=True)
+        st.session_state["term_snap"] = bridge.build_snapshot(ctx, ui)
+
+    value = terminal(snapshot=st.session_state["term_snap"], key="gigang_terminal", default=None)
+    if isinstance(value, dict) and value.get("nonce") != st.session_state.get("term_nonce"):
+        st.session_state["term_nonce"] = value.get("nonce")
+        ok, msg = bridge.handle_action(ctx, ui, str(value.get("action", "")), value.get("payload") or {})
+        if msg:
+            ui["last_result"] = {"nonce": value.get("nonce"), "ok": ok, "message": msg}
+        st.session_state["term_snap"] = bridge.build_snapshot(ctx, ui)
+        st.rerun()
 
 # 🚀 모든 기능은 차세대 사이버 OS로 대체: 메인에서 즉시 렌더링 후 완료
 render_cyber_os_terminal()

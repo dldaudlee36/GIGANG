@@ -196,7 +196,6 @@ GIGANG/
 │
 ├── data/
 │   ├── activity.log                   # 텔레메트리 활동 로그
-│   └── mysql_audit_log.csv            # DB 샘플 감사 로그
 │
 └── docs/
     ├── GIGANG_DB_Test_Guide.md                 # DB 감사 연동 가이드
@@ -270,3 +269,11 @@ GIGANG은 4대 핵심 도메인별 기능 브랜치로 나누어 협업합니다
 
 ---
 *GIGANG Security Operations Platform — "업무는 자유롭게, 기밀은 안전하게"*
+
+## 실측 데이터 모드
+
+- 화면에는 목업 데이터가 없다. 데이터가 없으면 "수집된 데이터 없음"으로 표시한다.
+- 데이터 출처: Railway 서버(`RAILWAY_URL`, `RAILWAY_API_KEY`)와 로컬 `data/activity.log`(또는 `DB_LOG_API_URL`).
+- 차단 토글·사이트 일시 허용은 Railway `/policy`, `/site-access` 로 실제 전송된다(API 키 필요).
+- 담당자 지정은 `runtime/case_assignees.json`, 차단 도메인 사본은 `runtime/blocked_domains.json` 에 저장된다(git 제외).
+- Gemini 진단은 `GEMINI_API_KEY` 가 서버에 설정된 경우에만 켤 수 있다.
