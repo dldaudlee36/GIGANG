@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import requests
 
 from gigang.collectors import team_collector as tc
+from gigang.engine import governance
 
 KST = timezone(timedelta(hours=9))
 _ROOT = Path(__file__).resolve().parents[2]
@@ -542,8 +543,9 @@ def handle_action(ctx, ui: Dict[str, Any], action: str, p: Dict[str, Any]) -> Tu
         ui["diag"] = {
             "domain": asset.domain, "service": asset.service_name, "category": asset.category,
             "riskLevel": asset.risk_level.value, "opinion": asset.ai_diagnosis,
-            "engine": "Gemini" if use_gemini else "Rule Engine",
+            "engine": governance.LAST_ENGINE["name"] if use_gemini else "Rule Engine",
             "hits": asset.access_count,
         }
-        return True, f"{asset.domain} 진단 완료 ({ui['diag']['engine']})"
+        note = " — Gemini 호출 실패, 규칙 기반으로 대체됨" if use_gemini and ui["diag"]["engine"] != "Gemini" else ""
+        return True, f"{asset.domain} 진단 완료 ({ui['diag']['engine']}){note}"
     return False, f"알 수 없는 동작: {action}"
