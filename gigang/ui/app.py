@@ -146,10 +146,8 @@ st.set_page_config(
 
 # 2. 차세대 사이버 OS 풀스크린 단독 마운트 (왼쪽 토글창/사이드바 완전 배제, 테마1·폰트5 고정)
 def render_cyber_os_terminal():
-    terminal_path = _root_dir / "prototypes" / "gigang_data_terminal.html"
-    if not terminal_path.exists():
-        terminal_path = _root_dir / "GIGANG_Data_Terminal_Beta.html"
-    
+    terminal_path = _root_dir / "GIGANG_Data_Terminal_Beta.html"
+
     if not terminal_path.exists():
         st.error("Cyber OS Terminal HTML 파일을 찾을 수 없습니다.")
         return
@@ -3449,7 +3447,7 @@ elif menu == "AI·IT 거버넌스":
                 with c1:
                     st.markdown(f"""
                     <div style="line-height: 1.35; padding: 2px 0; min-width: 0; overflow: hidden; word-break: break-all;">
-                        <b style="color: #ffffff; font-size: 13.5px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{asset.domain}">{asset.domain}</b>
+                        <b style="color: #ffffff; font-size: 13.5px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{asset.domain}">{"⛔ " if asset.sanction_status == SanctionStatus.BLOCKED else ""}{asset.domain}</b>
                         <span style="color: #94a3b8; font-size: 11px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;" title="{asset.service_name} · {asset.category}">{asset.service_name} · {asset.category}</span>
                     </div>
                     """, unsafe_allow_html=True)

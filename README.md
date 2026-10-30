@@ -191,10 +191,6 @@ GIGANG/
 │   ├── stop.py                        # 프로세스 정리 및 격리 해제
 │   └── lifecycle.py                   # 서비스 수명주기 관리
 │
-├── prototypes/                        # 관제 터미널 프로토타입
-│   ├── gigang_data_terminal.html      # 전술 사이버 OS 터미널 뷰
-│   └── gigang_5themes_prototype.html  # 테마 프로토타입
-│
 ├── data/
 │   ├── activity.log                   # 텔레메트리 활동 로그
 │   └── mysql_audit_log.csv            # DB 샘플 감사 로그

@@ -512,8 +512,8 @@ class ShadowAIGovernanceEngine:
         양성화/차단 등 승인 상태 변경
 
         관리자가 거버넌스 화면에서 '승인' 또는 '차단' 버튼을 누르면 호출된다.
-        승인하면 위험도를 LOW로, 차단하면 HIGH로 함께 바꾼다.
-        (차단된 도메인을 목록 맨 위에 띄워서 관리자가 바로 알아보게 하려는 것)
+        승인하면 위험도를 LOW로 바꾼다. 차단은 위험도를 건드리지 않는다.
+        (위험도는 서비스 자체의 성격이고, 차단은 관리자의 조치 상태라서 서로 다른 칸에 따로 보여 준다)
 
         ※ 상태 변경 이력은 남기지 않는다. 누가 언제 승인했는지 추적하려면 별도 기록이 필요하다.
         """
@@ -521,8 +521,6 @@ class ShadowAIGovernanceEngine:
             self.assets[domain].sanction_status = new_status
             if new_status == SanctionStatus.APPROVED:
                 self.assets[domain].risk_level = Severity.LOW
-            elif new_status == SanctionStatus.BLOCKED:
-                self.assets[domain].risk_level = Severity.HIGH
             return self.assets[domain]
         return None
 
