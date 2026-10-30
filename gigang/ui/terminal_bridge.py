@@ -213,6 +213,18 @@ def assign_case(case_id: str, assignee: str) -> Tuple[bool, str]:
 # ---------------------------------------------------------------------------
 # 수집·분석
 # ---------------------------------------------------------------------------
+def _gemini_key() -> str:
+    """환경변수 → Streamlit Secrets 순으로 Gemini 키를 찾는다 (값은 화면에 노출하지 않는다)."""
+    v = os.getenv("GEMINI_API_KEY", "")
+    if v:
+        return v
+    try:
+        import streamlit as st
+        return str(st.secrets.get("GEMINI_API_KEY", ""))
+    except Exception:
+        return ""
+
+
 def refresh(ctx, force: bool = False) -> Dict[str, Any]:
     """Railway 로그를 받아 엔진에 투입한다. 실패해도 예외를 밖으로 던지지 않는다."""
     result = {"fetched": 0, "ingested": 0}
@@ -462,7 +474,7 @@ def build_snapshot(ctx, ui: Dict[str, Any]) -> Dict[str, Any]:
     weekly = [{"day": names[d.weekday()], "date": d.isoformat(), "count": c} for d, c in per_day.items()]
 
     sites, site_err = fetch_site_access()
-    gem_key = bool(os.getenv("GEMINI_API_KEY"))
+    gem_key = bool(_gemini_key())
     return {
         "serverNow": datetime.now(KST).isoformat(timespec="seconds"),
         "meta": {
@@ -527,7 +539,7 @@ def handle_action(ctx, ui: Dict[str, Any], action: str, p: Dict[str, Any]) -> Tu
     if action == "assign":
         return assign_case(str(p.get("id", "")), str(p.get("assignee", "")))
     if action == "toggle_gemini":
-        if not os.getenv("GEMINI_API_KEY"):
+        if not _gemini_key():
             ui["gemini"] = False
             return False, "GEMINI_API_KEY가 서버에 설정되어 있지 않습니다. .env 또는 Streamlit Secrets에 등록하세요."
         ui["gemini"] = bool(p.get("on"))
@@ -536,8 +548,8 @@ def handle_action(ctx, ui: Dict[str, Any], action: str, p: Dict[str, Any]) -> Tu
         d = _norm_domain(str(p.get("domain", "")))
         if not d or "." not in d:
             return False, "도메인 형식이 올바르지 않습니다."
-        use_gemini = bool(ui.get("gemini", bool(os.getenv("GEMINI_API_KEY")))) and bool(os.getenv("GEMINI_API_KEY"))
-        key = os.getenv("GEMINI_API_KEY") if use_gemini else None
+        use_gemini = bool(ui.get("gemini", bool(_gemini_key()))) and bool(_gemini_key())
+        key = _gemini_key() if use_gemini else None
         asset = ctx.governance_engine.analyze_and_register_domain(
             d, api_key=key, live_context=ctx.governance_engine.get_railway_domain_stats().get(d))
         ui["diag"] = {
