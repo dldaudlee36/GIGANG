@@ -11,6 +11,10 @@ root_dir = Path(__file__).resolve().parent
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
 
+# 슬랙 알림은 홈페이지와 별개로 백그라운드에서 시작한다 (SLACK_WEBHOOK_URL 없으면 꺼짐).
+from gigang.engine.slack_worker import start_slack_monitor
+start_slack_monitor()
+
 # Execute in Streamlit's script namespace so timed fragments keep the same
 # script identity across navigation and automatic reruns.
 dashboard_file = root_dir / "gigang" / "ui" / "app.py"
