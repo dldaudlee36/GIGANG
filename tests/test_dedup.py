@@ -1,6 +1,6 @@
 """프롬프트 3 검증: 같은 이벤트 리스트를 두 번 ingest 해도 두 번째엔 상태 전이가 없어야 한다."""
 import os, sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from datetime import datetime, timedelta
 from gigang.engine.correlation import CorrelationEngine

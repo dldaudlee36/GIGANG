@@ -165,7 +165,7 @@ class SQLiteStore:
 
     def get_all_active_risks(self) -> List[Dict[str, Any]]:
         """
-        현재 활성화된 모든 감시/위험 사용자 목록 (WATCH, HIGH, CRITICAL)
+        현재 활성화된 모든 감시/위험 사용자 목록 (WATCH, HIGH)
 
         state != 'NORMAL' 조건이 붙어 있으므로 평상 상태 사용자는 빠진다.
         대시보드의 '감시 대상 목록'에 쓰인다.
@@ -185,7 +185,7 @@ class SQLiteStore:
 
     def get_all_risks(self) -> List[Dict[str, Any]]:
         """
-        모든 사용자 상태 목록 (NORMAL, WATCH, HIGH, CRITICAL 포함)
+        모든 사용자 상태 목록 (NORMAL, WATCH, HIGH 포함)
 
         get_all_active_risks()와 달리 NORMAL도 함께 돌려준다.
         상태별 카운터를 셀 때 쓴다.

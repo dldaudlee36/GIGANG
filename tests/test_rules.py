@@ -1,4 +1,4 @@
-"""Agent 규칙 검사(source/agent/rules.py) 오탐·미탐 테스트
+"""Agent 규칙 검사(guard/agent/rules.py) 오탐·미탐 테스트
 
 실행:  python test_rules.py
  - 걸리면 안 되는 경우(헷갈리는 데이터)가 걸리면 오탐
@@ -7,7 +7,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'source', 'agent'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'guard', 'agent'))
 
 from rules import scan_text
 

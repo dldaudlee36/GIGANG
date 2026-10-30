@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
 const path=require('path');
-const dir=path.join(__dirname,'../browser_extension');
+const dir=path.join(__dirname,'../../guard/browser_extension');
 vm.runInThisContext(fs.readFileSync(path.join(dir,'image_match.js'),'utf8')+'\nglobalThis.IM=ImageMatch;');
 (async()=>{
     const now=Date.now(), seed='test-random-seed';

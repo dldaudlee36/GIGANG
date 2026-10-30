@@ -1,6 +1,6 @@
 // Event-handler unit test. This does not claim to replace a real Chrome integration test.
 const vm=require('vm'),fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
-const code=fs.readFileSync(path.join(__dirname,'../browser_extension/image_content.js'),'utf8');
+const code=fs.readFileSync(path.join(__dirname,'../../guard/browser_extension/image_content.js'),'utf8');
 function setup(){
     const listeners={},nodes=new Map(),calls=[],replayed=[];let resolve;
     class Element{

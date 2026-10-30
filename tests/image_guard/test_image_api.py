@@ -10,7 +10,7 @@ from http.server import ThreadingHTTPServer
 import requests
 
 root=Path(__file__).parent
-sys.path.insert(0,str(root.parent/'guard/agent'))
+sys.path.insert(0,str(root.parent.parent/'guard/agent'))
 import agent
 from image_ocr import recognize_image
 

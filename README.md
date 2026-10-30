@@ -59,7 +59,7 @@ GIGANG v4.0부터 고밀도 보안 관제 환경에 맞춘 **전술 사이버 OS
 
 ### 단말기 실행 방식
 - **웹 대시보드 실행**: `streamlit run app.py` (또는 `run-dashboard.bat`) 실행 시 브라우저에서 사이버 OS 관제 콘솔이 바로 열립니다.
-- **독립 실행 (Zero-Dependency)**: 루트의 `GIGANG_Data_Terminal_Beta.html` 또는 `run_beta_terminal.bat`을 더블 클릭해 브라우저 단독 화면으로 띄울 수 있습니다.
+- **독립 실행 (Zero-Dependency)**: 루트의 `gigang_terminal.html` 또는 `run_beta_terminal.bat`을 더블 클릭해 브라우저 단독 화면으로 띄울 수 있습니다.
 
 ---
 
@@ -162,11 +162,14 @@ GIGANG/
 ├── ADMIN_START.bat / ADMIN_STOP.bat   # 관리자 프로세스 실행 및 종료 스크립트
 ├── USER_START.bat / USER_STOP.bat     # 사용자 단말 에이전트 실행 및 종료 스크립트
 ├── RUN_ALL_TESTS.bat                  # 전체 단위 테스트 일괄 실행 스크립트
-├── GIGANG_Data_Terminal_Beta.html     # 독립 실행형 전술 관제 터미널
+├── gigang_terminal.html     # 독립 실행형 전술 관제 터미널
 ├── VERSION.txt                        # 버전 정보
 ├── requirements.txt                   # 파이썬 의존성 목록
 ├── run_demo.py                        # 시뮬레이션 검증 스크립트
 ├── compare_engines.py                 # FSM 엔진 성능 비교
+│
+├── tests/                             # 단위 테스트 (python tests/test_*.py, 전체는 RUN_ALL_TESTS.bat)
+│   └── image_guard/                   # 이미지 OCR·대조 테스트
 │
 ├── guard/                             # 단말 센서 및 수집 서브시스템
 │   ├── agent/                         # Windows 단말 에이전트 (OCR, 클립보드, hosts 제어)
@@ -190,10 +193,6 @@ GIGANG/
 │   ├── launch.py                      # 프로세스 실행기
 │   ├── stop.py                        # 프로세스 정리 및 격리 해제
 │   └── lifecycle.py                   # 서비스 수명주기 관리
-│
-├── prototypes/                        # 관제 터미널 프로토타입
-│   ├── gigang_data_terminal.html      # 전술 사이버 OS 터미널 뷰
-│   └── gigang_5themes_prototype.html  # 테마 프로토타입
 │
 ├── data/
 │   ├── activity.log                   # 텔레메트리 활동 로그
@@ -253,9 +252,10 @@ RUN_ALL_TESTS.bat
 
 # 주요 테스트 개별 수행
 python run_demo.py
-python test_dedup.py
-python test_rules.py
-python test_policy.py
+python tests/test_dedup.py
+python tests/test_rules.py
+python tests/test_policy.py
+python tests/test_score_unify.py
 ```
 
 ---
