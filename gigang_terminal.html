@@ -4161,7 +4161,7 @@
               </div>
             </div>
             <div class="cw-callout" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
-              <span>분석 엔진: <strong style="color:#ffffff;font-weight:600;">${state.geminiEnabled ? 'Gemini 2.5 Flash' : 'Rule Engine'}</strong></span>
+              <span>분석 엔진: <strong style="color:#ffffff;font-weight:600;">${state.geminiEnabled ? 'Gemini' : 'Rule Engine'}</strong></span>
               <button type="button" class="${cfg.primaryBtnClass}" onclick="window.setPage('governance')">도메인 차단 정책 관리 →</button>
             </div>
           </div>
@@ -4236,10 +4236,11 @@
                   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                     <span class="mono" style="font-weight:600;">${escapeHtml(state.diagResult.domain)}</span>
                     <span class="${pillClassForSeverity(state.diagResult.level)}">${escapeHtml(state.diagResult.level)}</span>
+                    <span class="pill pill-neu mono">${escapeHtml(state.diagResult.engine || '')}</span>
                   </div>
                   <div style="font-size:13.5px;color:var(--text);line-height:1.55;">${escapeHtml(state.diagResult.opinion)}</div>
                 ` : `
-                  <span style="color:var(--muted);">도메인을 입력하고 우측 상단 '진단 실행'을 클릭하세요. (${state.geminiEnabled ? 'Gemini 2.5 Flash' : 'Rule Engine'})</span>
+                  <span style="color:var(--muted);">도메인을 입력하고 우측 상단 '진단 실행'을 클릭하세요. (${state.geminiEnabled ? 'Gemini' : 'Rule Engine'})</span>
                 `}
               </div>
             </div>
