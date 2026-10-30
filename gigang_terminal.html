@@ -2326,6 +2326,10 @@
     .v-terminal.neo .case-table th:not(:last-child) {
       border-right: 1px solid rgba(var(--color-accent-code), 0.22);
     }
+    .v-terminal.neo .case-table th { position: relative; }
+    .col-resizer { position: absolute; top: 0; right: -4px; bottom: 0; width: 9px; cursor: col-resize; z-index: 3; }
+    .col-resizer::after { content: ''; position: absolute; top: 25%; bottom: 25%; left: 4px; width: 1px; background: transparent; transition: background 0.15s; }
+    .col-resizer:hover::after { background: rgba(var(--color-accent-code), 0.9); box-shadow: 0 0 6px rgba(var(--color-accent-code), 0.7); }
     .v-terminal.neo table.data-table td { border-bottom: 1px solid var(--rule); font-size: 13px; font-weight: 300; padding: 13px 16px; }
     .v-terminal.neo table.data-table tr.selected-row td { background: rgba(var(--color-accent-code), 0.08); }
     @media (hover: hover) and (pointer: fine) {
@@ -3916,6 +3920,45 @@
       renderStage();
     };
     
+    /* 케이스 목록 열 너비 조절: 헤더 오른쪽 경계를 드래그. 너비는 브라우저(localStorage)에 저장된다. */
+    const CASE_COL_MIN = 60;
+    try {
+      const saved = JSON.parse(localStorage.getItem('gigang.caseColWidths') || 'null');
+      if (Array.isArray(saved) && saved.length === 9 && saved.every(w => Number.isFinite(w) && w >= CASE_COL_MIN)) state.caseColWidths = saved;
+    } catch (e) { /* 저장소를 쓸 수 없는 환경이면 세션 동안만 유지 */ }
+
+    window.startColResize = function(e, idx) {
+      e.preventDefault(); e.stopPropagation();
+      const table = e.target.closest('table');
+      const cols = table.querySelectorAll('colgroup col');
+      const widths = Array.from(table.querySelectorAll('thead tr:first-child th')).map(th => Math.round(th.getBoundingClientRect().width));
+      const startX = e.clientX, startW = widths[idx];
+      const apply = () => {
+        cols.forEach((c, i) => { c.style.width = widths[i] + 'px'; });
+        table.style.width = widths.reduce((a, b) => a + b, 0) + 'px';
+        table.style.minWidth = '0';
+      };
+      apply();
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      const move = ev => { widths[idx] = Math.max(CASE_COL_MIN, Math.round(startW + ev.clientX - startX)); apply(); };
+      const up = () => {
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+        document.body.style.cursor = ''; document.body.style.userSelect = '';
+        state.caseColWidths = widths.slice();
+        try { localStorage.setItem('gigang.caseColWidths', JSON.stringify(state.caseColWidths)); } catch (err) {}
+      };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    };
+
+    window.resetCaseCols = function() {
+      state.caseColWidths = null;
+      try { localStorage.removeItem('gigang.caseColWidths'); } catch (e) {}
+      renderStage();
+    };
+
     window.toggleCaseSort = function(col) {
       if (!state.caseSort) state.caseSort = { col: 'createdAt', dir: 'desc' };
       if (state.caseSort.col === col) {
@@ -4319,6 +4362,8 @@
         return String(va).localeCompare(String(vb)) * sortDir;
       });
 
+      const caseColWidths = (Array.isArray(state.caseColWidths) && state.caseColWidths.length === 9) ? state.caseColWidths : null;
+
       const getSortIcon = (col) => {
         if (!state.caseSort || state.caseSort.col !== col) {
           return '<span style="color:#94a3b8;font-size:10px;margin-left:4px;">↕</span>';
@@ -4483,6 +4528,7 @@
                 <span style="font-size:12px;color:#b6bbcc;font-family:'IBM Plex Mono', monospace;">
                   전체 19,106건 중 1-${displayCount} 표시
                 </span>
+                ${caseColWidths ? `<button type="button" onclick="window.resetCaseCols()" style="padding:4px 10px;font-size:11px;cursor:pointer;border-radius:6px;border:1px solid rgba(var(--color-accent-code),0.35);background:rgba(13,45,60,0.7);color:#b6bbcc;">열 너비 초기화</button>` : ''}
                 <div style="display:inline-flex;border-radius:6px;overflow:hidden;border:1px solid rgba(var(--color-accent-code),0.35);background:rgba(13,45,60,0.7);">
                   ${[10, 20, 50].map(sz => `
                     <button type="button" onclick="window.setCasePageSize(${sz})" style="padding:4px 10px;font-size:11px;font-family:'IBM Plex Mono', monospace;cursor:pointer;border:none;${f.pageSize === sz ? 'background:#25c9ba;color:#021c26;font-weight:700;' : 'background:transparent;color:#b6bbcc;'}">
@@ -4495,29 +4541,21 @@
 
             <!-- 테이블 헤더 + 본문 테이블 (가로 스크롤 및 고정 컬럼 비율 적용) -->
             <div style="width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;">
-              <table class="case-table" style="width:100%;min-width:1240px;border-collapse:collapse;text-align:left;table-layout:fixed;">
+              <table class="case-table" style="${caseColWidths ? `width:${caseColWidths.reduce((a, b) => a + b, 0)}px;min-width:0;` : 'width:100%;min-width:1240px;'}border-collapse:collapse;text-align:left;table-layout:fixed;">
                 <colgroup>
-                  <col style="width:150px;">
-                  <col style="width:auto;">
-                  <col style="width:96px;">
-                  <col style="width:96px;">
-                  <col style="width:160px;">
-                  <col style="width:110px;">
-                  <col style="width:145px;">
-                  <col style="width:145px;">
-                  <col style="width:78px;">
+                  ${(caseColWidths || [150, null, 96, 96, 160, 110, 145, 145, 78]).map(w => `<col style="width:${w ? w + 'px' : 'auto'};">`).join('')}
                 </colgroup>
                 <thead>
                   <tr style="height:40px;background:rgba(3,16,22,0.7);font-size:11.5px;font-weight:600;color:rgba(255,255,255,0.85);white-space:nowrap;">
-                    <th onclick="window.toggleCaseSort('id')" style="padding:0 12px 0 16px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="케이스 ID 정렬">케이스 ID ${getSortIcon('id')}</th>
-                    <th onclick="window.toggleCaseSort('title')" style="padding:0 12px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="제목 정렬">제목 및 세부 설명 ${getSortIcon('title')}</th>
-                    <th onclick="window.toggleCaseSort('severity')" style="text-align:center;padding:0 8px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="심각도 정렬">심각도 ${getSortIcon('severity')}</th>
-                    <th onclick="window.toggleCaseSort('status')" style="text-align:center;padding:0 8px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="상태 정렬">상태 ${getSortIcon('status')}</th>
-                    <th onclick="window.toggleCaseSort('asset')" style="padding:0 12px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="영향 자산 정렬">영향 자산 ${getSortIcon('asset')}</th>
-                    <th onclick="window.toggleCaseSort('assignee')" style="padding:0 12px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="담당자 정렬">담당 ${getSortIcon('assignee')}</th>
-                    <th onclick="window.toggleCaseSort('createdAt')" style="text-align:center;padding:0 8px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="생성일 정렬">생성일 ${getSortIcon('createdAt')}</th>
-                    <th onclick="window.toggleCaseSort('updatedAt')" style="text-align:center;padding:0 8px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="수정일 정렬">수정일 ${getSortIcon('updatedAt')}</th>
-                    <th onclick="window.toggleCaseSort('elapsed')" style="text-align:center;padding:0 16px 0 8px;cursor:pointer;user-select:none;transition:background 0.15s, color 0.15s;" title="경과 시간 정렬">경과 ${getSortIcon('elapsed')}</th>
+                    <th onclick="window.toggleCaseSort('id')" style="padding:0 12px 0 16px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="케이스 ID 정렬">케이스 ID ${getSortIcon('id')}<span class="col-resizer" onmousedown="window.startColResize(event,0)" onclick="event.stopPropagation()" title="드래그하여 너비 조절"></span></th>
+                    <th onclick="window.toggleCaseSort('title')" style="padding:0 12px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="제목 정렬">제목 및 세부 설명 ${getSortIcon('title')}<span class="col-resizer" onmousedown="window.startColResize(event,1)" onclick="event.stopPropagation()" title="드래그하여 너비 조절"></span></th>
+                    <th onclick="window.toggleCaseSort('severity')" style="text-align:center;padding:0 8px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="심각도 정렬">심각도 ${getSortIcon('severity')}<span class="col-resizer" onmousedown="window.startColResize(event,2)" onclick="event.stopPropagation()" title="드래그하여 너비 조절"></span></th>
+                    <th onclick="window.toggleCaseSort('status')" style="text-align:center;padding:0 8px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="상태 정렬">상태 ${getSortIcon('status')}<span class="col-resizer" onmousedown="window.startColResize(event,3)" onclick="event.stopPropagation()" title="드래그하여 너비 조절"></span></th>
+                    <th onclick="window.toggleCaseSort('asset')" style="padding:0 12px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="영향 자산 정렬">영향 자산 ${getSortIcon('asset')}<span class="col-resizer" onmousedown="window.startColResize(event,4)" onclick="event.stopPropagation()" title="드래그하여 너비 조절"></span></th>
+                    <th onclick="window.toggleCaseSort('assignee')" style="padding:0 12px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="담당자 정렬">담당 ${getSortIcon('assignee')}<span class="col-resizer" onmousedown="window.startColResize(event,5)" onclick="event.stopPropagation()" title="드래그하여 너비 조절"></span></th>
+                    <th onclick="window.toggleCaseSort('createdAt')" style="text-align:center;padding:0 8px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="생성일 정렬">생성일 ${getSortIcon('createdAt')}<span class="col-resizer" onmousedown="window.startColResize(event,6)" onclick="event.stopPropagation()" title="드래그하여 너비 조절"></span></th>
+                    <th onclick="window.toggleCaseSort('updatedAt')" style="text-align:center;padding:0 8px;cursor:pointer;user-select:none;border-right:1px solid rgba(37,201,186,0.25);transition:background 0.15s, color 0.15s;" title="수정일 정렬">수정일 ${getSortIcon('updatedAt')}<span class="col-resizer" onmousedown="window.startColResize(event,7)" onclick="event.stopPropagation()" title="드래그하여 너비 조절"></span></th>
+                    <th onclick="window.toggleCaseSort('elapsed')" style="text-align:center;padding:0 16px 0 8px;cursor:pointer;user-select:none;transition:background 0.15s, color 0.15s;" title="경과 시간 정렬">경과 ${getSortIcon('elapsed')}<span class="col-resizer" onmousedown="window.startColResize(event,8)" onclick="event.stopPropagation()" title="드래그하여 너비 조절"></span></th>
                   </tr>
                   <!-- 1px 시안 발광선 -->
                   <tr>
