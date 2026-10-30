@@ -103,26 +103,29 @@ HIGH보다 약한 사건이HIGH 사용자를WATCH로 낮추지 않습니다.
 
 ## 7. 적용 방법
 
-이 ZIP은 최신 원본6156a7b에서의 누적 전체 패치입니다. 이전 v1/v2에 다시 전체 패치를 적용하면 안 됩니다.
+이 문서는 검토 브랜치 fix/dashboard-sync의 소스 변경 설명입니다. 별도 ZIP 패치를 적용하지 말고 해당 브랜치를 체크아웃하여 검토합니다.
+
 루트 gigang/, guard/agent/, guard/browser_extension/를 함께 적용하고 확장 재로드·Python 에이전트·대시보드를 재시작합니다.
 기존 GIGANGAgent.exe는 소스를 바꿔도 자동 갱신되지 않습니다. Python 실행 또는 재빌드가 필요합니다.
 GIGANG_User_Client 독립 배포본은 별도 이관 대상입니다. 이미 배포된 서버 파일은 자동 변경되지 않습니다.
 부서 정책(users/원격 정책), 실행 중인 확장 폴더, 포트8765의 프로그램 버전을 확인하세요.
 
 ```powershell
-git apply --check gigang-scoring-v3.patch
-git apply gigang-scoring-v3.patch
+git fetch origin
+git switch --track origin/fix/dashboard-sync
 python -m unittest discover -s tests -v
 node tests/test_portal_extension.cjs
-python test_policy.py
+python tests/test_policy.py
 python tests/image_guard/test_image_api.py
 python tests/image_guard/test_image_risk.py
 node tests/image_guard/test_image_match.cjs
 node tests/image_guard/test_image_interception.cjs
-python test_rules.py
+python tests/test_rules.py
 ```
 
 ## 8. 검증 범위
+
+이번 최신 main 통합에서 점수 35개·사건 저장1개·공통 계산/등급2개와 Node 검사 정보 전달 테스트를 실행했습니다. 아래 항목은 이전 로컬 v3 구현 과정의 확인 이력이며, 전체를 이번에 재실행했다는 뜻은 아닙니다.
 
 - Python 회귀43개: 로컬HTTP 실제 요청, 회사표/다운로드/OCR건수, 개별사건SQLite저장, 중복수신, 요약점수보존 포함.
 - 실제Windows OCR: 숫자가 있는PNG를 읽고 전화1건·주민번호1건 → 캡처WATCH72 → 내용일치 외부입력HIGH82 확인.
