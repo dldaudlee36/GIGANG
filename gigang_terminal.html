@@ -2326,9 +2326,12 @@
     .v-terminal.neo .case-table th:not(:last-child) {
       border-right: 1px solid rgba(var(--color-accent-code), 0.22);
     }
-    .v-terminal.neo .case-table th { position: relative; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .v-terminal.neo .case-table th, .v-terminal.neo .gov-table th { position: relative; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     /* 열을 좁혀도 글자가 줄바꿈되지 않고 한 줄로 잘리게 한다 */
     .v-terminal.neo .case-table td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* 거버넌스 표: 진단 소견(5번째 열)만 줄바꿈 허용, 나머지는 한 줄로 고정 */
+    .v-terminal.neo .gov-table.resized td:not(:nth-child(5)) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .v-terminal.neo .gov-table.resized td:nth-child(5) { overflow: hidden; }
     .v-terminal.neo .case-table td button { white-space: nowrap; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
     .col-resizer { position: absolute; top: 0; right: 0; bottom: 0; width: 8px; cursor: col-resize; z-index: 3; }
     .col-resizer::after { content: ''; position: absolute; top: 25%; bottom: 25%; left: 4px; width: 1px; background: transparent; transition: background 0.15s; }
@@ -3923,14 +3926,19 @@
       renderStage();
     };
     
-    /* 케이스 목록 열 너비 조절: 헤더 오른쪽 경계를 드래그. 너비는 브라우저(localStorage)에 저장된다. */
-    const CASE_COL_MIN = 60;
-    try {
-      const saved = JSON.parse(localStorage.getItem('gigang.caseColWidths') || 'null');
-      if (Array.isArray(saved) && saved.length === 9 && saved.every(w => Number.isFinite(w) && w >= CASE_COL_MIN)) state.caseColWidths = saved;
-    } catch (e) { /* 저장소를 쓸 수 없는 환경이면 세션 동안만 유지 */ }
+    /* 표 열 너비 조절: 헤더 오른쪽 경계를 드래그. 너비는 브라우저(localStorage)에 저장된다.
+       key = 'case'(케이스 목록, 9열) | 'gov'(AI 거버넌스 표, 6열) */
+    const COL_MIN = 60;
+    const COL_COUNTS = { case: 9, gov: 6 };
+    Object.keys(COL_COUNTS).forEach(key => {
+      try {
+        const saved = JSON.parse(localStorage.getItem('gigang.' + key + 'ColWidths') || 'null');
+        if (Array.isArray(saved) && saved.length === COL_COUNTS[key] && saved.every(w => Number.isFinite(w) && w >= COL_MIN)) state[key + 'ColWidths'] = saved;
+      } catch (e) { /* 저장소를 쓸 수 없는 환경이면 세션 동안만 유지 */ }
+    });
 
-    window.startColResize = function(e, idx) {
+    window.startColResize = function(e, idx, key) {
+      key = key || 'case';
       e.preventDefault(); e.stopPropagation();
       const table = e.target.closest('table');
       const cols = table.querySelectorAll('colgroup col');
@@ -3940,27 +3948,30 @@
         cols.forEach((c, i) => { c.style.width = widths[i] + 'px'; });
         table.style.width = widths.reduce((a, b) => a + b, 0) + 'px';
         table.style.minWidth = '0';
+        table.style.tableLayout = 'fixed';
+        table.classList.add('resized');
       };
       apply();
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
-      const move = ev => { widths[idx] = Math.max(CASE_COL_MIN, Math.round(startW + ev.clientX - startX)); apply(); };
+      const move = ev => { widths[idx] = Math.max(COL_MIN, Math.round(startW + ev.clientX - startX)); apply(); };
       const up = () => {
         document.removeEventListener('mousemove', move);
         document.removeEventListener('mouseup', up);
         document.body.style.cursor = ''; document.body.style.userSelect = '';
-        state.caseColWidths = widths.slice();
-        try { localStorage.setItem('gigang.caseColWidths', JSON.stringify(state.caseColWidths)); } catch (err) {}
+        state[key + 'ColWidths'] = widths.slice();
+        try { localStorage.setItem('gigang.' + key + 'ColWidths', JSON.stringify(widths)); } catch (err) {}
       };
       document.addEventListener('mousemove', move);
       document.addEventListener('mouseup', up);
     };
 
-    window.resetCaseCols = function() {
-      state.caseColWidths = null;
-      try { localStorage.removeItem('gigang.caseColWidths'); } catch (e) {}
+    window.resetColWidths = function(key) {
+      state[key + 'ColWidths'] = null;
+      try { localStorage.removeItem('gigang.' + key + 'ColWidths'); } catch (e) {}
       renderStage();
     };
+    window.resetCaseCols = function() { window.resetColWidths('case'); };
 
     window.toggleCaseSort = function(col) {
       if (!state.caseSort) state.caseSort = { col: 'createdAt', dir: 'desc' };
@@ -4773,6 +4784,8 @@
     }
 
     function renderGovernanceSubView(cfg) {
+      const govColWidths = (Array.isArray(state.govColWidths) && state.govColWidths.length === 6) ? state.govColWidths : null;
+      const GOV_HANDLE = i => `<span class="col-resizer" onmousedown="window.startColResize(event,${i},'gov')" onclick="event.stopPropagation()" title="드래그하여 너비 조절"></span>`;
       const q = (state.govSearch || '').trim().toLowerCase();
       let rows = state.govAssets.filter(a =>
         !q ||
@@ -4866,6 +4879,7 @@
                 <option value="compact" ${state.govViewMode === 'compact' ? 'selected' : ''}>컴팩트 1줄</option>
                 <option value="wide" ${state.govViewMode === 'wide' ? 'selected' : ''}>와이드 상세</option>
               </select>
+              ${govColWidths ? `<button type="button" onclick="window.resetColWidths('gov')" class="${cfg.selectClass}" style="cursor:pointer;">열 너비 초기화</button>` : ''}
               <input type="search" class="${cfg.inputClass}" style="width:220px;"
                 placeholder="도메인·서비스 검색..." autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search"
                 value="${escapeHtml(state.govSearch)}"
@@ -4874,16 +4888,17 @@
             </div>
           </div>
 
-          <div class="table-scroll" style="border:1px solid var(--border);border-radius:6px;overflow:hidden;">
-            <table class="data-table">
+          <div class="table-scroll" style="border:1px solid var(--border);border-radius:6px;overflow-x:auto;overflow-y:hidden;">
+            <table class="data-table gov-table${govColWidths ? ' resized' : ''}" style="${govColWidths ? `table-layout:fixed;min-width:0;width:${govColWidths.reduce((a, b) => a + b, 0)}px;` : ''}">
+              ${govColWidths ? `<colgroup>${govColWidths.map(w => `<col style="width:${w}px;">`).join('')}</colgroup>` : '<colgroup>' + '<col>'.repeat(6) + '</colgroup>'}
               <thead>
                 <tr>
-                  <th style="cursor:pointer;" onclick="window.sortGov('domain')">도메인 · 분류</th>
-                  <th style="cursor:pointer;" onclick="window.sortGov('riskScore')">위험도 · 상태</th>
-                  <th class="num" style="cursor:pointer;" onclick="window.sortGov('liveHits')">실시간 접속</th>
-                  <th>누적 · 반출 시도</th>
-                  <th>진단 소견</th>
-                  <th class="num">차단 정책</th>
+                  <th style="cursor:pointer;" onclick="window.sortGov('domain')">도메인 · 분류${GOV_HANDLE(0)}</th>
+                  <th style="cursor:pointer;" onclick="window.sortGov('riskScore')">위험도 · 상태${GOV_HANDLE(1)}</th>
+                  <th class="num" style="cursor:pointer;" onclick="window.sortGov('liveHits')">실시간 접속${GOV_HANDLE(2)}</th>
+                  <th>누적 · 반출 시도${GOV_HANDLE(3)}</th>
+                  <th>진단 소견${GOV_HANDLE(4)}</th>
+                  <th class="num">차단 정책${GOV_HANDLE(5)}</th>
                 </tr>
               </thead>
               <tbody>
@@ -4892,7 +4907,7 @@
                   const rowFillStyle = cfg.useRowFill
                     ? `background: linear-gradient(90deg, rgba(94,158,255,0.12) ${pct}%, transparent ${pct}%);`
                     : '';
-                  const opinionStyle = state.govViewMode === 'compact'
+                  const opinionStyle = govColWidths ? 'white-space:normal;' : state.govViewMode === 'compact'
                     ? 'max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'
                     : (state.govViewMode === 'wide' ? 'min-width:340px;white-space:normal;' : 'max-width:340px;white-space:normal;');
                   return `
@@ -4902,7 +4917,7 @@
                         <div style="font-size:12px;color:var(--muted);margin-top:3px;">${r.service} · ${r.category}</div>
                       </td>
                       <td>
-                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;white-space:nowrap;">
                           <span class="${pillClassForSeverity(r.riskLevel)}">${r.riskLevel} · ${r.riskScore}점</span>
                           <span class="${pillClassForSeverity(r.govStatus)}">${r.govStatus}</span>
                         </div>
