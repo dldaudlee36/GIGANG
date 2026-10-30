@@ -2667,7 +2667,7 @@
         {
           id: 'INC-SEC-002',
           title: '기밀 DB 대량 쿼리 후 브라우저 확장 프로그램 통한 외부 AI 반출 시도',
-          severity: '치명',
+          severity: '심각',
           status: '차단 완료',
           riskScore: 96,
           hostIp: 'DEV-WORKSTATION-01 / 192.168.10.88',
@@ -2723,7 +2723,7 @@
           title: 'Shadow AI 대량 기밀 코드·DB 스키마 유출 징후',
           description: '내부 핵심 Git 저장소 조회 직후 4분 이내 chatgpt.com 대량 프롬프트 붙여넣기 및 문서 첨부',
           isML: true,
-          severity: 'CRITICAL',
+          severity: 'HIGH',
           status: '신규',
           asset: { isFlow: false, name: 'DEV-WORKSTATION', ip: '192.168.10.88' },
           assignee: '미배정',
@@ -2736,7 +2736,7 @@
           title: '외부 SSH 브루트포스 침투 및 내부 고객 원장 DB 피보팅',
           description: '외부 위험 IP(203.0.113.77) 48회 인증 실패 후 루트 세션 획득, PROD-CUST-DB01 덤프 생성 후 반출 시도',
           isML: true,
-          severity: 'CRITICAL',
+          severity: 'HIGH',
           status: '신규',
           asset: { isFlow: true, srcIp: '203.0.113.77', dstIp: 'jump-host-01' },
           assignee: '미배정',
@@ -2939,7 +2939,7 @@
           id: 'INC-SEC-002',
           title: '외부 SSH 브루트포스 침투 후 내부 고객 DB 피보팅 및 클라우드 반출',
           shortTitle: '외부 브루트포스 및 내부 DB 피보팅 유출',
-          severity: 'CRITICAL',
+          severity: 'HIGH',
           score: 95,
           time: '2026-10-26 21:52:31 KST',
           source: '203.0.113.77 (외부 위협 IP) → jump-host-01',
@@ -3044,7 +3044,7 @@
           utc: '2026-10-26 12:52:31 UTC',
           target: 'admin_root · PROD-CUST-DB01',
           prev: 'NORMAL',
-          next: 'CRITICAL (95점)',
+          next: 'HIGH (95점)',
           reason: '외부 SSH 브루트포스(203.0.113.77) 침투 후 고객 원장 48.2MB wetransfer.com 반출 시도'
         },
         {
@@ -3101,7 +3101,7 @@
           domain: 'wetransfer.com',
           service: 'WeTransfer File Share',
           category: '대용량 파일 공유',
-          riskLevel: 'CRITICAL',
+          riskLevel: 'HIGH',
           riskScore: 96,
           govStatus: '즉시 차단 대상',
           liveHits: 8,
@@ -3410,7 +3410,7 @@
 
     function pillClassForSeverity(sev) {
       const u = String(sev || '').toUpperCase();
-      if (u.includes('CRITICAL') || u.includes('치명') || u.includes('BLOCKED') || u.includes('차단')) return 'pill pill-neg';
+      if (u.includes('BLOCKED') || u.includes('차단')) return 'pill pill-neg';
       if (u.includes('HIGH') || u.includes('심각')) return 'pill pill-high';
       if (u.includes('WATCH') || u.includes('MEDIUM') || u.includes('관찰')) return 'pill pill-watch';
       if (u.includes('LOW') || u.includes('NORMAL') || u.includes('ALLOWED') || u.includes('승인') || u.includes('허용')) return 'pill pill-pos';
@@ -3959,7 +3959,6 @@
       const mode = state.incidentFilterMode || 'ALL';
 
       const incidents = (state.activeIncidentsData || []).filter(item => {
-        if (mode === 'CRITICAL') return item.severity === '치명';
         if (mode === 'HIGH') return item.severity === '심각';
         if (mode === 'WATCH') return item.severity === '선제 관찰' || item.severity === '관찰';
         return true;
@@ -4004,9 +4003,7 @@
               <div style="margin-top:12px;">
                 <div style="font-family:'IBM Plex Mono', monospace;font-size:28px;font-weight:700;color:#ffffff;line-height:1;">3</div>
                 <div style="margin-top:8px;font-size:11.5px;color:#b6bbcc;display:flex;align-items:center;gap:6px;">
-                  <span style="color:#f87171;font-weight:700;">치명 1</span>
-                  <span style="color:#94a3b8;">·</span>
-                  <span style="color:#fbbf24;font-weight:700;">심각 1</span>
+                  <span style="color:#fbbf24;font-weight:700;">심각 2</span>
                   <span style="color:#94a3b8;">·</span>
                   <span style="color:#c084fc;font-weight:700;">관찰 1</span>
                 </div>
@@ -4080,9 +4077,8 @@
             </div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               ${[
-                { id: 'ALL', label: '전체 인시던트', count: 3 },
-                { id: 'CRITICAL', label: '치명 (CRITICAL)', count: 1, alert: true },
-                { id: 'HIGH', label: '심각 (HIGH)', count: 1, warn: true },
+                { id: 'ALL', label: '전체 인시던트', count: (state.activeIncidentsData || []).length },
+                { id: 'HIGH', label: '심각 (HIGH)', count: (state.activeIncidentsData || []).filter(x => x.severity === '심각').length, warn: true },
                 { id: 'WATCH', label: '선제 관찰 (WATCH)', count: 1, watch: true }
               ].map(f => {
                 const isSel = mode === f.id;
@@ -4120,7 +4116,7 @@
                     <!-- 카드 상단: 뱃지 + 원형 위험 점수 게이지 -->
                     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
                       <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
-                        <span style="padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:700;letter-spacing:0.02em;${inc.severity === '치명' ? 'background:rgba(248,113,113,0.2);color:#f87171;border:1px solid rgba(248,113,113,0.4);' : (inc.severity === '심각' ? 'background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);' : 'background:rgba(167,139,250,0.2);color:#c084fc;border:1px solid rgba(167,139,250,0.45);')}">
+                        <span style="padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:700;letter-spacing:0.02em;${(inc.severity === '심각' ? 'background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);' : 'background:rgba(167,139,250,0.2);color:#c084fc;border:1px solid rgba(167,139,250,0.45);')}">
                           ${inc.severity}
                         </span>
                         <span style="padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:600;background:rgba(37,201,186,0.15);color:#25c9ba;border:1px solid rgba(var(--color-accent-code),0.35);">
@@ -4305,7 +4301,7 @@
       // Sort cases
       const sortCol = state.caseSort.col;
       const sortDir = state.caseSort.dir === 'asc' ? 1 : -1;
-      const sevRank = { 'CRITICAL': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+      const sevRank = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
       filtered.sort((a, b) => {
         let va, vb;
         if (sortCol === 'id') { va = a.id; vb = b.id; }
@@ -4336,9 +4332,7 @@
       const displayCount = filtered.length;
 
       const getSevBadge = (sev) => {
-        if (sev === 'CRITICAL') {
-          return '<span style="width:72px;height:22px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;background:rgba(255,40,0,0.15);color:#f87171;border:1px solid rgba(255,40,0,0.4);">매우 높음</span>';
-        } else if (sev === 'HIGH') {
+        if (sev === 'HIGH') {
           return '<span style="width:72px;height:22px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);">높음</span>';
         } else if (sev === 'MEDIUM') {
           return '<span style="width:72px;height:22px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;background:rgba(0,143,236,0.15);color:#60a5fa;border:1px solid rgba(0,143,236,0.4);">중간</span>';
@@ -4419,7 +4413,6 @@
                 <label style="font-size:11px;color:#b6bbcc;font-weight:normal;">심각도</label>
                 <select onchange="window.setCaseSeverity(this.value)" aria-label="심각도 필터" style="width:100%;height:38px;padding:0 12px;background:rgba(13,45,60,0.7);color:#f6f7f8;font-size:13px;border-radius:6px;border:1px solid rgba(var(--color-accent-code),0.25);outline:none;cursor:pointer;">
                   <option value="ALL" ${f.severity === 'ALL' ? 'selected' : ''}>전체 심각도</option>
-                  <option value="CRITICAL" ${f.severity === 'CRITICAL' ? 'selected' : ''}>매우 높음 (CRITICAL)</option>
                   <option value="HIGH" ${f.severity === 'HIGH' ? 'selected' : ''}>높음 (HIGH)</option>
                   <option value="MEDIUM" ${f.severity === 'MEDIUM' ? 'selected' : ''}>중간 (MEDIUM)</option>
                   <option value="LOW" ${f.severity === 'LOW' ? 'selected' : ''}>낮음 (LOW)</option>
@@ -5354,7 +5347,7 @@
           <div class="neo-win-body">${body}</div>
         </section>`;
 
-      const highCount = state.incidents.filter(i => ['CRITICAL', 'HIGH'].includes(i.severity)).length;
+      const highCount = state.incidents.filter(i => i.severity === 'HIGH').length;
       const watchCount = state.incidents.filter(i => i.severity === 'WATCH').length;
       const sevCount = sev => state.incidents.filter(i => i.severity === sev).length;
       const firstOf = sev => (state.incidents.find(i => i.severity === sev) || inc).id;
@@ -5382,7 +5375,7 @@
                 대응이 필요한 고위험 인시던트 <em style="color:var(--negative);">${highCount}건</em> ·
                 WATCH <em>${wUser.user}</em> · 골든타임 TTL <em class="mono" data-ttl-display="1">${formatTTL(state.ttlSeconds)}</em>
               </p>
-              <button type="button" class="term-btn term-btn-primary" onclick="window.openKillchainFor('${firstOf('CRITICAL')}')">킬체인 분석 열기</button>
+              <button type="button" class="term-btn term-btn-primary" onclick="window.openKillchainFor('${firstOf('HIGH')}')">킬체인 분석 열기</button>
             </div>
           </section>
 
@@ -5399,8 +5392,8 @@
             </div>
             <div class="neo-kpi">
               <span class="neo-num" style="color:var(--negative);">${highCount}</span>
-              <span class="neo-kpi-label" style="color:#f87171;">CRITICAL · HIGH</span>
-              <button type="button" class="neo-link" onclick="window.openKillchainFor('${firstOf('CRITICAL')}')">${ico.link}<span>상세 보기</span></button>
+              <span class="neo-kpi-label" style="color:#f87171;">HIGH</span>
+              <button type="button" class="neo-link" onclick="window.openKillchainFor('${firstOf('HIGH')}')">${ico.link}<span>상세 보기</span></button>
             </div>
             <div class="neo-kpi">
               <span class="neo-num" style="color:#c084fc;">${watchCount}</span>
@@ -5421,12 +5414,7 @@
 
           <div class="neo-split">
             ${win('심각도별 분포', `
-              <div class="neo-cells c4">
-                <div class="neo-cell t-err">
-                  <span class="neo-label" style="color:#f87171;">Critical</span>
-                  <span class="neo-num" style="color:#ff4d4f;">${sevCount('CRITICAL')}</span>
-                  <button type="button" class="neo-link" onclick="window.openKillchainFor('${firstOf('CRITICAL')}')">${ico.link}<span>상세 보기</span></button>
-                </div>
+              <div class="neo-cells c3">
                 <div class="neo-cell t-pt">
                   <span class="neo-label" style="color:#fbbf24;">High</span>
                   <span class="neo-num" style="color:#f59e0b;">${sevCount('HIGH')}</span>

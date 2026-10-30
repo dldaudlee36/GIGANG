@@ -146,7 +146,7 @@ st.set_page_config(
 
 # 2. 차세대 사이버 OS 풀스크린 단독 마운트 (왼쪽 토글창/사이드바 완전 배제, 테마1·폰트5 고정)
 def render_cyber_os_terminal():
-    terminal_path = _root_dir / "GIGANG_Data_Terminal_Beta.html"
+    terminal_path = _root_dir / "gigang_terminal.html"
 
     if not terminal_path.exists():
         st.error("Cyber OS Terminal HTML 파일을 찾을 수 없습니다.")

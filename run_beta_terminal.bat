@@ -8,4 +8,4 @@ echo   Standalone Zero-Dependency Browser Interface
 echo ============================================================
 echo.
 
-start "" "%~dp0GIGANG_Data_Terminal_Beta.html"
+start "" "%~dp0gigang_terminal.html"
