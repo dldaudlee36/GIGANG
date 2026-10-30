@@ -2634,27 +2634,25 @@
         <button type="button" onclick="window.closeGeminiModal()" style="background:none;border:none;color:#a0a0a6;font-size:18px;line-height:1;padding:4px;" aria-label="닫기">×</button>
       </div>
       <p style="font-size:13px;color:#a0a0a6;margin-bottom:14px;">
-        외부 도메인 진단 및 상관분석에 사용할 Gemini API 키와 엔진 모드를 설정합니다.
+        외부 도메인 진단에 Gemini를 쓸지, 내장 규칙 엔진만 쓸지 정합니다.
       </p>
-      <div style="margin-bottom:12px;">
-        <label for="modal-gemini-key" style="display:block;font-size:13px;color:#d0d0d6;margin-bottom:6px;">Gemini API Key</label>
-        <input id="modal-gemini-key" type="password" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" value="AIzaSyD-GIGANG-SEC-99812A"
-          oninput="window.updateGeminiKey(this.value)"
-          style="width:100%;height:34px;padding:0 10px;border-radius:6px;border:1px solid #343438;background:#111113;color:#f2f2f3;font-family:var(--font-mono);font-size:13px;" />
+      <div style="margin-bottom:12px;padding:10px 12px;background:#111113;border:1px solid #26262a;border-radius:6px;">
+        <div style="font-size:13px;color:#d0d0d6;margin-bottom:4px;">Gemini API 키 상태</div>
+        <div id="modal-gemini-status" style="font-size:12px;color:#a0a0a6;line-height:1.5;">-</div>
+        <div style="font-size:11px;color:#8e8e96;margin-top:6px;">키는 브라우저에 저장하지 않습니다. 서버의 GEMINI_API_KEY 환경변수로만 관리합니다.</div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#111113;border:1px solid #26262a;border-radius:6px;margin-bottom:16px;">
         <div>
-          <div style="font-size:13px;font-weight:500;color:#f2f2f3;">로컬 AI 지능형 엔진 활성화</div>
+          <div style="font-size:13px;font-weight:500;color:#f2f2f3;">Gemini 판별 사용</div>
           <div style="font-size:11px;color:#8e8e96;">비활성화 시 내장 휴리스틱 룰셋(Rule-Fallback)으로 동작</div>
         </div>
         <label class="switch-toggle" aria-label="로컬 AI 지능형 엔진 활성화">
-          <input type="checkbox" id="modal-gemini-toggle" checked onchange="window.toggleGeminiEngine(this.checked)" />
+          <input type="checkbox" id="modal-gemini-toggle" onchange="window.toggleGeminiEngine(this.checked)" />
           <span class="switch-slider"></span>
         </label>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;">
         <button type="button" onclick="window.closeGeminiModal()" style="height:32px;padding:0 14px;border-radius:6px;border:1px solid #343438;background:#202024;color:#f2f2f3;font-size:13px;font-weight:500;">닫기</button>
-        <button type="button" onclick="window.saveGeminiModal()" style="height:32px;padding:0 14px;border-radius:6px;border:1px solid #4a8ad6;background:#4a8ad6;color:#ffffff;font-size:13px;font-weight:600;">설정 적용</button>
       </div>
     </div>
   </div>
@@ -2673,50 +2671,7 @@
             // Page: Active Incidents Store (Prompt 2)
       incidentFilterMode: 'ALL',
       incidentActiveTab: 'active',
-      activeIncidentsData: [
-        {
-          id: 'INC-SEC-002',
-          title: '기밀 DB 대량 쿼리 후 브라우저 확장 프로그램 통한 외부 AI 반출 시도',
-          severity: '심각',
-          status: '차단 완료',
-          riskScore: 96,
-          hostIp: 'DEV-WORKSTATION-01 / 192.168.10.88',
-          assetCount: 3,
-          eventCount: 48,
-          correlationFlow: '10.0.4.22 (DB Server) → 192.168.10.88 (로컬 버퍼) → 104.18.23.45 (Shadow AI)',
-          aiSummary: 'Gemini AI 이상 탐지: DB 기밀 스키마 조회 후 3분 내 외부 LLM 엔드포인트 대량 POST 전송 시도 감지 즉시 자동 차단',
-          assignee: 'park_dev',
-          time: '22:14:08 (KST)'
-        },
-        {
-          id: 'INC-SEC-001',
-          title: '외부 위협 IP SSH 브루트포스 침투 후 내부 호스트 피보팅',
-          severity: '심각',
-          status: '격리 조치',
-          riskScore: 88,
-          hostIp: 'GATEWAY-FW01 / 203.0.113.42',
-          assetCount: 2,
-          eventCount: 89,
-          correlationFlow: '203.0.113.42 (외부 위협 IP) → 10.0.0.1 (DMZ 방화벽) → 10.0.4.22 (DB 침투 시도)',
-          aiSummary: '상관분석 엔진: 비인가 외부 IP로부터의 다중 SSH 접속 실패 후 내부 호스트 피보팅 감지 즉시 IP 세션 차단',
-          assignee: 'admin_root',
-          time: '21:45:00 (KST)'
-        },
-        {
-          id: 'INC-SEC-003',
-          title: '야간 비인가 개발 환경에서의 이상 접근 및 대량 데이터 스테이징',
-          severity: '선제 관찰',
-          status: '선제 관찰 중',
-          riskScore: 64,
-          hostIp: 'DEV-WORKSTATION-02 / 192.168.10.92',
-          assetCount: 1,
-          eventCount: 12,
-          correlationFlow: '192.168.10.92 (워크스테이션) → 30분 무활동 TTL 자가치유 관찰 진행 중 (잔여 18분)',
-          aiSummary: '선제 관찰 (WATCH): 심야 비인가 접근 감지. 30분 무활동 시 오탐 배제 자가치유 정상 복귀 예정 (잔여 18분)',
-          assignee: 'park_dev',
-          time: '22:42:00 (KST)'
-        }
-      ],
+      activeIncidentsData: [],
       caseFilters: {
         search: '',
         severity: 'ALL',
@@ -2724,349 +2679,38 @@
         assignee: 'ALL',
         mlOnly: false,
         dateRange: '최근 7일',
-        dateFrom: '2026-10-20',
-        dateTo: '2026-10-26',
+        dateFrom: '',
+        dateTo: '',
         pageSize: 20,
         page: 1
       },
-      casesData: [
-        {
-          id: 'CASE-2026-013660',
-          title: 'Shadow AI 대량 기밀 코드·DB 스키마 유출 징후',
-          description: '내부 핵심 Git 저장소 조회 직후 4분 이내 chatgpt.com 대량 프롬프트 붙여넣기 및 문서 첨부',
-          isML: true,
-          severity: 'HIGH',
-          status: '신규',
-          asset: { isFlow: false, name: 'DEV-WORKSTATION', ip: '192.168.10.88' },
-          assignee: '미배정',
-          createdAt: '2026-10-26 22:14:08',
-          updatedAt: '2026-10-26 22:15:30',
-          elapsed: '18분 전'
-        },
-        {
-          id: 'CASE-2026-013659',
-          title: '외부 SSH 브루트포스 침투 및 내부 고객 원장 DB 피보팅',
-          description: '외부 위험 IP(203.0.113.77) 48회 인증 실패 후 루트 세션 획득, PROD-CUST-DB01 덤프 생성 후 반출 시도',
-          isML: true,
-          severity: 'HIGH',
-          status: '신규',
-          asset: { isFlow: true, srcIp: '203.0.113.77', dstIp: 'jump-host-01' },
-          assignee: '미배정',
-          createdAt: '2026-10-26 21:52:31',
-          updatedAt: '2026-10-26 22:00:12',
-          elapsed: '40분 전'
-        },
-        {
-          id: 'CASE-2026-013658',
-          title: '마케팅 예산 DB 대량 쿼리 후 미승인 AI(claude.ai) 질의',
-          description: '4분기 캠페인 예산 테이블 조회 후 미승인 claude.ai 420자 텍스트 입력 감지 (선제 감시 전환)',
-          isML: false,
-          severity: 'MEDIUM',
-          status: '신규',
-          asset: { isFlow: false, name: 'DESKTOP-MKT01', ip: '192.168.10.42' },
-          assignee: '미배정',
-          createdAt: '2026-10-26 22:04:19',
-          updatedAt: '2026-10-26 22:04:19',
-          elapsed: '28분 전'
-        },
-        {
-          id: 'CASE-2026-013657',
-          title: '비인가 Python 스크립트 기반 외부 OpenAI API 토큰 호출',
-          description: '엔드포인트 데몬 비인가 프로세스 탐지 및 api.openai.com HTTPS 아웃바운드 세션 강제 차단',
-          isML: true,
-          severity: 'HIGH',
-          status: '신규',
-          asset: { isFlow: false, name: 'DEV-WORKSTATION', ip: '192.168.10.88' },
-          assignee: '미배정',
-          createdAt: '2026-10-26 21:41:12',
-          updatedAt: '2026-10-26 21:42:01',
-          elapsed: '51분 전'
-        },
-        {
-          id: 'CASE-2026-013656',
-          title: '인사팀 대외비 연봉 원장 로컬 PDF 암호화 해제 시도',
-          description: 'HR-LAPTOP02 파일 시스템 센서 암호화 속성 변경 및 외부 드라이브 마운트 이벤트 포착',
-          isML: false,
-          severity: 'HIGH',
-          status: '진행 중',
-          asset: { isFlow: false, name: 'HR-LAPTOP02', ip: '192.168.10.64' },
-          assignee: 'choi_hr',
-          createdAt: '2026-10-26 21:30:11',
-          updatedAt: '2026-10-26 21:35:10',
-          elapsed: '1시간 전'
-        },
-        {
-          id: 'CASE-2026-013655',
-          title: '재무회계 전표 DB 야간 비정상 시간대 배치 덤프 요청',
-          description: '심야 비인가 시간대 SELECT COUNT(*) 풀스캔 쿼리 발생 직후 세션 자동 타임아웃 격리',
-          isML: true,
-          severity: 'MEDIUM',
-          status: '해결됨',
-          asset: { isFlow: false, name: 'FINANCE-PC04', ip: '192.168.10.105' },
-          assignee: 'admin_root',
-          createdAt: '2026-10-26 20:45:00',
-          updatedAt: '2026-10-26 21:15:00',
-          elapsed: '2시간 전'
-        },
-        {
-          id: 'CASE-2026-013654',
-          title: '엔드포인트 브라우저 센서 DOM 파일 첨부 훅 차단',
-          description: 'chatgpt.com 파일 드롭존에 2.4MB PDF 첨부 시도 감지 즉시 Chrome Extension 훅 정책 차단',
-          isML: false,
-          severity: 'HIGH',
-          status: '종결',
-          asset: { isFlow: false, name: 'DEV-WORKSTATION', ip: '192.168.10.88' },
-          assignee: 'park_dev',
-          createdAt: '2026-10-26 20:10:22',
-          updatedAt: '2026-10-26 20:11:00',
-          elapsed: '2시간 전'
-        },
-        {
-          id: 'CASE-2026-013653',
-          title: '사내 클라우드 스토리지 동기화 폴더 외부 IP 일괄 다운로드',
-          description: '허가된 사내 VPN 대역 외 비인가 IP에서의 버킷 접근 시도 차단 및 임시 세션 폐기',
-          isML: true,
-          severity: 'MEDIUM',
-          status: '신규',
-          asset: { isFlow: true, srcIp: '198.51.100.24', dstIp: 'S3-SYNC-BUCKET' },
-          assignee: '미배정',
-          createdAt: '2026-10-26 19:40:15',
-          updatedAt: '2026-10-26 19:40:15',
-          elapsed: '3시간 전'
-        },
-        {
-          id: 'CASE-2026-013652',
-          title: '정기 취약점 포트 스캔 정상 감사 이벤트 통과',
-          description: '사내 취약점 진단 도구 자동 스케줄러 실행 확인 및 감사 화이트리스트 자동 매칭 완료',
-          isML: false,
-          severity: 'LOW',
-          status: '종결',
-          asset: { isFlow: false, name: 'SCANNER-SRV01', ip: '10.0.1.5' },
-          assignee: 'sec_daemon',
-          createdAt: '2026-10-26 18:00:00',
-          updatedAt: '2026-10-26 18:05:00',
-          elapsed: '4시간 전'
-        },
-        {
-          id: 'CASE-2026-013651',
-          title: '엔드포인트 30분 TTL 정상 업무 복귀 (선제 감시 해제)',
-          description: 'kim_marketing 계정 외부 AI 접속 30분 경과 후 추가 반출 행위 없어 정상 복귀 승인',
-          isML: false,
-          severity: 'LOW',
-          status: '해결됨',
-          asset: { isFlow: false, name: 'DESKTOP-MKT01', ip: '192.168.10.42' },
-          assignee: 'kim_marketing',
-          createdAt: '2026-10-26 17:34:19',
-          updatedAt: '2026-10-26 18:04:19',
-          elapsed: '4시간 전'
-        }
-      ],
+      casesData: [],
 
       variant: 1,
       page: 'overview', // 'overview' | 'killchain' | 'governance' | 'pipeline'
-      selectedIncidentId: 'INC-SEC-001',
-      railwayLive: true,
-      lastSyncTime: '22:28:14 KST',
-      geminiKey: 'AIzaSyD-GIGANG-SEC-99812A',
-      geminiEnabled: true,
+      selectedIncidentId: '',
+      railwayLive: false,
+      lastSyncTime: '-',
+            geminiEnabled: false,
       mobileNavOpen: false,
       sidebarCollapsed: false,
-      ttlSeconds: 1122, // 18:42 countdown
+      ttlSeconds: 0,
       topoZoom: 1.0,
       topoPanX: 0,
       topoPanY: 0,
       activeHopIdx: 2,
 
       // Page 1: Watch Users (Self-healing 30m TTL)
-      watchUsers: [
-        {
-          user: 'kim_marketing',
-          dept: '마케팅팀 · 일반 계정',
-          host: 'DESKTOP-MKT01 (192.168.10.42)',
-          score: 68,
-          status: 'WATCH',
-          ttlRemain: '24분 15초',
-          reason: '사내 고객 세그먼트 DB 대량 조회 직후 미승인 외부 생성형 AI 도메인 접근 감지 (실제 반출 전 사전 감시 전환)'
-        }
-      ],
+      watchUsers: [],
 
       // Page 1: 7-Day Weekly Activity
-      weeklyActivity: [
-        { day: 'Mon', count: 14 },
-        { day: 'Tue', count: 21 },
-        { day: 'Wed', count: 17 },
-        { day: 'Thu', count: 29 },
-        { day: 'Fri', count: 38 },
-        { day: 'Sat', count: 9 },
-        { day: 'Sun', count: 12 }
-      ],
+      weeklyActivity: [],
 
       // Page 1 & Page 2: Priority Incidents & 3-Hop Kill-Chain Data
-      incidents: [
-        {
-          id: 'INC-SEC-001',
-          title: 'Shadow AI를 통한 사내 기밀 소스코드 및 전략 문서 외부 유출',
-          shortTitle: 'Shadow AI 기밀 문서·코드 유출',
-          severity: 'HIGH',
-          score: 92,
-          time: '2026-10-26 22:14:08 KST',
-          source: 'park_dev · DEV-WORKSTATION (192.168.10.88)',
-          target: 'chatgpt.com / api.openai.com (외부 생성형 AI)',
-          category: 'Shadow AI Exfiltration · 복합 킬체인',
-          summary: '내부 핵심 Git 저장소 및 DB 스키마 열람 후 4분 이내에 미승인 외부 AI 프롬프트 창으로 3,420자 코드 붙여넣기 및 기밀 문서 첨부 전송이 확인되었습니다.',
-          hops: [
-            {
-              step: 'Step 1 · 사내 기밀 자산 열람',
-              nodeLabel: 'INTERNAL DB · GIT',
-              nodeSub: 'core-auth-schema.sql',
-              time: '22:10:12',
-              actor: 'park_dev (192.168.10.88)',
-              detail: '사내 핵심 인증 DB 스키마(core-auth-schema.sql) 및 2026 신제품 로드맵 문서 로컬 반출 열람'
-            },
-            {
-              step: 'Step 2 · 엔드포인트 클립보드·첨부 행위',
-              nodeLabel: 'DEV-WORKSTATION',
-              nodeSub: 'Paste 3,420자 · 첨부 2.4MB',
-              time: '22:12:49',
-              actor: 'Chrome Ext Sensor (v2.4)',
-              detail: '브라우저 프롬프트 입력창에 3,420자 대용량 소스코드 붙여넣기(Paste) 및 기밀 PDF 파일 첨부 이벤트 캡처'
-            },
-            {
-              step: 'Step 3 · 미승인 외부 AI 도메인 반출',
-              nodeLabel: 'chatgpt.com',
-              nodeSub: 'HTTPS POST · 92점 HIGH',
-              time: '22:14:08',
-              actor: 'Outbound TLS Session',
-              detail: '거버넌스 미승인 생성형 AI(chatgpt.com)로 암호화 페이로드 전송 시도 감지 및 브라우저 정책 즉시 차단'
-            }
-          ],
-          reasons: [
-            '사내 기밀 DB·저장소 접근 로그와 브라우저 외부 AI 업로드 로그 간 시간차 3분 56초 (임계치 10분 이내)',
-            '동일 호스트(192.168.10.88) 및 동일 계정(park_dev) 세션 핑거프린트 100% 일치',
-            '프롬프트 붙여넣기 글자 수(3,420자)가 기밀 유출 고위험 임계치(1,000자)를 3.4배 초과',
-            'Gemini AI 컨텍스트 판정: 사내 인증 스키마 구조가 외부 LLM 학습 데이터로 노출될 위험 매우 높음 (92점)'
-          ]
-        },
-        {
-          id: 'INC-SEC-002',
-          title: '외부 SSH 브루트포스 침투 후 내부 고객 DB 피보팅 및 클라우드 반출',
-          shortTitle: '외부 브루트포스 및 내부 DB 피보팅 유출',
-          severity: 'HIGH',
-          score: 95,
-          time: '2026-10-26 21:52:31 KST',
-          source: '203.0.113.77 (외부 위협 IP) → jump-host-01',
-          target: 'PROD-CUST-DB01 → wetransfer.com',
-          category: 'Brute-Force Pivoting · Data Exfiltration',
-          summary: '외부 공격 IP에서 48회 SSH 로그인 실패 후 탈취된 계정으로 점프 호스트에 진입, 고객 원장 DB 덤프 생성 후 외부 파일 공유 서비스로 반출을 시도했습니다.',
-          hops: [
-            {
-              step: 'Step 1 · 외부 무차별 대입 침투',
-              nodeLabel: '203.0.113.77',
-              nodeSub: 'SSH 48회 실패 후 성공',
-              time: '21:46:05',
-              actor: 'External Threat Actor',
-              detail: '외부 비인가 대역(203.0.113.77)에서 jump-host-01 대상 48회 연속 인증 실패 직후 root 세션 획득'
-            },
-            {
-              step: 'Step 2 · 내부 고객 DB 측면 이동(Pivoting)',
-              nodeLabel: 'PROD-CUST-DB01',
-              nodeSub: 'SELECT * · 48.2MB 덤프',
-              time: '21:49:18',
-              actor: 'admin_root (Internal Pivot)',
-              detail: '점프 호스트에서 운영 고객 원장 DB(PROD-CUST-DB01)로 비정상 쿼리 실행 및 customer_dump_1026.csv 생성'
-            },
-            {
-              step: 'Step 3 · 대용량 외부 스토리지 반출',
-              nodeLabel: 'wetransfer.com',
-              nodeSub: 'Upload 48.2MB · 95점',
-              time: '21:52:31',
-              actor: 'FINANCE-PC04 Relay',
-              detail: '미승인 파일 전송 사이트(wetransfer.com)로 48.2MB 압축 아카이브 업로드 시도 감지 및 세션 강제 종료'
-            }
-          ],
-          reasons: [
-            '외부 SSH 브루트포스 성공 직후 3분 13초 만에 내부 핵심 DB 대량 조회 쿼리 발생',
-            '평소 심야 시간대 접근 이력이 전무한 관리자 계정(admin_root)의 비정상 피보팅 경로 탐지',
-            '생성된 덤프 파일 크기(48.2MB)와 외부 업로드 스트림 바이트 크기 일치',
-            '듀얼 상관분석 엔진 판정: 침투(Infiltration) → 측면 이동(Lateral Movement) → 반출(Exfiltration) 3단계 완벽 부합 (95점)'
-          ]
-        },
-        {
-          id: 'INC-SEC-003',
-          title: '사내 전략기획 DB 조회 후 미승인 외부 AI 요약 서비스 접근 (사전 감시)',
-          shortTitle: '사내 전략기획 DB 조회 후 미승인 AI 접근',
-          severity: 'WATCH',
-          score: 68,
-          time: '2026-10-26 22:04:19 KST',
-          source: 'kim_marketing · DESKTOP-MKT01 (192.168.10.42)',
-          target: 'claude.ai (외부 생성형 AI)',
-          category: 'Pre-Exfiltration Watch · 선제 관찰',
-          summary: '마케팅 부서 계정이 4분기 캠페인 예산 DB를 조회한 뒤 미승인 외부 AI 사이트에 접속하고 420자 텍스트를 입력했으나, 대량 파일 첨부는 없어 WATCH(사전 감시) 상태로 전환되었습니다.',
-          hops: [
-            {
-              step: 'Step 1 · 사내 기획 DB 열람',
-              nodeLabel: 'MKT-PLAN-DB',
-              nodeSub: 'Q4_budget_plan.xlsx',
-              time: '22:01:10',
-              actor: 'kim_marketing (192.168.10.42)',
-              detail: '사내 마케팅 예산 기획 테이블 조회 및 로컬 스프레드시트 열람'
-            },
-            {
-              step: 'Step 2 · 브라우저 클립보드 복사',
-              nodeLabel: 'DESKTOP-MKT01',
-              nodeSub: 'Paste 420자 (첨부 없음)',
-              time: '22:03:45',
-              actor: 'Chrome Ext Sensor (v2.4)',
-              detail: '브라우저 입력창에 420자 요약 요청 프롬프트 붙여넣기 감지 (파일 첨부 0건)'
-            },
-            {
-              step: 'Step 3 · 외부 AI 도메인 접속 (WATCH)',
-              nodeLabel: 'claude.ai',
-              nodeSub: 'WATCH 전환 · 30m TTL',
-              time: '22:04:19',
-              actor: 'Self-Healing Policy Guard',
-              detail: '위험도 68점 산출로 즉시 차단 대신 선제 관찰(WATCH) 부여 (30분간 추가 반출 없을 시 NORMAL 자동 복귀)'
-            }
-          ],
-          reasons: [
-            '사내 기획 DB 조회 후 3분 이내에 외부 생성형 AI(claude.ai) 접속 상관성 확인',
-            '붙여넣기 분량(420자)이 고위험 차단 임계치(1,000자) 미만이며 기밀 파일 첨부 행위 없음',
-            '오탐으로 인한 업무 마비를 방지하기 위해 30분 Self-Healing TTL 기반 WATCH 상태로 분류 (68점)'
-          ]
-        }
-      ],
+      incidents: [],
 
       // Page 1: Real-time Security State Audit History
-      auditHistory: [
-        {
-          utc: '2026-10-26 13:14:08 UTC',
-          target: 'park_dev · DEV-WORKSTATION',
-          prev: 'WATCH',
-          next: 'HIGH (92점)',
-          reason: '사내 인증 DB 스키마 열람 후 chatgpt.com 대상 3,420자 붙여넣기 및 파일 첨부 감지'
-        },
-        {
-          utc: '2026-10-26 13:04:19 UTC',
-          target: 'kim_marketing · DESKTOP-MKT01',
-          prev: 'NORMAL',
-          next: 'WATCH (68점)',
-          reason: '마케팅 기획 DB 조회 직후 claude.ai 접근 및 420자 프롬프트 입력 (30분 TTL 카운트다운 가동)'
-        },
-        {
-          utc: '2026-10-26 12:52:31 UTC',
-          target: 'admin_root · PROD-CUST-DB01',
-          prev: 'NORMAL',
-          next: 'HIGH (95점)',
-          reason: '외부 SSH 브루트포스(203.0.113.77) 침투 후 고객 원장 48.2MB wetransfer.com 반출 시도'
-        },
-        {
-          utc: '2026-10-26 12:30:00 UTC',
-          target: 'choi_hr · HR-LAPTOP02',
-          prev: 'WATCH',
-          next: 'NORMAL (18점)',
-          reason: '30분 무전송 경과에 따른 Self-Healing TTL 자동 해제 및 정상(NORMAL) 등급 원복'
-        }
-      ],
+      auditHistory: [],
 
       // Page 3: AI & IT Governance Assets
       govSearch: '',
@@ -3076,313 +2720,17 @@
       govSortAsc: false,
       diagInput: 'perplexity.ai',
       diagResult: null,
-      govAssets: [
-        {
-          domain: 'chatgpt.com',
-          service: 'OpenAI ChatGPT Web',
-          category: '생성형 AI (LLM)',
-          riskLevel: 'HIGH',
-          riskScore: 92,
-          govStatus: '미승인 Shadow AI',
-          liveHits: 42,
-          liveDevices: 5,
-          users: 4,
-          freqLabel: '급증',
-          totalCumulative: 318,
-          exfilAttempts: 9,
-          aiOpinion: '프롬프트 입력 데이터가 외부 모델 컨텍스트로 전송됨. 사내 구축형 Enterprise LLM 게이트웨이로 대체 권고.',
-          blocked: true
-        },
-        {
-          domain: 'api.openai.com',
-          service: 'OpenAI Developer API',
-          category: 'AI API 엔드포인트',
-          riskLevel: 'HIGH',
-          riskScore: 89,
-          govStatus: '제한적 테스트 허용',
-          liveHits: 67,
-          liveDevices: 3,
-          users: 2,
-          freqLabel: '빈번',
-          totalCumulative: 512,
-          exfilAttempts: 4,
-          aiOpinion: '스크립트 기반 자동화 페이로드 반출 위험 존재. API Key 감사 및 사내 프록시 경유 강제 필요.',
-          blocked: true
-        },
-        {
-          domain: 'wetransfer.com',
-          service: 'WeTransfer File Share',
-          category: '대용량 파일 공유',
-          riskLevel: 'HIGH',
-          riskScore: 96,
-          govStatus: '즉시 차단 대상',
-          liveHits: 8,
-          liveDevices: 2,
-          users: 2,
-          freqLabel: '감지',
-          totalCumulative: 29,
-          exfilAttempts: 6,
-          aiOpinion: '계정 인증 없이 대용량 원장·덤프 파일을 외부 링크로 반출 가능. 사내 승인 문서보안(DRM) 드라이브로 대체.',
-          blocked: true
-        },
-        {
-          domain: 'claude.ai',
-          service: 'Anthropic Claude Web',
-          category: '생성형 AI (LLM)',
-          riskLevel: 'MEDIUM',
-          riskScore: 68,
-          govStatus: '사전 감시 (WATCH)',
-          liveHits: 19,
-          liveDevices: 3,
-          users: 3,
-          freqLabel: '빈번',
-          totalCumulative: 144,
-          exfilAttempts: 2,
-          aiOpinion: '대용량 문서 첨부 요약 기능이 강력하여 기획서 원본 업로드 우려. 파일 첨부 이벤트 발생 시 즉시 차단 권고.',
-          blocked: true
-        },
-        {
-          domain: 'cursor.sh',
-          service: 'Cursor AI Code Editor',
-          category: 'AI 코드 어시스턴트',
-          riskLevel: 'HIGH',
-          riskScore: 84,
-          govStatus: '미승인 Shadow AI',
-          liveHits: 31,
-          liveDevices: 2,
-          users: 2,
-          freqLabel: '급증',
-          totalCumulative: 205,
-          exfilAttempts: 3,
-          aiOpinion: '로컬 코드베이스 인덱싱 과정에서 사내 핵심 알고리즘 스니펫이 외부 서버로 동기화될 위험.',
-          blocked: false
-        },
-        {
-          domain: 'dropbox.com',
-          service: 'Dropbox Cloud Storage',
-          category: '외부 클라우드 스토리지',
-          riskLevel: 'MEDIUM',
-          riskScore: 72,
-          govStatus: '부서 예외 신청 필요',
-          liveHits: 12,
-          liveDevices: 2,
-          users: 2,
-          freqLabel: '감지',
-          totalCumulative: 96,
-          exfilAttempts: 1,
-          aiOpinion: '개인 계정 로그인 시 사내 문서 자동 동기화 우려. 사내 Microsoft 365 OneDrive 기업용 테넌트로 일원화.',
-          blocked: false
-        },
-        {
-          domain: 'notion.so',
-          service: 'Notion Workspace & AI',
-          category: '협업 위키 · AI',
-          riskLevel: 'LOW',
-          riskScore: 34,
-          govStatus: '공식 승인 자산',
-          liveHits: 118,
-          liveDevices: 14,
-          users: 12,
-          freqLabel: '빈번',
-          totalCumulative: 1420,
-          exfilAttempts: 0,
-          aiOpinion: '사내 SSO 연동 기업용 워크스페이스로 승인됨. 외부 공개 페이지(Public Share) 링크 생성만 감사 유지.',
-          blocked: false
-        },
-        {
-          domain: 'slack.com',
-          service: 'Slack Enterprise Grid',
-          category: '사내 공식 메신저',
-          riskLevel: 'LOW',
-          riskScore: 18,
-          govStatus: '공식 승인 자산',
-          liveHits: 245,
-          liveDevices: 18,
-          users: 16,
-          freqLabel: '빈번',
-          totalCumulative: 3890,
-          exfilAttempts: 0,
-          aiOpinion: '사내 표준 커뮤니케이션 채널. 외부 게스트 채널 파일 업로드 시에만 DLP 스캔 연동.',
-          blocked: false
-        }
-      ],
+      meta: {},
+      serverNow: null,
+      govAssets: [],
 
       // Page 4: Central Server Pipeline & site_access.py (차단 내역 · 일시 허용 관리)
       siteSearch: '',
       pipeIpFilter: 'ALL',
       pipeTypeFilter: 'ALL',
-      pcSummary: [
-        { pcName: 'DEV-WORKSTATION', ip: '192.168.10.88', count: 47, lastTime: '2026-10-26 22:14:08 KST', user: 'park_dev' },
-        { pcName: 'DESKTOP-MKT01', ip: '192.168.10.42', count: 31, lastTime: '2026-10-26 22:04:19 KST', user: 'kim_marketing' },
-        { pcName: 'FINANCE-PC04', ip: '192.168.10.105', count: 19, lastTime: '2026-10-26 21:52:31 KST', user: 'admin_root' },
-        { pcName: 'HR-LAPTOP02', ip: '192.168.10.64', count: 24, lastTime: '2026-10-26 21:30:11 KST', user: 'choi_hr' }
-      ],
-      siteAccessGroups: [
-        {
-          id: 'SA-01',
-          pcName: 'DEV-WORKSTATION',
-          ip: '192.168.10.88',
-          user: 'park_dev',
-          domain: 'chatgpt.com',
-          attempts: 9,
-          status: 'BLOCKED', // 'BLOCKED' | 'ALLOWED'
-          remainMin: 0,
-          grantFormOpen: false,
-          grantMinutes: 30,
-          detailOpen: false,
-          lastActionTime: '2026-10-26 22:14:08 KST',
-          deviceId: 'DEV-WK-88-CHROME-EXT',
-          lastDetail: 'core-auth-schema.sql 첨부 및 3,420자 프롬프트 붙여넣기 차단 완료'
-        },
-        {
-          id: 'SA-02',
-          pcName: 'DESKTOP-MKT01',
-          ip: '192.168.10.42',
-          user: 'kim_marketing',
-          domain: 'claude.ai',
-          attempts: 4,
-          status: 'ALLOWED',
-          remainMin: 18,
-          grantFormOpen: false,
-          grantMinutes: 30,
-          detailOpen: false,
-          lastActionTime: '2026-10-26 22:09:00 KST',
-          deviceId: 'MKT-PC-42-CHROME-EXT',
-          lastDetail: '마케팅 카피 초안 검수 목적 30분 일시 허용 승인 (잔여 18분)'
-        },
-        {
-          id: 'SA-03',
-          pcName: 'FINANCE-PC04',
-          ip: '192.168.10.105',
-          user: 'admin_root',
-          domain: 'wetransfer.com',
-          attempts: 6,
-          status: 'BLOCKED',
-          remainMin: 0,
-          grantFormOpen: false,
-          grantMinutes: 15,
-          detailOpen: false,
-          lastActionTime: '2026-10-26 21:52:31 KST',
-          deviceId: 'FIN-PC-105-AGENT',
-          lastDetail: 'customer_dump_1026.csv (48.2MB) 외부 반출 시도 강제 차단'
-        },
-        {
-          id: 'SA-04',
-          pcName: 'DEV-WORKSTATION',
-          ip: '192.168.10.88',
-          user: 'park_dev',
-          domain: 'api.openai.com',
-          attempts: 5,
-          status: 'BLOCKED',
-          remainMin: 0,
-          grantFormOpen: false,
-          grantMinutes: 30,
-          detailOpen: false,
-          lastActionTime: '2026-10-26 21:41:12 KST',
-          deviceId: 'DEV-WK-88-AGENT',
-          lastDetail: '비인가 Python 스크립트 기반 외부 API 토큰 호출 차단'
-        }
-      ],
-      pipelineLogs: [
-        {
-          id: 'EVT-9048',
-          time: '2026-10-26 22:14:08',
-          user: 'park_dev',
-          pcName: 'DEV-WORKSTATION',
-          ip: '192.168.10.88',
-          type: 'FILE_ATTACH_BLOCK',
-          site: 'chatgpt.com',
-          fileName: 'core-auth-schema.sql',
-          fileSize: '2,418 KB',
-          pasteChars: 3420,
-          source: 'Chrome Ext v2.4',
-          score: 92
-        },
-        {
-          id: 'EVT-9047',
-          time: '2026-10-26 22:10:12',
-          user: 'park_dev',
-          pcName: 'DEV-WORKSTATION',
-          ip: '192.168.10.88',
-          type: 'DB_SENSITIVE_READ',
-          site: 'INTERNAL-GIT-DB',
-          fileName: 'core-auth-schema.sql',
-          fileSize: '2,418 KB',
-          pasteChars: 0,
-          source: 'DB Audit Agent',
-          score: 64
-        },
-        {
-          id: 'EVT-9046',
-          time: '2026-10-26 22:04:19',
-          user: 'kim_marketing',
-          pcName: 'DESKTOP-MKT01',
-          ip: '192.168.10.42',
-          type: 'PROMPT_PASTE_WATCH',
-          site: 'claude.ai',
-          fileName: '-',
-          fileSize: '-',
-          pasteChars: 420,
-          source: 'Chrome Ext v2.4',
-          score: 68
-        },
-        {
-          id: 'EVT-9045',
-          time: '2026-10-26 22:01:10',
-          user: 'kim_marketing',
-          pcName: 'DESKTOP-MKT01',
-          ip: '192.168.10.42',
-          type: 'DB_SENSITIVE_READ',
-          site: 'MKT-PLAN-DB',
-          fileName: 'Q4_budget_plan.xlsx',
-          fileSize: '840 KB',
-          pasteChars: 0,
-          source: 'DB Audit Agent',
-          score: 45
-        },
-        {
-          id: 'EVT-9044',
-          time: '2026-10-26 21:52:31',
-          user: 'admin_root',
-          pcName: 'FINANCE-PC04',
-          ip: '192.168.10.105',
-          type: 'FILE_ATTACH_BLOCK',
-          site: 'wetransfer.com',
-          fileName: 'customer_dump_1026.csv',
-          fileSize: '48,210 KB',
-          pasteChars: 0,
-          source: 'Railway Collector',
-          score: 95
-        },
-        {
-          id: 'EVT-9043',
-          time: '2026-10-26 21:46:05',
-          user: 'admin_root',
-          pcName: 'FINANCE-PC04',
-          ip: '192.168.10.105',
-          type: 'SSH_BRUTE_PIVOT',
-          site: 'PROD-CUST-DB01',
-          fileName: 'customer_dump_1026.csv',
-          fileSize: '48,210 KB',
-          pasteChars: 0,
-          source: 'OS Syslog Daemon',
-          score: 91
-        },
-        {
-          id: 'EVT-9042',
-          time: '2026-10-26 21:30:11',
-          user: 'choi_hr',
-          pcName: 'HR-LAPTOP02',
-          ip: '192.168.10.64',
-          type: 'TTL_SELF_HEAL',
-          site: 'notion.so',
-          fileName: '-',
-          fileSize: '-',
-          pasteChars: 110,
-          source: 'Correlation Engine',
-          score: 18
-        }
-      ]
+      pcSummary: [],
+      siteAccessGroups: [],
+      pipelineLogs: []
     };
 
     /* =========================================================================
@@ -3416,8 +2764,76 @@
       return `${m}:${s}`;
     }
 
+
+    /* =========================================================================
+       HOST BRIDGE: Streamlit 컴포넌트 프로토콜(postMessage). 데이터는 전부 백엔드에서 받는다.
+       ========================================================================= */
+    const HOSTED = window.parent !== window;
+    let lastSnapSig = '';
+    let seenResultNonce = null;
+    function hostSend(type, data) {
+      window.parent.postMessage(Object.assign({ isStreamlitMessage: true, type }, data || {}), '*');
+    }
+    window.gigangAct = function(action, payload, pendingMsg) {
+      if (!HOSTED) {
+        showToast('백엔드에 연결되어 있지 않습니다', 'Streamlit(streamlit run app.py)에서 열어야 이 동작이 실제로 수행됩니다.');
+        return false;
+      }
+      state.pending = action;
+      if (pendingMsg) showToast('처리 중', pendingMsg);
+      hostSend('streamlit:setComponentValue', {
+        value: { action, payload: payload || {}, nonce: Date.now() + '-' + Math.random().toString(36).slice(2) },
+        dataType: 'json'
+      });
+      return true;
+    };
+    function isEditing() {
+      const a = document.activeElement;
+      return a && (a.tagName === 'INPUT' || a.tagName === 'SELECT' || a.tagName === 'TEXTAREA');
+    }
+    function applySnapshot(snap) {
+      if (!snap) return;
+      const listKeys = ['activeIncidentsData', 'casesData', 'watchUsers', 'weeklyActivity', 'incidents', 'auditHistory', 'govAssets', 'siteAccessGroups', 'pcSummary', 'pipelineLogs'];
+      const result = snap.lastResult;
+      const newResult = result && result.nonce !== seenResultNonce;
+      const sig = JSON.stringify(listKeys.map(k => snap[k])) + JSON.stringify(snap.meta) + JSON.stringify(snap.diag || null);
+      if (!newResult && sig === lastSnapSig) return;      // 바뀐 게 없으면 다시 그리지 않는다
+      lastSnapSig = sig;
+      const keep = {};
+      state.siteAccessGroups.forEach(g => { keep[g.id] = { grantFormOpen: g.grantFormOpen, grantMinutes: g.grantMinutes, detailOpen: g.detailOpen }; });
+      listKeys.forEach(k => { state[k] = snap[k] || []; });
+      state.siteAccessGroups.forEach(g => Object.assign(g, keep[g.id] || {}));
+      state.meta = snap.meta || {};
+      state.serverNow = snap.serverNow ? new Date(snap.serverNow) : new Date();
+      CASE_REF_NOW = state.serverNow;
+      if (!state.caseFilters.dateFrom) window.setCaseDateRange(state.caseFilters.dateRange, true);
+      state.railwayLive = Boolean(state.meta.railwayLive);
+      state.geminiEnabled = Boolean(state.meta.geminiEnabled);
+      state.lastSyncTime = state.meta.lastSuccess ? state.meta.lastSuccess.split(' ')[1] + ' KST' : '-';
+      state.ttlSeconds = state.watchUsers.length ? Math.max(...state.watchUsers.map(w => w.ttlSeconds)) : 0;
+      if (!state.incidents.some(i => i.id === state.selectedIncidentId)) state.selectedIncidentId = state.incidents.length ? state.incidents[0].id : '';
+      state.diagResult = snap.diag ? { domain: snap.diag.domain, level: snap.diag.riskLevel, opinion: snap.diag.opinion, engine: snap.diag.engine } : null;
+      state.pending = null;
+      if (newResult) {
+        seenResultNonce = result.nonce;
+        showToast(result.ok ? '완료' : '실패', result.message);
+      }
+      if (typeof window.refreshGeminiModal === 'function') window.refreshGeminiModal();
+      if (!isEditing()) renderStage({ animate: false });
+    }
+    window.addEventListener('message', (e) => {
+      const d = e.data;
+      if (d && d.type === 'streamlit:render' && d.args) applySnapshot(d.args.snapshot);
+    });
+    if (HOSTED) {
+      hostSend('streamlit:componentReady', { apiVersion: 1 });
+      hostSend('streamlit:setFrameHeight', { height: 1000 });
+      setInterval(() => { if (!state.pending && !isEditing()) window.gigangAct('poll', {}); }, 15000);
+    }
+
+    const EMPTY_INC = { id: '-', empty: true, shortTitle: '-', title: '-', score: 0, severity: 'NORMAL', hops: [], reasons: [], summary: '', user: '-', pc: '-', ip: '-' };
     function getSelectedIncident() {
-      return state.incidents.find(i => i.id === state.selectedIncidentId) || state.incidents[0];
+      return state.incidents.find(i => i.id === state.selectedIncidentId) || state.incidents[0] || EMPTY_INC;
     }
 
     function pillClassForSeverity(sev) {
@@ -3451,6 +2867,7 @@
       state.topoPanX = 0;
       state.topoPanY = 0;
       const inc = getSelectedIncident();
+      if (inc.empty) return;
       showToast(`인시던트 선택: ${inc.id}`, `${inc.shortTitle} (위험도 ${inc.score}점) 포렌식 컨텍스트를 불러왔습니다.`);
       renderStage();
     };
@@ -3462,77 +2879,40 @@
       state.topoPanX = 0;
       state.topoPanY = 0;
       const inc = getSelectedIncident();
+      if (inc.empty) { showToast('인시던트 없음', '수집된 인시던트가 없습니다.'); renderStage(); return; }
       showToast('킬체인 분석 화면 이동', `${inc.id} 3-Hop 네트워크 경로 맵 및 상관분석 근거를 표시합니다.`);
       renderStage();
     };
 
     window.toggleRailway = function(checked) {
-      state.railwayLive = Boolean(checked);
-      showToast(
-        state.railwayLive ? 'Railway 실시간 수집 가동 (ON)' : 'Railway 실시간 수집 일시 중지 (OFF)',
-        state.railwayLive
-          ? '중앙 서버(https://web-production-694c8.up.railway.app) 실시간 폴링이 활성화되었습니다.'
-          : '실시간 폴링이 일시 중지되었으며 로컬 스냅샷 캐시 모드로 동작합니다.'
-      );
-      renderStage();
+      if (!window.gigangAct('toggle_collect', { on: Boolean(checked) })) renderStage({ animate: false });
     };
 
     window.syncRailwayLogs = function() {
-      const now = new Date();
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
-      const ss = String(now.getSeconds()).padStart(2, '0');
-      state.lastSyncTime = `${hh}:${mm}:${ss} KST`;
-      const newId = 'EVT-' + (9049 + Math.floor(Math.random() * 40));
-      state.pipelineLogs.unshift({
-        id: newId,
-        time: `2026-10-26 ${hh}:${mm}:${ss}`,
-        user: 'park_dev',
-        pcName: 'DEV-WORKSTATION',
-        ip: '192.168.10.88',
-        type: 'POLICY_HEARTBEAT',
-        site: 'chatgpt.com',
-        fileName: 'blocked_domains.json',
-        fileSize: '4 KB',
-        pasteChars: 0,
-        source: 'Railway Sync',
-        score: 24
-      });
-      showToast('최신 로그 즉시 동기화 완료', `Railway 중앙 서버로부터 최신 에이전트 이벤트(${newId})를 수신했습니다.`);
-      renderStage();
-    };
-
-    window.updateGeminiKey = function(val) {
-      state.geminiKey = val;
+      window.gigangAct('sync', {}, 'Railway 로그를 동기화하는 중입니다');
     };
 
     window.toggleGeminiEngine = function(checked) {
-      state.geminiEnabled = Boolean(checked);
-      const modalToggle = document.getElementById('modal-gemini-toggle');
-      if (modalToggle) modalToggle.checked = state.geminiEnabled;
-      showToast(
-        state.geminiEnabled ? 'Gemini AI 지능형 엔진 활성화' : '내장 휴리스틱(Rule-Fallback) 전환',
-        state.geminiEnabled
-          ? '실시간 도메인 위험도 진단 및 상관분석 소견 생성에 Gemini AI 모델을 사용합니다.'
-          : '외부 API 호출 없이 로컬 보안 룰셋 기반으로 판정을 수행합니다.'
-      );
-      renderStage();
+      if (!window.gigangAct('toggle_gemini', { on: Boolean(checked) })) renderStage({ animate: false });
     };
 
     window.openGeminiModal = function() {
       const m = document.getElementById('gemini-modal');
       if (m) m.classList.add('open');
+      window.refreshGeminiModal();
+    };
+
+    window.refreshGeminiModal = function() {
+      const t = document.getElementById('modal-gemini-toggle');
+      const st = document.getElementById('modal-gemini-status');
+      const ok = Boolean(state.meta.geminiConfigured);
+      if (t) { t.checked = Boolean(state.geminiEnabled); t.disabled = !ok; }
+      if (st) st.textContent = ok ? '서버에 GEMINI_API_KEY가 설정되어 있습니다.' : 'GEMINI_API_KEY가 서버에 설정되어 있지 않습니다. .env 또는 Streamlit Secrets에 등록해야 사용할 수 있습니다.';
     };
 
     window.closeGeminiModal = function() {
       const m = document.getElementById('gemini-modal');
       if (m) m.classList.remove('open');
-    };
-
-    window.saveGeminiModal = function() {
-      window.closeGeminiModal();
-      showToast('Gemini AI 엔진 설정 저장', `엔진 상태: ${state.geminiEnabled ? 'ONLINE (Gemini 2.5 Flash)' : 'RULE-FALLBACK'}`);
-      renderStage();
     };
 
     // Page 3 Handlers
@@ -3541,44 +2921,10 @@
     };
 
     window.runGeminiDiagnosis = function() {
-      const raw = (state.diagInput || '').trim().toLowerCase() || 'perplexity.ai';
+      const raw = (state.diagInput || '').trim().toLowerCase();
+      if (!raw || raw.indexOf('.') < 0) { showToast('도메인을 입력하세요', '예: chatgpt.com'); return; }
       state.diagInput = raw;
-      const isHighRisk = raw.includes('ai') || raw.includes('gpt') || raw.includes('perplexity') || raw.includes('deepseek') || raw.includes('transfer');
-      const score = isHighRisk ? 86 : 44;
-      const level = isHighRisk ? 'HIGH' : 'MEDIUM';
-      const opinion = isHighRisk
-        ? `[Gemini AI 실시간 분석] '${raw}' 도메인은 외부 LLM 추론 서버로 프롬프트 원문과 첨부 문서를 전송합니다. 사내 기밀 텍스트 붙여넣기 임계치(1,000자) 초과 시 즉시 차단 정책 적용을 권고합니다.`
-        : `[Gemini AI 실시간 분석] '${raw}' 도메인은 일반 SaaS 서비스로 분류되나 비인가 파일 업로드 엔드포인트가 포함되어 있어 WATCH(선제 관찰) 정책 등록을 권고합니다.`;
-
-      state.diagResult = {
-        domain: raw,
-        score,
-        level,
-        opinion,
-        engine: state.geminiEnabled ? 'Gemini AI 실시간 추론' : '로컬 휴리스틱 엔진'
-      };
-
-      const existing = state.govAssets.find(a => a.domain === raw);
-      if (!existing) {
-        state.govAssets.unshift({
-          domain: raw,
-          service: `${raw.split('.')[0].toUpperCase()} External Service`,
-          category: isHighRisk ? '생성형 AI (신규 진단)' : '외부 웹 서비스',
-          riskLevel: level,
-          riskScore: score,
-          govStatus: isHighRisk ? '미승인 Shadow AI' : '사전 감시 (WATCH)',
-          liveHits: 5,
-          liveDevices: 1,
-          users: 1,
-          freqLabel: '감지',
-          totalCumulative: 5,
-          exfilAttempts: isHighRisk ? 1 : 0,
-          aiOpinion: opinion,
-          blocked: isHighRisk
-        });
-      }
-      showToast(`AI 즉시 진단 완료: ${raw}`, `위험도 ${score}점 (${level}) · 거버넌스 인벤토리에 진단 결과가 반영되었습니다.`);
-      renderStage();
+      window.gigangAct('diagnose', { domain: raw }, `${raw} 진단 중입니다`);
     };
 
     window.setGovSearch = function(val) {
@@ -3607,18 +2953,8 @@
     };
 
     window.toggleDomainBlock = function(domain, checked) {
-      const item = state.govAssets.find(a => a.domain === domain);
-      if (item) {
-        item.blocked = Boolean(checked);
-        item.govStatus = item.blocked ? '즉시 차단 정책 적용' : '사전 감시 (WATCH)';
-        showToast(
-          item.blocked ? `브라우저 차단 정책 활성화: ${domain}` : `브라우저 차단 해제: ${domain}`,
-          item.blocked
-            ? `blocked_domains.json 및 Railway /policy 엔드포인트에 '${domain}' 차단 룰이 즉시 배포되었습니다.`
-            : `'${domain}' 도메인이 차단 목록에서 제외되어 WATCH 감시 모드로 전환되었습니다.`
-        );
-        renderStage();
-      }
+      window.gigangAct('block_domain', { domain, blocked: Boolean(checked) });
+      renderStage({ animate: false });  // 서버 응답이 오기 전 체크 상태를 원래대로 되돌림
     };
 
     // Page 4 & site_access.py Handlers
@@ -3649,25 +2985,13 @@
     window.applySiteGrant = function(groupId) {
       const g = state.siteAccessGroups.find(x => x.id === groupId);
       if (!g) return;
-      g.status = 'ALLOWED';
-      g.remainMin = g.grantMinutes || 30;
-      g.grantFormOpen = false;
-      g.lastActionTime = '방금 전 (관리자 일시 허용)';
-      g.lastDetail = `관리자 예외 승인으로 ${g.remainMin}분간 일시 허용 설정됨 (만료 시 자동 차단 복귀)`;
-      showToast(`일시 허용 적용: ${g.pcName} → ${g.domain}`, `${g.remainMin}분 동안 해당 PC의 '${g.domain}' 접근이 한시적으로 허용됩니다.`);
-      renderStage();
+      window.gigangAct('site_access', { deviceId: g.deviceId, domain: g.domain, pcName: g.pcName, minutes: g.grantMinutes || 30 });
     };
 
     window.revokeSiteGrant = function(groupId) {
       const g = state.siteAccessGroups.find(x => x.id === groupId);
       if (!g) return;
-      g.status = 'BLOCKED';
-      g.remainMin = 0;
-      g.grantFormOpen = false;
-      g.lastActionTime = '방금 전 (즉시 재차단)';
-      g.lastDetail = '관리자 명령으로 일시 허용이 회수되고 즉시 차단 상태로 전환됨';
-      showToast(`즉시 재차단 완료: ${g.pcName} → ${g.domain}`, `일시 허용이 종료되고 브라우저 확장 정책이 차단 유지로 복구되었습니다.`);
-      renderStage();
+      window.gigangAct('site_access', { deviceId: g.deviceId, domain: g.domain, pcName: g.pcName, minutes: 0 });
     };
 
     window.toggleSiteDetail = function(groupId) {
@@ -3716,6 +3040,7 @@
       state.activeHopIdx = Number(idx) || 0;
       const inc = getSelectedIncident();
       const hop = inc.hops[state.activeHopIdx] || inc.hops[0];
+      if (!hop) return;
       triggerHaptic(8);
       showToast(`${inc.id} · ${hop.step}`, `${hop.nodeLabel} (${hop.time} KST) — ${hop.detail}`);
       renderStage({ animate: false });
@@ -3892,12 +3217,7 @@
       state.incidentActiveTab = tab;
       renderStage();
     };
-    window.acquireIncident = function(id) {
-      showToast('인시던트 인수 완료', `${id} 담당자가 현재 로그인된 보안 분석가(park_dev)로 배정되었습니다.`);
-      const item = (state.activeIncidentsData || []).find(i => i.id === id);
-      if (item) item.assignee = 'park_dev';
-      renderStage();
-    };
+    window.acquireIncident = function(id) { window.assignCase(id); };
 
     window.setCaseSearch = function(val) {
       state.caseFilters.search = val;
@@ -3920,19 +3240,19 @@
       renderStage();
     };
     /* 생성일 필터. 기준 시각은 목업 데이터가 찍힌 시점이다. 백엔드를 붙일 때 서버 현재 시각으로 교체한다. */
-    const CASE_REF_NOW = new Date('2026-10-26T22:28:14');
+    let CASE_REF_NOW = new Date();
     const pad2 = n => String(n).padStart(2, '0');
     const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
     const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
     const CASE_DATE_CHIPS = { '오늘': 0, '최근 24시간': 1, '최근 7일': 6, '최근 30일': 29 };
 
-    window.setCaseDateRange = function(val) {
+    window.setCaseDateRange = function(val, silent) {
       const back = CASE_DATE_CHIPS[val];
       state.caseFilters.dateRange = val;
       state.caseFilters.dateTo = ymd(CASE_REF_NOW);
       state.caseFilters.dateFrom = ymd(addDays(CASE_REF_NOW, -back));
       state.caseFilters.page = 1;
-      renderStage();
+      if (!silent) renderStage();
     };
     window.setCaseDateCustom = function(which, val) {
       const f = state.caseFilters;
@@ -3952,7 +3272,19 @@
     };
     window.setCasePageSize = function(size) {
       state.caseFilters.pageSize = Number(size);
+      state.caseFilters.page = 1;
       renderStage();
+    };
+    window.setCasePage = function(pg) {
+      state.caseFilters.page = Number(pg);
+      renderStage({ animate: false });
+    };
+    window.assignCase = function(id) {
+      const cur = (state.casesData.find(c => c.id === id) || {}).assignee;
+      const name = window.prompt('담당자 이름을 입력하세요', cur && cur !== '미배정' ? cur : (localStorage.getItem('gigang.operator') || ''));
+      if (!name || !name.trim()) return;
+      localStorage.setItem('gigang.operator', name.trim());
+      window.gigangAct('assign', { id, assignee: name.trim() });
     };
     
     /* 표 열 너비 조절: 헤더 오른쪽 경계를 드래그. 너비는 브라우저(localStorage)에 저장된다.
@@ -4024,8 +3356,8 @@
         assignee: 'ALL',
         mlOnly: false,
         dateRange: '최근 7일',
-        dateFrom: '2026-10-20',
-        dateTo: '2026-10-26',
+        dateFrom: '',
+        dateTo: '',
         pageSize: 20,
         page: 1
       };
@@ -4089,11 +3421,11 @@
                 </span>
               </div>
               <div style="margin-top:12px;">
-                <div style="font-family:'IBM Plex Mono', monospace;font-size:28px;font-weight:700;color:#ffffff;line-height:1;">3</div>
+                <div style="font-family:'IBM Plex Mono', monospace;font-size:28px;font-weight:700;color:#ffffff;line-height:1;">${(state.activeIncidentsData || []).length}</div>
                 <div style="margin-top:8px;font-size:11.5px;color:#b6bbcc;display:flex;align-items:center;gap:6px;">
-                  <span style="color:#fbbf24;font-weight:700;">심각 2</span>
+                  <span style="color:#fbbf24;font-weight:700;">심각 ${(state.activeIncidentsData || []).filter(x => x.severity === '심각').length}</span>
                   <span style="color:#94a3b8;">·</span>
-                  <span style="color:#c084fc;font-weight:700;">관찰 1</span>
+                  <span style="color:#c084fc;font-weight:700;">관찰 ${(state.activeIncidentsData || []).filter(x => x.severity !== '심각').length}</span>
                 </div>
               </div>
             </div>
@@ -4108,11 +3440,11 @@
                 </span>
               </div>
               <div style="margin-top:12px;">
-                <div style="font-family:'IBM Plex Mono', monospace;font-size:28px;font-weight:700;color:#25c9ba;line-height:1;">64</div>
+                <div style="font-family:'IBM Plex Mono', monospace;font-size:28px;font-weight:700;color:#25c9ba;line-height:1;">${(state.govAssets || []).filter(a => a.blocked).length}</div>
                 <div style="margin-top:8px;font-size:11.5px;color:#b6bbcc;display:flex;align-items:center;gap:6px;">
-                  <span style="color:#25c9ba;font-weight:600;">Shadow AI 차단 완료</span>
+                  <span style="color:#25c9ba;font-weight:600;">차단 정책 적용 도메인</span>
                   <span style="color:#94a3b8;">·</span>
-                  <span>100% 방어</span>
+                  <span>전체 ${(state.govAssets || []).length}개 중</span>
                 </div>
               </div>
             </div>
@@ -4127,11 +3459,11 @@
                 </span>
               </div>
               <div style="margin-top:12px;">
-                <div style="font-family:'IBM Plex Mono', monospace;font-size:28px;font-weight:700;color:#c084fc;line-height:1;">1</div>
+                <div style="font-family:'IBM Plex Mono', monospace;font-size:28px;font-weight:700;color:#c084fc;line-height:1;">${(state.watchUsers || []).filter(w => w.state === 'WATCH').length}</div>
                 <div style="margin-top:8px;font-size:11.5px;color:#b6bbcc;display:flex;align-items:center;gap:6px;">
-                  <span style="color:#c084fc;font-weight:600;">30분 TTL 모니터링</span>
+                  <span style="color:#c084fc;font-weight:600;">TTL 모니터링</span>
                   <span style="color:#94a3b8;">·</span>
-                  <span>잔여 18분</span>
+                  <span>${(state.watchUsers || []).length ? `최대 잔여 ${Math.ceil(Math.max(...state.watchUsers.map(w => w.ttlSeconds)) / 60)}분` : '대상 없음'}</span>
                 </div>
               </div>
             </div>
@@ -4146,11 +3478,11 @@
                 </span>
               </div>
               <div style="margin-top:12px;">
-                <div style="font-family:'IBM Plex Mono', monospace;font-size:28px;font-weight:700;color:#4ade80;line-height:1;">18</div>
+                <div style="font-family:'IBM Plex Mono', monospace;font-size:28px;font-weight:700;color:#4ade80;line-height:1;">${(state.auditHistory || []).filter(h => h.next === 'NORMAL' && h.prev !== 'NORMAL').length}</div>
                 <div style="margin-top:8px;font-size:11.5px;color:#b6bbcc;display:flex;align-items:center;gap:6px;">
                   <span style="color:#4ade80;font-weight:600;">무활동 정상화 완료</span>
                   <span style="color:#94a3b8;">·</span>
-                  <span>최근 7일</span>
+                  <span>최근 전이 이력 기준</span>
                 </div>
               </div>
             </div>
@@ -4167,7 +3499,7 @@
               ${[
                 { id: 'ALL', label: '전체 인시던트', count: (state.activeIncidentsData || []).length },
                 { id: 'HIGH', label: '심각 (HIGH)', count: (state.activeIncidentsData || []).filter(x => x.severity === '심각').length, warn: true },
-                { id: 'WATCH', label: '선제 관찰 (WATCH)', count: 1, watch: true }
+                { id: 'WATCH', label: '선제 관찰 (WATCH)', count: (state.activeIncidentsData || []).filter(x => x.severity !== '심각').length, watch: true }
               ].map(f => {
                 const isSel = mode === f.id;
                 let bgStyle = isSel ? 'background:var(--gradient-action-btn);color:#ffffff;border:none;' : 'background:rgba(13,45,60,0.7);color:#b6bbcc;border:1px solid rgba(var(--color-accent-code),0.25);';
@@ -4198,6 +3530,7 @@
 
               <!-- 인시던트 카드 목록 -->
               <div style="display:flex;flex-direction:column;gap:14px;">
+                ${incidents.length === 0 ? '<div style="padding:40px 0;text-align:center;font-size:13px;color:#94a3b8;">수집된 데이터 없음 — ' + ((state.meta && state.meta.fetchError) ? escapeHtml(state.meta.fetchError) : '인시던트가 탐지되지 않았거나 수집이 꺼져 있습니다.') + '</div>' : ''}
                 ${incidents.map(inc => `
                   <article style="background:var(--color-pannel-dark);padding:18px;border-radius:0;box-shadow:0 0 0 1px rgba(var(--color-accent-code), 0.22) inset;display:flex;flex-direction:column;gap:14px;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='rgba(2, 28, 38, 0.95)'">
                     
@@ -4220,10 +3553,10 @@
                     <!-- 제목 & 메타 정보 -->
                     <div>
                       <h3 style="font-size:15px;font-weight:600;color:#ffffff;line-height:1.4;margin:0;letter-spacing:-0.01em;">
-                        ${inc.title}
+                        ${escapeHtml(inc.title)}
                       </h3>
                       <div style="margin-top:6px;display:flex;align-items:center;gap:8px;font-size:12px;color:#b6bbcc;">
-                        <span style="font-family:'IBM Plex Mono', monospace;color:#25c9ba;font-weight:500;">${inc.hostIp}</span>
+                        <span style="font-family:'IBM Plex Mono', monospace;color:#25c9ba;font-weight:500;">${escapeHtml(inc.hostIp)}</span>
                         <span style="color:#94a3b8;">·</span>
                         <span>자산 ${inc.assetCount}개</span>
                         <span style="color:#94a3b8;">·</span>
@@ -4234,12 +3567,12 @@
                     <!-- 3-Hop 상관분석 경로 흐름 박스 -->
                     <div style="background:rgba(13,45,60,0.6);border:1px solid rgba(var(--color-accent-code),0.25);border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:10px;font-family:'IBM Plex Mono', monospace;font-size:11.5px;color:#ffffff;overflow-x:auto;">
                       <span style="color:#25c9ba;font-weight:700;font-size:11px;padding:1px 6px;border-radius:4px;background:rgba(37,201,186,0.2);flex-shrink:0;">연관 경로</span>
-                      <span style="white-space:nowrap;color:#e8f1f5;">${inc.correlationFlow}</span>
+                      <span style="white-space:nowrap;color:#e8f1f5;">${escapeHtml(inc.correlationFlow)}</span>
                     </div>
 
                     <!-- AI 분석 소견 (Gemini / Correlation Insight) -->
                     <div style="font-size:12px;color:#b6bbcc;line-height:1.55;background:rgba(2,16,22,0.6);padding:10px 12px;border-left:3px solid #25c9ba;">
-                      <span style="color:#25c9ba;font-weight:600;">[분석 소견]</span> ${inc.aiSummary}
+                      <span style="color:#25c9ba;font-weight:600;">[분석 소견]</span> ${escapeHtml(inc.aiSummary)}
                     </div>
 
                     <!-- 카드 푸터: 생성 시간 & 킬체인 분석 이동 버튼 -->
@@ -4248,9 +3581,9 @@
                         <span>발생 시각:</span>
                         <span style="color:#ffffff;">${inc.time}</span>
                         <span style="color:#94a3b8;">·</span>
-                        <span>담당: ${inc.assignee}</span>
+                        <span>담당: ${escapeHtml(inc.assignee)}</span>
                       </div>
-                      <button type="button" onclick="window.openKillchainFor('${inc.id}')" style="height:28px;padding:0 14px;border-radius:9999px;font-size:11.5px;font-weight:600;color:#25c9ba;background:rgba(13,45,60,0.7);border:1px solid rgba(var(--color-accent-code),0.45);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;" onmouseover="this.style.background='#25c9ba';this.style.color='#021c26'" onmouseout="this.style.background='rgba(13,45,60,0.7)';this.style.color='#25c9ba'">
+                      <button type="button" onclick="window.openKillchainFor('${escapeHtml(inc.id)}')" style="height:28px;padding:0 14px;border-radius:9999px;font-size:11.5px;font-weight:600;color:#25c9ba;background:rgba(13,45,60,0.7);border:1px solid rgba(var(--color-accent-code),0.45);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;" onmouseover="this.style.background='#25c9ba';this.style.color='#021c26'" onmouseout="this.style.background='rgba(13,45,60,0.7)';this.style.color='#25c9ba'">
                         <span>킬체인 상세 분석</span>
                         <span>→</span>
                       </button>
@@ -4271,15 +3604,15 @@
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#25c9ba" stroke-width="2"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
                     <h3 style="font-size:13px;font-weight:600;color:#ffffff;margin:0;">실시간 위협 탐지 분류</h3>
                   </div>
-                  <span style="font-size:11px;font-family:'IBM Plex Mono', monospace;color:#b6bbcc;">최근 7일 통계</span>
+                  <span style="font-size:11px;font-family:'IBM Plex Mono', monospace;color:#b6bbcc;">실측 집계</span>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:10px;">
-                  ${[
-                    { category: 'Shadow AI 프롬프트 반출 차단', count: 64, pct: 100, color: '#25c9ba' },
-                    { category: '기밀 DB 대량 조회 징후', count: 49, pct: 76, color: '#ffffff' },
-                    { category: '외부 IP 브루트포스 / 피보팅', count: 28, pct: 44, color: '#f59e0b' },
-                    { category: '30분 무활동 TTL 안전 정상 복귀', count: 18, pct: 28, color: '#4ade80' }
-                  ].map(item => `
+                  ${(() => { const blocked = (state.govAssets || []).filter(x => x.blocked).length; const wi = (state.watchUsers || []).length; const back = (state.auditHistory || []).filter(h => h.next === 'NORMAL' && h.prev !== 'NORMAL').length; const inc = (state.activeIncidentsData || []).length; const mx = Math.max(1, blocked, wi, back, inc); return [
+                    { category: '활성 인시던트', count: inc, pct: inc / mx * 100, color: '#f87171' },
+                    { category: '차단 정책 적용 도메인', count: blocked, pct: blocked / mx * 100, color: '#25c9ba' },
+                    { category: 'WATCH/TTL 감시 대상', count: wi, pct: wi / mx * 100, color: '#f59e0b' },
+                    { category: '정상 복귀 전이', count: back, pct: back / mx * 100, color: '#4ade80' }
+                  ]; })().map(item => `
                     <div style="display:flex;flex-direction:column;gap:4px;">
                       <div style="display:flex;align-items:center;justify-content:space-between;font-size:11.5px;">
                         <span style="color:#b6bbcc;">${item.category}</span>
@@ -4303,12 +3636,8 @@
                   <span style="font-size:11px;color:#b6bbcc;">위험도순</span>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px;">
-                  ${[
-                    { id: 'ENT-01', name: 'DEV-WORKSTATION-01', ip: '192.168.10.88', type: 'ENDPOINT', score: 96 },
-                    { id: 'ENT-02', name: 'PROD-CUST-DB01', ip: '10.0.4.22', type: 'DATABASE', score: 89 },
-                    { id: 'ENT-03', name: 'GATEWAY-FW01', ip: '203.0.113.42', type: 'FIREWALL', score: 82 },
-                    { id: 'ENT-04', name: 'DEV-WORKSTATION-02', ip: '192.168.10.92', type: 'ENDPOINT', score: 64 }
-                  ].map(ent => `
+                  ${((state.casesData || []).slice().sort((x, y) => y.score - x.score).slice(0, 4).map(c => ({ name: c.asset.name, ip: c.asset.ip || c.asset.srcIp || '-', type: 'ENDPOINT', score: c.score }))).length === 0 ? '<div style="font-size:11.5px;color:#94a3b8;">수집된 데이터 없음</div>' : 
+                  ((state.casesData || []).slice().sort((x, y) => y.score - x.score).slice(0, 4).map(c => ({ name: c.asset.name, ip: c.asset.ip || c.asset.srcIp || '-', type: 'ENDPOINT', score: c.score })).map(ent => `
                     <div style="padding:10px;background:rgba(13,45,60,0.4);border-radius:4px;border:1px solid rgba(var(--color-accent-code),0.15);display:flex;align-items:center;justify-content:space-between;">
                       <div style="display:flex;flex-direction:column;gap:2px;overflow:hidden;padding-right:8px;">
                         <div style="display:flex;align-items:center;gap:6px;">
@@ -4321,7 +3650,7 @@
                         ${ent.score}점
                       </span>
                     </div>
-                  `).join('')}
+                  `).join('')) }
                 </div>
               </div>
 
@@ -4332,20 +3661,20 @@
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#25c9ba" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                     <h3 style="font-size:13px;font-weight:600;color:#ffffff;margin:0;">자동 방어 정책 상태</h3>
                   </div>
-                  <span style="font-size:11px;color:#4ade80;font-weight:600;">정상 가동</span>
+                  <span style="font-size:11px;color:${(state.meta && state.meta.railwayLive) ? '#4ade80' : '#f87171'};font-weight:600;">${(state.meta && state.meta.railwayLive) ? '수집 중' : '수집 중지'}</span>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px;font-size:11.5px;">
                   <div style="display:flex;align-items:center;justify-content:space-between;padding:8px;background:rgba(13,45,60,0.4);border-radius:4px;">
-                    <span style="color:#b6bbcc;">Shadow AI 즉시 세션 차단</span>
-                    <span style="color:#25c9ba;font-weight:600;">활성 (100%)</span>
+                    <span style="color:#b6bbcc;">정책 서버 연동</span>
+                    <span style="color:#25c9ba;font-weight:600;">${(state.meta && state.meta.policyOk) ? '정상' : '미연결'}</span>
                   </div>
                   <div style="display:flex;align-items:center;justify-content:space-between;padding:8px;background:rgba(13,45,60,0.4);border-radius:4px;">
-                    <span style="color:#b6bbcc;">30분 무활동 TTL 세션 자가치유</span>
-                    <span style="color:#4ade80;font-weight:600;">활성 (100%)</span>
+                    <span style="color:#b6bbcc;">API 키 / 사이트 접근 제어</span>
+                    <span style="color:#4ade80;font-weight:600;">${(state.meta && state.meta.hasApiKey) ? ((state.meta.siteAccessError) ? '오류' : '설정됨') : '키 없음'}</span>
                   </div>
                   <div style="display:flex;align-items:center;justify-content:space-between;padding:8px;background:rgba(13,45,60,0.4);border-radius:4px;">
-                    <span style="color:#b6bbcc;">AI 분석 엔진 (Gemini 2.5)</span>
-                    <span style="color:#c084fc;font-weight:600;">연동 완료</span>
+                    <span style="color:#b6bbcc;">AI 분석 엔진 (Gemini)</span>
+                    <span style="color:#c084fc;font-weight:600;">${(state.meta && state.meta.geminiConfigured) ? (state.meta.geminiEnabled ? '가동' : '꺼짐') : '키 미설정'}</span>
                   </div>
                 </div>
               </div>
@@ -4365,8 +3694,8 @@
         assignee: 'ALL',
         mlOnly: false,
         dateRange: '최근 7일',
-        dateFrom: '2026-10-20',
-        dateTo: '2026-10-26',
+        dateFrom: '',
+        dateTo: '',
         pageSize: 20,
         page: 1
       };
@@ -4396,7 +3725,7 @@
       // Sort cases
       const sortCol = state.caseSort.col;
       const sortDir = state.caseSort.dir === 'asc' ? 1 : -1;
-      const sevRank = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+      const sevRank = { 'HIGH': 3, 'WATCH': 2, 'NORMAL': 1 };
       filtered.sort((a, b) => {
         let va, vb;
         if (sortCol === 'id') { va = a.id; vb = b.id; }
@@ -4407,7 +3736,7 @@
         else if (sortCol === 'assignee') { va = a.assignee; vb = b.assignee; }
         else if (sortCol === 'createdAt') { va = a.createdAt; vb = b.createdAt; }
         else if (sortCol === 'updatedAt') { va = a.updatedAt; vb = b.updatedAt; }
-        else if (sortCol === 'elapsed') { va = parseInt(a.elapsed) || 0; vb = parseInt(b.elapsed) || 0; }
+        else if (sortCol === 'elapsed') { va = -new Date(a.createdAt.replace(' ', 'T')).getTime(); vb = -new Date(b.createdAt.replace(' ', 'T')).getTime(); }
         else { va = a.createdAt; vb = b.createdAt; }
 
         if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * sortDir;
@@ -4425,13 +3754,28 @@
           : '<span style="color:#25c9ba;font-size:10px;margin-left:4px;font-weight:bold;">▼</span>';
       };
 
-      const totalCount = 19106;
+      const totalCount = (state.casesData || []).length;
       const displayCount = filtered.length;
+      const pageSize = f.pageSize || 20;
+      const totalPages = Math.max(1, Math.ceil(displayCount / pageSize));
+      if (f.page > totalPages) f.page = totalPages;
+      if (f.page < 1) f.page = 1;
+      const pageStart = (f.page - 1) * pageSize;
+      const pageRows = filtered.slice(pageStart, pageStart + pageSize);
+      const elapsedLabel = (createdAt) => {
+        const t = new Date(String(createdAt).replace(' ', 'T')).getTime();
+        if (!t) return '-';
+        const m = Math.max(0, Math.floor(((CASE_REF_NOW instanceof Date ? CASE_REF_NOW.getTime() : Date.now()) - t) / 60000));
+        if (m < 60) return `${m}분 전`;
+        if (m < 1440) return `${Math.floor(m / 60)}시간 전`;
+        return `${Math.floor(m / 1440)}일 전`;
+      };
+      const assigneeOptions = Array.from(new Set((state.casesData || []).map(c => c.assignee).filter(a => a && a !== '미배정'))).sort();
 
       const getSevBadge = (sev) => {
         if (sev === 'HIGH') {
           return '<span style="height:18px;padding:0 9px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;line-height:1;white-space:nowrap;background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);">높음</span>';
-        } else if (sev === 'MEDIUM') {
+        } else if (sev === 'WATCH') {
           return '<span style="height:18px;padding:0 9px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;line-height:1;white-space:nowrap;background:rgba(0,143,236,0.15);color:#60a5fa;border:1px solid rgba(0,143,236,0.4);">중간</span>';
         } else {
           return '<span style="height:18px;padding:0 9px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;line-height:1;white-space:nowrap;background:rgba(37,201,186,0.15);color:#25c9ba;border:1px solid rgba(var(--color-accent-code),0.45);">낮음</span>';
@@ -4443,7 +3787,7 @@
           return '<span style="height:18px;padding:0 9px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;line-height:1;white-space:nowrap;background:rgba(0,143,236,0.2);color:#93c5fd;border:1px solid rgba(0,143,236,0.4);">신규</span>';
         } else if (st === '진행 중') {
           return '<span style="height:18px;padding:0 9px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;line-height:1;white-space:nowrap;background:rgba(245,158,11,0.2);color:#fcd34d;border:1px solid rgba(245,158,11,0.4);">진행 중</span>';
-        } else if (st === '해결됨') {
+        } else if (st === '차단 완료' || st === '해결됨') {
           return '<span style="height:18px;padding:0 9px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;line-height:1;white-space:nowrap;background:rgba(74,222,128,0.2);color:#86efac;border:1px solid rgba(74,222,128,0.4);">해결됨</span>';
         } else {
           return '<span style="height:18px;padding:0 9px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;line-height:1;white-space:nowrap;background:rgba(255,255,255,0.1);color:#b6bbcc;border:1px solid rgba(255,255,255,0.2);">종결</span>';
@@ -4465,8 +3809,8 @@
               </p>
             </div>
             <div style="display:flex;align-items:center;gap:12px;">
-              <span style="font-size:12px;color:#b6bbcc;">실시간 동기화 완료</span>
-              <span style="width:8px;height:8px;border-radius:9999px;background:#25c9ba;display:inline-block;box-shadow:0 0 8px #25c9ba;"></span>
+              <span style="font-size:12px;color:#b6bbcc;">${state.meta.fetchOk ? '동기화 ' + escapeHtml(state.lastSyncTime) : '백엔드 연결 없음'}</span>
+              <span style="width:8px;height:8px;border-radius:9999px;background:${state.meta.fetchOk ? '#25c9ba' : '#f87171'};display:inline-block;"></span>
             </div>
           </header>
 
@@ -4511,8 +3855,8 @@
                 <select onchange="window.setCaseSeverity(this.value)" aria-label="심각도 필터" style="width:100%;height:38px;padding:0 12px;background:rgba(13,45,60,0.7);color:#f6f7f8;font-size:13px;border-radius:6px;border:1px solid rgba(var(--color-accent-code),0.25);outline:none;cursor:pointer;">
                   <option value="ALL" ${f.severity === 'ALL' ? 'selected' : ''}>전체 심각도</option>
                   <option value="HIGH" ${f.severity === 'HIGH' ? 'selected' : ''}>높음 (HIGH)</option>
-                  <option value="MEDIUM" ${f.severity === 'MEDIUM' ? 'selected' : ''}>중간 (MEDIUM)</option>
-                  <option value="LOW" ${f.severity === 'LOW' ? 'selected' : ''}>낮음 (LOW)</option>
+                  <option value="WATCH" ${f.severity === 'WATCH' ? 'selected' : ''}>관찰 (WATCH)</option>
+                  <option value="NORMAL" ${f.severity === 'NORMAL' ? 'selected' : ''}>정상 (NORMAL)</option>
                 </select>
               </div>
               <!-- 상태 -->
@@ -4522,7 +3866,7 @@
                   <option value="ALL" ${f.status === 'ALL' ? 'selected' : ''}>전체 상태</option>
                   <option value="신규" ${f.status === '신규' ? 'selected' : ''}>신규 (NEW)</option>
                   <option value="진행 중" ${f.status === '진행 중' ? 'selected' : ''}>진행 중 (OPEN)</option>
-                  <option value="해결됨" ${f.status === '해결됨' ? 'selected' : ''}>해결됨 (RESOLVED)</option>
+                  <option value="차단 완료" ${f.status === '차단 완료' ? 'selected' : ''}>차단 완료 (CONTAINED)</option>
                   <option value="종결" ${f.status === '종결' ? 'selected' : ''}>종결 (CLOSED)</option>
                 </select>
               </div>
@@ -4532,10 +3876,7 @@
                 <select onchange="window.setCaseAssignee(this.value)" aria-label="담당자 필터" style="width:100%;height:38px;padding:0 12px;background:rgba(13,45,60,0.7);color:#f6f7f8;font-size:13px;border-radius:6px;border:1px solid rgba(var(--color-accent-code),0.25);outline:none;cursor:pointer;">
                   <option value="ALL" ${f.assignee === 'ALL' ? 'selected' : ''}>전체 담당자</option>
                   <option value="미배정" ${f.assignee === '미배정' ? 'selected' : ''}>미배정</option>
-                  <option value="park_dev" ${f.assignee === 'park_dev' ? 'selected' : ''}>park_dev</option>
-                  <option value="kim_marketing" ${f.assignee === 'kim_marketing' ? 'selected' : ''}>kim_marketing</option>
-                  <option value="admin_root" ${f.assignee === 'admin_root' ? 'selected' : ''}>admin_root</option>
-                  <option value="choi_hr" ${f.assignee === 'choi_hr' ? 'selected' : ''}>choi_hr</option>
+                  ${assigneeOptions.map(n => `<option value="${escapeHtml(n)}" ${f.assignee === n ? 'selected' : ''}>${escapeHtml(n)}</option>`).join('')}
                 </select>
               </div>
             </div>
@@ -4564,7 +3905,7 @@
                 </div>
               </div>
               <div style="font-size:12px;color:#b6bbcc;font-family:'IBM Plex Mono', monospace;align-self:flex-end;padding-bottom:8px;">
-                전체 19,106건
+                전체 ${totalCount.toLocaleString()}건
               </div>
             </div>
           </section>
@@ -4582,7 +3923,7 @@
               </div>
               <div style="display:flex;align-items:center;gap:12px;">
                 <span style="font-size:12px;color:#b6bbcc;font-family:'IBM Plex Mono', monospace;">
-                  전체 19,106건 중 1-${displayCount} 표시
+                  전체 ${totalCount.toLocaleString()}건 중 ${displayCount ? pageStart + 1 : 0}-${pageStart + pageRows.length} 표시
                 </span>
                 ${caseColWidths ? `<button type="button" onclick="window.resetCaseCols()" style="padding:4px 10px;font-size:11px;cursor:pointer;border-radius:6px;border:1px solid rgba(var(--color-accent-code),0.35);background:rgba(13,45,60,0.7);color:#b6bbcc;">열 너비 초기화</button>` : ''}
                 <div style="display:inline-flex;border-radius:6px;overflow:hidden;border:1px solid rgba(var(--color-accent-code),0.35);background:rgba(13,45,60,0.7);">
@@ -4619,21 +3960,21 @@
                   </tr>
                 </thead>
                 <tbody>
-                  ${filtered.length > 0 ? filtered.map(item => `
+                  ${pageRows.length > 0 ? pageRows.map(item => `
                     <tr style="height:48px;border-bottom:1px solid rgba(37,201,186,0.12);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
                       <!-- 케이스 ID -->
                       <td style="padding-left:16px;font-family:'IBM Plex Mono', monospace;font-size:12px;color:rgba(255,255,255,0.9);white-space:nowrap;">
-                        <button type="button" onclick="window.openKillchainFor('INC-SEC-001')" style="background:none;border:none;padding:0;color:inherit;font-family:inherit;font-size:inherit;cursor:pointer;text-align:left;" onmouseover="this.style.color='#25c9ba'" onmouseout="this.style.color='rgba(255,255,255,0.9)'">
-                          ${item.id}
+                        <button type="button" onclick="window.openKillchainFor('${escapeHtml(item.id)}')" style="background:none;border:none;padding:0;color:inherit;font-family:inherit;font-size:inherit;cursor:pointer;text-align:left;" onmouseover="this.style.color='#25c9ba'" onmouseout="this.style.color='rgba(255,255,255,0.9)'">
+                          ${escapeHtml(item.id)}
                         </button>
                       </td>
                       <!-- 제목 / 세부설명 -->
                       <td style="padding:0 12px;vertical-align:middle;overflow:hidden;">
                         <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                          <span style="font-size:12px;font-weight:500;color:#ffffff;overflow:hidden;text-overflow:ellipsis;">${item.title}</span>
+                          <span style="font-size:12px;font-weight:500;color:#ffffff;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.title)}</span>
                         </div>
                         <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                          ${item.description}
+                          ${escapeHtml(item.description)}
                         </div>
                       </td>
                       <!-- 심각도 -->
@@ -4648,14 +3989,14 @@
                       <td style="padding:0 12px;font-size:12px;color:#b6bbcc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                         ${item.asset.isFlow ? `
                           <div style="display:inline-flex;align-items:center;gap:4px;font-family:'IBM Plex Mono', monospace;font-size:11.5px;white-space:nowrap;">
-                            <span style="color:#f87171;">↑ ${item.asset.srcIp}</span>
+                            <span style="color:#f87171;">↑ ${escapeHtml(item.asset.srcIp)}</span>
                             <span style="color:#25c9ba;">→</span>
-                            <span style="color:#60a5fa;">↓ ${item.asset.dstIp}</span>
+                            <span style="color:#60a5fa;">↓ ${escapeHtml(item.asset.dstIp)}</span>
                           </div>
                         ` : `
                           <div style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#25c9ba" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-                            <span style="color:#ffffff;">${item.asset.name}</span>
+                            <span style="color:#ffffff;" title="${escapeHtml(item.asset.ip || '')}">${escapeHtml(item.asset.name)}</span>
                           </div>
                         `}
                       </td>
@@ -4663,7 +4004,7 @@
                       <td style="padding:0 12px;font-size:12px;color:#b6bbcc;white-space:nowrap;">
                         <div style="display:flex;align-items:center;gap:6px;">
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                          <span style="color:${item.assignee === '미배정' ? '#94a3b8' : '#b6bbcc'};">${item.assignee}</span>
+                          <button type="button" onclick="window.assignCase('${escapeHtml(item.id)}')" title="클릭하여 담당자 지정" style="background:none;border:none;padding:0;cursor:pointer;font:inherit;color:${item.assignee === '미배정' ? '#94a3b8' : '#b6bbcc'};text-decoration:underline dotted;">${escapeHtml(item.assignee)}</button>
                         </div>
                       </td>
                       <!-- 생성일 -->
@@ -4676,7 +4017,7 @@
                       </td>
                       <!-- 경과일 -->
                       <td style="text-align:center;font-size:12px;color:#25c9ba;padding-right:16px;font-family:'IBM Plex Mono', monospace;white-space:nowrap;">
-                        ${item.elapsed}
+                        ${elapsedLabel(item.createdAt)}
                       </td>
                     </tr>
                   `).join('') : `
@@ -4694,16 +4035,18 @@
             </div>
 
             <!-- 하단 페이지네이션 -->
-            <div style="margin-top:auto;padding-top:14px;border-top:1px solid rgba(37,201,186,0.4);display:flex;align-items:center;justify-content:center;gap:6px;">
-              <button type="button" style="height:30px;padding:0 12px;border-radius:4px;font-size:11.5px;color:#b6bbcc;background:rgba(13,45,60,0.5);border:1px solid rgba(255,255,255,0.1);cursor:pointer;">Previous</button>
-              <button type="button" style="width:30px;height:30px;border-radius:4px;font-size:11.5px;font-weight:600;color:#ffffff;background:var(--gradient-action-btn);border:none;cursor:pointer;">1</button>
-              <button type="button" style="width:30px;height:30px;border-radius:4px;font-size:11.5px;color:#b6bbcc;background:rgba(13,45,60,0.5);border:1px solid rgba(255,255,255,0.1);cursor:pointer;">2</button>
-              <button type="button" style="width:30px;height:30px;border-radius:4px;font-size:11.5px;color:#b6bbcc;background:rgba(13,45,60,0.5);border:1px solid rgba(255,255,255,0.1);cursor:pointer;">3</button>
-              <button type="button" style="width:30px;height:30px;border-radius:4px;font-size:11.5px;color:#b6bbcc;background:rgba(13,45,60,0.5);border:1px solid rgba(255,255,255,0.1);cursor:pointer;">4</button>
-              <button type="button" style="width:30px;height:30px;border-radius:4px;font-size:11.5px;color:#b6bbcc;background:rgba(13,45,60,0.5);border:1px solid rgba(255,255,255,0.1);cursor:pointer;">5</button>
-              <span style="color:#94a3b8;font-size:12px;padding:0 4px;">...</span>
-              <button type="button" style="height:30px;padding:0 10px;border-radius:4px;font-size:11.5px;color:#b6bbcc;background:rgba(13,45,60,0.5);border:1px solid rgba(255,255,255,0.1);cursor:pointer;">956</button>
-              <button type="button" style="height:30px;padding:0 12px;border-radius:4px;font-size:11.5px;color:#b6bbcc;background:rgba(13,45,60,0.5);border:1px solid rgba(255,255,255,0.1);cursor:pointer;">Next</button>
+            <div style="margin-top:auto;padding-top:14px;border-top:1px solid rgba(37,201,186,0.4);display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;">
+              ${(() => {
+                const btn = (label, pg, active, disabled) => `<button type="button" ${disabled ? 'disabled' : `onclick="window.setCasePage(${pg})"`} style="min-width:30px;height:30px;padding:0 10px;border-radius:4px;font-size:11.5px;${active ? 'font-weight:600;color:#ffffff;background:var(--gradient-action-btn);border:none;' : 'color:#b6bbcc;background:rgba(13,45,60,0.5);border:1px solid rgba(255,255,255,0.1);'}cursor:${disabled ? 'default' : 'pointer'};opacity:${disabled ? 0.4 : 1};">${label}</button>`;
+                const pages = [];
+                for (let i = 1; i <= totalPages; i++) {
+                  if (i === 1 || i === totalPages || Math.abs(i - f.page) <= 1) pages.push(i);
+                  else if (pages[pages.length - 1] !== '…') pages.push('…');
+                }
+                return btn('이전', f.page - 1, false, f.page <= 1)
+                  + pages.map(pg => pg === '…' ? '<span style="color:#94a3b8;font-size:12px;padding:0 4px;">…</span>' : btn(pg, pg, pg === f.page, false)).join('')
+                  + btn('다음', f.page + 1, false, f.page >= totalPages);
+              })()}
             </div>
           </section>
 
@@ -4713,6 +4056,7 @@
 
     function renderKillchainSubView(cfg) {
       const inc = getSelectedIncident();
+      if (inc.empty) return `<div style="padding:60px 0;text-align:center;color:#94a3b8;font-size:14px;">수집된 데이터 없음 — 분석할 인시던트가 없습니다.</div>`;
       return `
         <!-- Spacious CloudWAN Header -->
         <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border);">
@@ -4817,7 +4161,7 @@
               </div>
             </div>
             <div class="cw-callout" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
-              <span>분석 엔진: <strong style="color:#ffffff;font-weight:600;">${state.geminiEnabled ? 'Gemini 2.5 Flash' : 'Rule Engine'}</strong></span>
+              <span>분석 엔진: <strong style="color:#ffffff;font-weight:600;">${state.geminiEnabled ? 'Gemini' : 'Rule Engine'}</strong></span>
               <button type="button" class="${cfg.primaryBtnClass}" onclick="window.setPage('governance')">도메인 차단 정책 관리 →</button>
             </div>
           </div>
@@ -4891,11 +4235,12 @@
                 ${state.diagResult ? `
                   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                     <span class="mono" style="font-weight:600;">${escapeHtml(state.diagResult.domain)}</span>
-                    <span class="${pillClassForSeverity(state.diagResult.level)}">${escapeHtml(state.diagResult.level)} · ${state.diagResult.score}점</span>
+                    <span class="${pillClassForSeverity(state.diagResult.level)}">${escapeHtml(state.diagResult.level)}</span>
+                    <span class="pill pill-neu mono">${escapeHtml(state.diagResult.engine || '')}</span>
                   </div>
                   <div style="font-size:13.5px;color:var(--text);line-height:1.55;">${escapeHtml(state.diagResult.opinion)}</div>
                 ` : `
-                  <span style="color:var(--muted);">도메인을 입력하고 우측 상단 '진단 실행'을 클릭하세요. (${state.geminiEnabled ? 'Gemini 2.5 Flash' : 'Rule Engine'})</span>
+                  <span style="color:var(--muted);">도메인을 입력하고 우측 상단 '진단 실행'을 클릭하세요. (${state.geminiEnabled ? 'Gemini' : 'Rule Engine'})</span>
                 `}
               </div>
             </div>
@@ -4955,13 +4300,13 @@
                   return `
                     <tr style="${rowFillStyle}">
                       <td>
-                        <div class="mono" style="font-weight:600;color:var(--text);font-size:14px;">${r.domain}</div>
-                        <div style="font-size:12px;color:var(--muted);margin-top:3px;">${r.service} · ${r.category}</div>
+                        <div class="mono" style="font-weight:600;color:var(--text);font-size:14px;">${escapeHtml(r.domain)}</div>
+                        <div style="font-size:12px;color:var(--muted);margin-top:3px;">${escapeHtml(r.service)} · ${escapeHtml(r.category)}</div>
                       </td>
                       <td>
                         <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;white-space:nowrap;">
-                          <span class="${pillClassForSeverity(r.riskLevel)}">${r.riskLevel} · ${r.riskScore}점</span>
-                          <span class="${pillClassForSeverity(r.govStatus)}">${r.govStatus}</span>
+                          <span class="${pillClassForSeverity(r.riskLevel)}">${escapeHtml(r.riskLevel)} · ${r.riskScore == null ? '점수 없음' : r.riskScore + '점'}</span>
+                          <span class="${pillClassForSeverity(r.govStatus)}">${escapeHtml(r.govStatus)}</span>
                         </div>
                       </td>
                       <td class="num">
@@ -4969,13 +4314,13 @@
                         <div style="font-size:12px;color:var(--muted);margin-top:3px;">사용자 ${r.users}명</div>
                       </td>
                       <td>
-                        <div class="mono" style="font-size:13px;color:var(--text);">누적 <strong>${r.totalCumulative}</strong>건 <span style="color:var(--muted);">(${r.freqLabel})</span></div>
+                        <div class="mono" style="font-size:13px;color:var(--text);">누적 <strong>${r.totalCumulative}</strong>건 <span style="color:var(--muted);">(${escapeHtml(r.freqLabel)})</span></div>
                         <div class="mono" style="font-size:12px;color:${r.exfilAttempts > 0 ? 'var(--negative)' : 'var(--muted)'};margin-top:3px;">
                           반출 시도 ${r.exfilAttempts}건
                         </div>
                       </td>
                       <td style="${opinionStyle}font-size:13px;color:var(--muted);line-height:1.55;">
-                        ${r.aiOpinion}
+                        ${escapeHtml(r.aiOpinion)}
                       </td>
                       <td class="num">
                         <div style="display:inline-flex;align-items:center;gap:10px;">
@@ -5020,7 +4365,7 @@
         return ipOk && typeOk;
       });
 
-      const attachCount = state.pipelineLogs.filter(l => l.type.includes('ATTACH')).length;
+      const attachCount = state.pipelineLogs.filter(l => (l.type.includes('ATTACH') || l.type.includes('UPLOAD'))).length;
 
       return `
         <!-- Spacious Header & Railway Sync Controls -->
@@ -5054,15 +4399,15 @@
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                   <span>파이프라인 연결 설정</span>
                 </span>
-                <span class="pill pill-pos mono">${state.railwayLive ? '200 OK' : 'STANDBY'}</span>
+                <span class="pill pill-pos mono">${!state.railwayLive ? 'STANDBY' : (state.meta.fetchOk ? '수신 OK' : '수신 실패')}</span>
               </div>
               <div class="cw-prop-table">
                 <div class="cw-prop-row">
                   <div class="cw-prop-key">API 주소</div>
                   <div class="cw-prop-val">
                     <div class="cw-field-well mono">
-                      <span>https://web-production-694c8.up.railway.app</span>
-                      <span class="pill pill-neu mono">TLS 1.3 · RTT 38ms</span>
+                      <span>${escapeHtml((state.meta && state.meta.apiBase) || '백엔드 연결 없음')}</span>
+                      <span class="pill pill-neu mono">${(state.meta && state.meta.fetchOk) ? '수신 정상' : '수신 없음'}</span>
                     </div>
                   </div>
                 </div>
@@ -5071,10 +4416,10 @@
                   <div class="cw-prop-val" style="flex-direction:row;align-items:center;gap:16px;flex-wrap:wrap;">
                     <div class="cw-field-well" style="flex:1;">
                       <span style="color:var(--muted);">에이전트 수신</span>
-                      <span class="mono" style="font-weight:600;">${state.pipelineLogs.length}건 (누적 1,395)</span>
+                      <span class="mono" style="font-weight:600;">${state.pipelineLogs.length}건 (누적 ${(state.meta && state.meta.totalEvents) || 0})</span>
                     </div>
                     <div class="cw-field-well" style="flex:1;">
-                      <span style="color:var(--muted);">첨부 차단</span>
+                      <span style="color:var(--muted);">첨부 시도</span>
                       <span class="mono" style="font-weight:600;color:var(--negative);">${attachCount}건 (Chrome Ext)</span>
                     </div>
                   </div>
@@ -5100,26 +4445,26 @@
                 ${filteredSites.length > 0 ? filteredSites.map(g => `
                   <div class="cw-prop-row">
                     <div class="cw-prop-key" style="flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;">
-                      <span class="mono" style="font-weight:600;color:var(--text);">${g.pcName}</span>
-                      <span class="mono" style="font-size:11.5px;color:var(--muted);">${g.ip}</span>
+                      <span class="mono" style="font-weight:600;color:var(--text);">${escapeHtml(g.pcName)}</span>
+                      <span class="mono" style="font-size:11.5px;color:var(--muted);">${escapeHtml(g.ip)}</span>
                     </div>
                     <div class="cw-prop-val">
                       <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
                         <div>
                           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                            <span class="mono" style="font-size:14px;color:var(--accent);font-weight:600;">${g.domain}</span>
+                            <span class="mono" style="font-size:14px;color:var(--accent);font-weight:600;">${escapeHtml(g.domain)}</span>
                             <span class="pill pill-neu mono">시도 ${g.attempts}건</span>
-                            <span style="font-size:12.5px;color:var(--muted);">계정: <strong class="mono" style="color:var(--text);">${g.user}</strong> · ${g.lastActionTime}</span>
+                            <span style="font-size:12.5px;color:var(--muted);">계정: <strong class="mono" style="color:var(--text);">${escapeHtml(g.user)}</strong> · ${escapeHtml(g.lastActionTime)}</span>
                           </div>
                         </div>
                         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                           ${g.status === 'BLOCKED'
                             ? `<span class="pill pill-neg">차단 유지</span>
-                               <button type="button" class="${cfg.btnClass}" onclick="window.openGrantForm('${g.id}')">일시 허용</button>`
+                               <button type="button" class="${cfg.btnClass}" onclick="window.openGrantForm('${escapeHtml(g.id)}')">일시 허용</button>`
                             : `<span class="pill pill-pos">허용 · ${g.remainMin}분 남음</span>
-                               <button type="button" class="${cfg.btnClass}" onclick="window.revokeSiteGrant('${g.id}')">즉시 차단</button>`
+                               <button type="button" class="${cfg.btnClass}" onclick="window.revokeSiteGrant('${escapeHtml(g.id)}')">즉시 차단</button>`
                           }
-                          <button type="button" class="${cfg.btnClass}" onclick="window.toggleSiteDetail('${g.id}')">
+                          <button type="button" class="${cfg.btnClass}" onclick="window.toggleSiteDetail('${escapeHtml(g.id)}')">
                             ${g.detailOpen ? '접기' : '상세'}
                           </button>
                         </div>
@@ -5129,23 +4474,23 @@
                         <div class="cw-field-well" style="margin-top:8px;">
                           <div style="display:flex;align-items:center;gap:10px;">
                             <span style="font-size:13px;font-weight:600;">허용 시간:</span>
-                            <select class="${cfg.selectClass}" onchange="window.setGrantMinutes('${g.id}', this.value)" aria-label="일시 허용 시간(분)">
+                            <select class="${cfg.selectClass}" onchange="window.setGrantMinutes('${escapeHtml(g.id)}', this.value)" aria-label="일시 허용 시간(분)">
                               <option value="15" ${g.grantMinutes === 15 ? 'selected' : ''}>15분 허용</option>
                               <option value="30" ${g.grantMinutes === 30 ? 'selected' : ''}>30분 허용</option>
                               <option value="60" ${g.grantMinutes === 60 ? 'selected' : ''}>60분 허용</option>
                             </select>
                           </div>
                           <div style="display:flex;align-items:center;gap:8px;">
-                            <button type="button" class="${cfg.primaryBtnClass}" onclick="window.applySiteGrant('${g.id}')">적용</button>
-                            <button type="button" class="${cfg.btnClass}" onclick="window.closeGrantForm('${g.id}')">취소</button>
+                            <button type="button" class="${cfg.primaryBtnClass}" onclick="window.applySiteGrant('${escapeHtml(g.id)}')">적용</button>
+                            <button type="button" class="${cfg.btnClass}" onclick="window.closeGrantForm('${escapeHtml(g.id)}')">취소</button>
                           </div>
                         </div>
                       ` : ''}
 
                       ${g.detailOpen ? `
                         <div class="mono" style="margin-top:6px;padding-top:8px;border-top:1px dashed var(--border);font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px;">
-                          <div>센서 ID: ${g.deviceId}</div>
-                          <div>차단 명세: ${g.lastDetail}</div>
+                          <div>센서 ID: ${escapeHtml(g.deviceId)}</div>
+                          <div>차단 명세: ${escapeHtml(g.lastDetail)}</div>
                         </div>
                       ` : ''}
                     </div>
@@ -5174,14 +4519,14 @@
                 <div class="cw-prop-row">
                   <div class="cw-prop-key">Health</div>
                   <div class="cw-prop-val">
-                    <span style="color:var(--positive);font-weight:600;">정상 연결됨 (최근 동기화 ${state.lastSyncTime})</span>
+                    ${(state.meta && state.meta.fetchOk) ? `<span style="color:var(--positive);font-weight:600;">정상 연결됨 (최근 동기화 ${state.lastSyncTime})</span>` : `<span style="color:var(--negative);font-weight:600;">연결 안 됨 — ${escapeHtml((state.meta && state.meta.fetchError) || '수집이 꺼져 있거나 백엔드에 닿지 못했습니다')}</span>`}
                   </div>
                 </div>
                 <div class="cw-prop-row">
                   <div class="cw-prop-key">인증</div>
                   <div class="cw-prop-val">
-                    <span style="color:var(--warning);font-weight:500;">X-API-Key · OAuth2 Client Credentials 검증 완료</span>
-                    <span style="font-size:12px;color:var(--muted);">암호화 토큰으로 수집 데몬과 직접 통신합니다.</span>
+                    <span style="color:${(state.meta && state.meta.hasApiKey) ? 'var(--positive)' : 'var(--negative)'};font-weight:500;">${(state.meta && state.meta.hasApiKey) ? 'X-API-Key 설정됨' : 'RAILWAY_API_KEY 미설정'}</span>
+                    <span style="font-size:12px;color:var(--muted);">${(state.meta && state.meta.hasApiKey) ? '키 값은 화면에 표시하지 않습니다.' : '환경변수 또는 Streamlit secrets에 키를 등록하세요.'}</span>
                   </div>
                 </div>
               </div>
@@ -5222,10 +4567,7 @@
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
               <select class="${cfg.selectClass}" onchange="window.setPipeIpFilter(this.value)" aria-label="로컬 IP로 로그 골라 보기">
                 <option value="ALL" ${state.pipeIpFilter === 'ALL' ? 'selected' : ''}>모든 호스트 IP</option>
-                <option value="192.168.10.88" ${state.pipeIpFilter === '192.168.10.88' ? 'selected' : ''}>192.168.10.88 (DEV-WORKSTATION)</option>
-                <option value="192.168.10.42" ${state.pipeIpFilter === '192.168.10.42' ? 'selected' : ''}>192.168.10.42 (DESKTOP-MKT01)</option>
-                <option value="192.168.10.105" ${state.pipeIpFilter === '192.168.10.105' ? 'selected' : ''}>192.168.10.105 (FINANCE-PC04)</option>
-                <option value="192.168.10.64" ${state.pipeIpFilter === '192.168.10.64' ? 'selected' : ''}>192.168.10.64 (HR-LAPTOP02)</option>
+                ${Array.from(new Set(state.pipelineLogs.map(l => l.ip).filter(Boolean))).sort().map(ip => `<option value="${escapeHtml(ip)}" ${state.pipeIpFilter === ip ? 'selected' : ''}>${escapeHtml(ip)}</option>`).join('')}
               </select>
               <select class="${cfg.selectClass}" onchange="window.setPipeTypeFilter(this.value)" aria-label="이벤트 종류로 로그 골라 보기">
                 <option value="ALL" ${state.pipeTypeFilter === 'ALL' ? 'selected' : ''}>모든 이벤트 분류</option>
@@ -5258,24 +4600,24 @@
                   return `
                     <tr>
                       <td class="mono">
-                        <div style="font-weight:600;color:var(--text);">${l.id}</div>
-                        <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">${l.time.split(' ')[1] || l.time}</div>
+                        <div style="font-weight:600;color:var(--text);">${escapeHtml(l.id)}</div>
+                        <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">${escapeHtml(l.time.split(' ')[1] || l.time)}</div>
                       </td>
                       <td>
-                        <div class="mono" style="font-weight:600;color:var(--text);">${l.user}</div>
-                        <div class="mono" style="font-size:11.5px;color:var(--muted);margin-top:2px;">${l.pcName} (${l.ip})</div>
+                        <div class="mono" style="font-weight:600;color:var(--text);">${escapeHtml(l.user)}</div>
+                        <div class="mono" style="font-size:11.5px;color:var(--muted);margin-top:2px;">${escapeHtml(l.pcName)} (${escapeHtml(l.ip)})</div>
                       </td>
-                      <td><span class="${pillClassForSeverity(l.score >= 85 ? 'HIGH' : (l.score >= 60 ? 'WATCH' : 'LOW'))}">${l.type}</span></td>
-                      <td class="mono" style="font-weight:600;color:var(--text);">${l.site}</td>
+                      <td><span class="${pillClassForSeverity((l.score || 0) >= 85 ? 'HIGH' : ((l.score || 0) >= 60 ? 'WATCH' : 'LOW'))}">${escapeHtml(l.type)}</span></td>
+                      <td class="mono" style="font-weight:600;color:var(--text);">${escapeHtml(l.site)}</td>
                       <td class="mono" style="font-size:12px;">
-                        ${hasFile ? `<span style="color:var(--text);font-weight:600;">${l.fileName}</span> <span style="color:var(--muted);">(${l.fileSize})</span>` : ''}
+                        ${hasFile ? `<span style="color:var(--text);font-weight:600;">${escapeHtml(l.fileName)}</span> <span style="color:var(--muted);">(${escapeHtml(l.fileSize)})</span>` : ''}
                         ${hasFile && hasPaste ? `<span style="color:var(--muted);margin:0 4px;">·</span>` : ''}
                         ${hasPaste ? `<span style="color:var(--warning);">프롬프트 ${l.pasteChars.toLocaleString()}자</span>` : ''}
                         ${!hasFile && !hasPaste ? `<span style="color:var(--muted);">-</span>` : ''}
                       </td>
-                      <td style="font-size:12.5px;color:var(--muted);">${l.source}</td>
+                      <td style="font-size:12.5px;color:var(--muted);">${escapeHtml(l.source)}</td>
                       <td class="num">
-                        <span class="mono" style="font-weight:700;color:${l.score >= 85 ? 'var(--negative)' : (l.score >= 60 ? 'var(--warning)' : 'var(--positive)')};">${l.score}점</span>
+                        <span class="mono" style="font-weight:700;color:${(l.score || 0) >= 85 ? 'var(--negative)' : ((l.score || 0) >= 60 ? 'var(--warning)' : 'var(--positive)')};">${l.score == null ? '-' : l.score + '점'}</span>
                       </td>
                     </tr>
                   `;
@@ -5305,7 +4647,6 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
             <div style="font-size:14px;font-weight:600;">주간 위협 탐지 추이</div>
             <div style="display:flex;align-items:center;gap:6px;">
-              <span class="pill pill-pos mono">-14.2%</span>
               <span class="pill pill-neu mono">합계 ${total}건</span>
             </div>
           </div>
@@ -5347,7 +4688,7 @@
         <div style="padding-top:12px;border-top:1px solid var(--border);font-size:13px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
             <span class="mono" style="font-size:11px;font-weight:600;color:var(--muted);">PIPELINE MONITOR</span>
-            <span class="pill pill-pos mono" style="font-size:11px;padding:1px 6px;">LIVE</span>
+            <span class="pill pill-pos mono" style="font-size:11px;padding:1px 6px;">${state.railwayLive && state.meta.fetchOk ? 'LIVE' : 'IDLE'}</span>
           </div>
           <div style="display:flex;flex-direction:column;gap:5px;color:var(--muted);">
             <div style="display:flex;justify-content:space-between;">
@@ -5399,7 +4740,7 @@
 
     function renderVariantTerminal() {
       const inc = getSelectedIncident();
-      const wUser = state.watchUsers[0];
+      const wUser = state.watchUsers.find(w => w.state === 'WATCH') || { user: '없음', ttlSeconds: 0 };
       const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
       const themeMap = {
         ocean: '#25c9ba',
@@ -5445,6 +4786,8 @@
           <div class="neo-win-body">${body}</div>
         </section>`;
 
+      const normalCount = Math.max(0, ((state.meta && state.meta.totalEvents) || 0) - state.incidents.reduce((a, i) => a + (i.eventCount || 0), 0));
+      const typeCounts = Object.entries(state.pipelineLogs.reduce((m, l) => { const t = l.type || '-'; m[t] = (m[t] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 3);
       const highCount = state.incidents.filter(i => i.severity === 'HIGH').length;
       const watchCount = state.incidents.filter(i => i.severity === 'WATCH').length;
       const sevCount = sev => state.incidents.filter(i => i.severity === sev).length;
@@ -5456,7 +4799,7 @@
           <div class="neo-page-head">
             <div>
               <h1 class="neo-title">종합 관제</h1>
-              <p class="neo-meta" style="margin-top:6px;">마지막 동기화 <em>${state.lastSyncTime}</em> · 수집 이벤트 <em>1,395건</em></p>
+              <p class="neo-meta" style="margin-top:6px;">마지막 동기화 <em>${state.lastSyncTime}</em> · 수집 이벤트 <em>${(state.meta && state.meta.totalEvents) || 0}건</em></p>
             </div>
             <button type="button" class="term-btn" onclick="window.syncRailwayLogs()">${ico.sync}<span>동기화</span></button>
           </div>
@@ -5479,7 +4822,7 @@
 
           <div class="neo-kpi-grid">
             <div class="neo-kpi">
-              <span class="neo-num">1,395</span>
+              <span class="neo-num">${(state.meta && state.meta.totalEvents) || 0}</span>
               <span class="neo-kpi-label">수집 이벤트</span>
               <button type="button" class="neo-link" onclick="window.setPage('pipeline')">${ico.link}<span>상세 보기</span></button>
             </div>
@@ -5499,7 +4842,7 @@
               <button type="button" class="neo-link" onclick="window.openKillchainFor('${firstOf('WATCH')}')">${ico.link}<span>상세 보기</span></button>
             </div>
             <div class="neo-kpi">
-              <span class="neo-num" style="color:var(--accent);">1,392</span>
+              <span class="neo-num" style="color:var(--accent);">${normalCount}</span>
               <span class="neo-kpi-label">정상 통과</span>
               <button type="button" class="neo-link" onclick="window.setPage('pipeline')">${ico.link}<span>상세 보기</span></button>
             </div>
@@ -5525,30 +4868,16 @@
                 </div>
                 <div class="neo-cell">
                   <span class="neo-label">Normal</span>
-                  <span class="neo-num">1,392</span>
+                  <span class="neo-num">${normalCount}</span>
                   <button type="button" class="neo-link" onclick="window.setPage('pipeline')">${ico.link}<span>상세 보기</span></button>
                 </div>
               </div>
             `)}
             ${win('탐지 유형별 분포', `
               <div class="neo-cells c3">
-                <div class="neo-cell t-acc">
-                  <span class="neo-label">Shadow AI</span>
-                  <span class="neo-num" style="color:var(--accent);">64</span>
-                  <span class="neo-meta">외부 AI 반출 시도</span>
-                </div>
-                <div class="neo-cell">
-                  <span class="neo-label">DB Read</span>
-                  <span class="neo-num">49</span>
-                  <span class="neo-meta">기밀 DB 대량 조회</span>
-                </div>
-                <div class="neo-cell">
-                  <span class="neo-label">TTL</span>
-                  <span class="neo-num">18</span>
-                  <span class="neo-meta">30분 TTL 자동 복귀</span>
-                </div>
+                ${typeCounts.length ? typeCounts.map((t, i) => `<div class="neo-cell ${i === 0 ? 't-acc' : ''}"><span class="neo-label">${escapeHtml(t[0])}</span><span class="neo-num">${t[1]}</span><span class="neo-meta">수집 로그 기준</span></div>`).join('') : '<div class="neo-cell"><span class="neo-meta">수집된 데이터 없음</span></div>'}
               </div>
-            `, `<span class="neo-meta">최근 7일</span>`)}
+            `, `<span class="neo-meta">현재 수집분</span>`)}
           </div>
 
           ${win('우선 대응 인시던트', `
@@ -5564,13 +4893,14 @@
                   </tr>
                 </thead>
                 <tbody>
+                  ${state.incidents.length === 0 ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px 0;">수집된 데이터 없음</td></tr>' : ''}
                   ${state.incidents.map(item => {
                     const sel = item.id === inc.id;
                     return `
-                      <tr class="interactive-row ${sel ? 'selected-row' : ''}" style="cursor:pointer;" onclick="window.selectIncident('${item.id}')">
-                        <td class="mono col-id" style="border-left:1px solid ${sel ? 'var(--color-accent)' : 'transparent'};">${item.id}</td>
-                        <td style="color:var(--text);font-weight:400;">${item.shortTitle}</td>
-                        <td class="mono" style="font-size:12px;color:var(--muted);">${item.source.split('·')[0].trim()} <span style="color:var(--accent);">→</span> ${item.target.split('(')[0].trim()}</td>
+                      <tr class="interactive-row ${sel ? 'selected-row' : ''}" style="cursor:pointer;" onclick="window.selectIncident('${escapeHtml(item.id)}')">
+                        <td class="mono col-id" style="border-left:1px solid ${sel ? 'var(--color-accent)' : 'transparent'};">${escapeHtml(item.id)}</td>
+                        <td style="color:var(--text);font-weight:400;">${escapeHtml(item.shortTitle)}</td>
+                        <td class="mono" style="font-size:12px;color:var(--muted);">${escapeHtml(item.source.split('·')[0].trim())} <span style="color:var(--accent);">→</span> ${escapeHtml(item.target.split('(')[0].trim())}</td>
                         <td class="mono" style="font-size:12px;color:var(--muted);">${item.time}</td>
                         <td class="num col-score"><span class="${pillClassForSeverity(item.severity)}">${item.severity} · ${item.score}</span></td>
                       </tr>
@@ -5579,7 +4909,7 @@
                 </tbody>
               </table>
             </div>
-          `, `<button type="button" class="neo-link" onclick="window.openKillchainFor('${inc.id}')">${ico.link}<span>${inc.id} 킬체인</span></button>`)}
+          `, `<button type="button" class="neo-link" onclick="window.openKillchainFor('${escapeHtml(inc.id)}')">${ico.link}<span>${inc.id} 킬체인</span></button>`)}
         `;
       } else if (state.page === 'active_incidents') {
         bodyContent = renderActiveIncidentsSubView(cfg);
@@ -5635,7 +4965,7 @@
                 <span class="neo-status-dot" style="background:${state.geminiEnabled ? 'var(--accent)' : 'var(--warning)'};box-shadow:0 0 6px ${state.geminiEnabled ? 'var(--accent)' : 'var(--warning)'};" title="Gemini AI"></span>
               </div>
               <div class="neo-label" style="padding:0 14px 6px;">시스템 상태</div>
-              <div class="neo-status-row"><span>Railway 연동</span><em style="color:${state.railwayLive ? 'var(--accent)' : 'var(--warning)'};">${state.railwayLive ? 'LIVE' : 'PAUSED'}</em></div>
+              <div class="neo-status-row"><span>Railway 연동</span><em style="color:${state.railwayLive && state.meta.fetchOk ? 'var(--accent)' : 'var(--warning)'};">${!state.railwayLive ? 'PAUSED' : (state.meta.fetchOk ? 'LIVE' : '오류')}</em></div>
               <div class="neo-status-row"><span>분석 홉</span><em>3-HOP</em></div>
               <div class="neo-status-row" style="margin-bottom:10px;"><span>Gemini 엔진</span><em style="color:${state.geminiEnabled ? 'var(--accent)' : 'var(--warning)'};">${state.geminiEnabled ? 'ONLINE' : 'RULE'}</em></div>
               <button type="button" class="neo-nav-item" onclick="window.openGeminiModal()" title="AI 엔진 설정">${ico.ai}<span>AI 엔진 설정</span></button>
@@ -5689,69 +5019,6 @@
     window.replay = function() {
       renderStage();
     };
-
-    // Break-UI Dev Dataset Toggle (Demo -> Worst-Case -> Empty -> Demo)
-    const DEMO_SNAPSHOT = JSON.parse(JSON.stringify({
-      watchUsers: state.watchUsers,
-      incidents: state.incidents,
-      govAssets: state.govAssets,
-      siteAccessGroups: state.siteAccessGroups,
-      pipelineLogs: state.pipelineLogs
-    }));
-    state.dataMode = 'demo'; // 'demo' | 'worst' | 'empty'
-
-    window.setDataMode = function(mode) {
-      state.dataMode = mode;
-      const btn = document.getElementById('picker-data-btn');
-      if (mode === 'demo') {
-        state.watchUsers = JSON.parse(JSON.stringify(DEMO_SNAPSHOT.watchUsers));
-        state.incidents = JSON.parse(JSON.stringify(DEMO_SNAPSHOT.incidents));
-        state.govAssets = JSON.parse(JSON.stringify(DEMO_SNAPSHOT.govAssets));
-        state.siteAccessGroups = JSON.parse(JSON.stringify(DEMO_SNAPSHOT.siteAccessGroups));
-        state.pipelineLogs = JSON.parse(JSON.stringify(DEMO_SNAPSHOT.pipelineLogs));
-        state.govSearch = '';
-        state.siteSearch = '';
-        state.pipeIpFilter = 'ALL';
-        state.pipeTypeFilter = 'ALL';
-        if (btn) btn.textContent = 'Data: Demo';
-      } else if (mode === 'worst') {
-        state.watchUsers = [{
-          user: 'Aleksandra_Wiśniewska-Kowalczyk_SecOps_Lead',
-          dept: '글로벌전략기획·클라우드거버넌스합동본부 · 장기파견계정',
-          host: 'WKSTN-NORTHWIND-HOLDINGS-099812 (192.168.254.253)',
-          score: 99,
-          status: 'WATCH',
-          ttlRemain: '29분 59초',
-          reason: 'bartholomew.fitzgerald@northwind-industries-holdings.example.com 계정으로 https://sub.department.region.enterprise-llm-gateway-proxy.example.co.uk/v1/workspaces/q4-board-deck/upload?token=9f8e7d6c-5b4a-4c3d-8e2f-1a0b9c8d7e6f 장문 URL 호출 감지'
-        }];
-        state.incidents = JSON.parse(JSON.stringify(DEMO_SNAPSHOT.incidents));
-        state.incidents[0].title = '[극단적 장문 시나리오] Aleksandra Wiśniewska-Kowalczyk 계정의 Q3_Board_Deck_FINAL_revised_v12_[approved_by_legal].pdf 및 연속 무공백 도메인 반출 시도';
-        state.incidents[0].source = 'bartholomew.fitzgerald@northwind-industries-holdings.example.com · WKSTN-NORTHWIND-01';
-        state.incidents[0].target = 'https://sub.department.region.enterprise-llm-gateway-proxy.example.co.uk/v1/chat/completions';
-        state.govAssets = JSON.parse(JSON.stringify(DEMO_SNAPSHOT.govAssets));
-        state.govAssets[0].domain = 'sub.department.region.enterprise-llm-gateway-proxy.example.co.uk';
-        state.govAssets[0].service = 'Northwind Enterprise Multi-Region Unbreakable AI Gateway Service';
-        state.govAssets[0].liveHits = 99999;
-        state.govAssets[0].totalCumulative = 1284920;
-        state.siteAccessGroups = JSON.parse(JSON.stringify(DEMO_SNAPSHOT.siteAccessGroups));
-        state.siteAccessGroups[0].domain = 'sub.department.region.enterprise-llm-gateway-proxy.example.co.uk';
-        state.siteAccessGroups[0].lastDetail = 'Q3_Board_Deck_FINAL_revised_v12_[approved_by_legal]_IMG_20250914_183022_HDR.pdf (99,999 KB) 차단';
-        state.pipelineLogs = JSON.parse(JSON.stringify(DEMO_SNAPSHOT.pipelineLogs));
-        state.pipelineLogs[0].fileName = 'Q3_Board_Deck_FINAL_revised_v12_[approved_by_legal]_IMG_20250914_183022.pdf';
-        state.pipelineLogs[0].pasteChars = 999999;
-        state.govSearch = '';
-        state.siteSearch = '';
-        if (btn) btn.textContent = 'Data: Worst';
-      } else if (mode === 'empty') {
-        state.govSearch = '__NO_MATCH_ZERO_RESULT_QUERY__';
-        state.siteSearch = '__NO_MATCH_ZERO_RESULT_QUERY__';
-        state.pipeIpFilter = '192.168.10.64';
-        state.pipeTypeFilter = 'SSH_BRUTE_PIVOT';
-        if (btn) btn.textContent = 'Data: 0건';
-      }
-      renderStage({ animate: false });
-    };
-
 
     addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -5882,10 +5149,6 @@
     })();
 
     const initialUrl = new URL(location.href);
-    const initialData = initialUrl.searchParams.get('data');
-    if (initialData === 'worst' || initialData === 'empty') {
-      window.setDataMode(initialData);
-    }
     const initialPage = initialUrl.searchParams.get('page');
     if (initialPage && ['overview', 'active_incidents', 'cases', 'killchain', 'governance', 'pipeline'].includes(initialPage)) {
       state.page = initialPage;

@@ -139,6 +139,7 @@ def analyze_domain_with_gemini(domain: str, api_key: Optional[str] = None, live_
     # 키는 인자로 직접 받거나, 없으면 환경변수에서 읽는다.
     # 코드에 키를 적어두지 않기 위한 구조다.
     key = api_key or os.environ.get("GEMINI_API_KEY")
+    LAST_ENGINE["name"] = "Rule Engine"   # Gemini 응답을 실제로 받았을 때만 아래에서 "Gemini" 로 바꾼다
     if not key:
         return _fallback_heuristic_analysis(domain)
 
@@ -170,7 +171,10 @@ def analyze_domain_with_gemini(domain: str, api_key: Optional[str] = None, live_
     "ai_diagnosis": "보안 진단 소견 (1~2문장, 사용자 프롬프트 데이터의 외부 모델 재학습 여부 및 기밀 유출 위험성 평가)"
 }}
 """
-        models_to_try = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
+        # 모델명은 자주 폐기되므로 환경변수(GEMINI_MODELS, 쉼표 구분)로 바꿀 수 있게 하고,
+        # 기본값 끝에는 항상 최신으로 연결되는 별칭(gemini-flash-latest)을 둔다.
+        models_to_try = [m.strip() for m in os.environ.get("GEMINI_MODELS", "").split(",") if m.strip()] \
+            or ["gemini-3.6-flash", "gemini-flash-latest"]
         response = None
         for m in models_to_try:
             try:
@@ -185,6 +189,7 @@ def analyze_domain_with_gemini(domain: str, api_key: Optional[str] = None, live_
 
         # 세 모델 모두 실패 → 휴리스틱으로 넘어간다
         if not response or not response.text:
+            LAST_ENGINE["name"] = "Rule Engine"
             return _fallback_heuristic_analysis(domain)
 
         # LLM은 종종 JSON을 ```json ... ``` 코드블록으로 감싸서 돌려준다.
@@ -195,6 +200,7 @@ def analyze_domain_with_gemini(domain: str, api_key: Optional[str] = None, live_
         elif "```" in text:
             text = text.split("```")[1].split("```")[0].strip()
         data = json.loads(text)
+        LAST_ENGINE["name"] = "Gemini"
 
         # LLM이 준 문자열("HIGH")을 프로그램이 쓰는 Severity 값으로 바꾼다
         r_level = data.get("risk_level", "MEDIUM").upper()
@@ -209,6 +215,10 @@ def analyze_domain_with_gemini(domain: str, api_key: Optional[str] = None, live_
     except Exception:
         # 어떤 오류가 나든 대시보드는 멈추면 안 된다. 조용히 휴리스틱으로 대체한다.
         return _fallback_heuristic_analysis(domain)
+
+
+# 직전 진단을 실제로 수행한 엔진 (화면 표시용). 폴백이 조용히 일어나는 것을 드러낸다.
+LAST_ENGINE: Dict[str, str] = {"name": "Rule Engine"}
 
 
 def _fallback_heuristic_analysis(domain: str) -> Dict[str, Any]:
