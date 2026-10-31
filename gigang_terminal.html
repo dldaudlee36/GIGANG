@@ -3793,6 +3793,7 @@
 
       if (!state.caseSort) state.caseSort = { col: 'createdAt', dir: 'desc' };
 
+      const caseTerms = searchTerms(f.search);
       const dateBounds = (f.dateFrom && f.dateTo) ? caseDateBounds(f) : null;
       // Filter cases
       let filtered = (state.casesData || []).filter(item => {
@@ -4053,16 +4054,16 @@
                       <!-- 케이스 ID -->
                       <td style="padding-left:16px;font-family:'IBM Plex Mono', monospace;font-size:12px;color:rgba(255,255,255,0.9);white-space:nowrap;">
                         <button type="button" onclick="window.openKillchainFor('${escapeHtml(item.id)}')" style="background:none;border:none;padding:0;color:inherit;font-family:inherit;font-size:inherit;cursor:pointer;text-align:left;" onmouseover="this.style.color='#25c9ba'" onmouseout="this.style.color='rgba(255,255,255,0.9)'">
-                          ${escapeHtml(item.id)}
+                          ${hl(item.id, caseTerms)}
                         </button>
                       </td>
                       <!-- 제목 / 세부설명 -->
                       <td style="padding:0 12px;vertical-align:middle;overflow:hidden;">
                         <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                          <span style="font-size:12px;font-weight:500;color:#ffffff;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.title)}</span>
+                          <span style="font-size:12px;font-weight:500;color:#ffffff;overflow:hidden;text-overflow:ellipsis;">${hl(item.title, caseTerms)}</span>
                         </div>
                         <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                          ${escapeHtml(item.description)}
+                          ${hl(item.description, caseTerms)}
                         </div>
                       </td>
                       <!-- 심각도 -->
@@ -4084,7 +4085,8 @@
                         ` : `
                           <div style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#25c9ba" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-                            <span style="color:#ffffff;" title="${escapeHtml(item.asset.ip || '')}">${escapeHtml(item.asset.name)}</span>
+                            <span style="color:#ffffff;" title="${escapeHtml(item.asset.ip || '')}">${hl(item.asset.name, caseTerms)}</span>
+                            ${caseTerms.length && item.asset.ip && item.asset.ip !== item.asset.name && caseTerms.some(t => String(item.asset.ip).toLowerCase().includes(t)) ? `<span style="color:#94a3b8;font-family:'IBM Plex Mono', monospace;font-size:11px;">${hl(item.asset.ip, caseTerms)}</span>` : ''}
                           </div>
                         `}
                       </td>
@@ -4092,7 +4094,7 @@
                       <td style="padding:0 12px;font-size:12px;color:#b6bbcc;white-space:nowrap;">
                         <div style="display:flex;align-items:center;gap:6px;">
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                          <button type="button" onclick="window.assignCase('${escapeHtml(item.id)}')" title="클릭하여 담당자 지정" style="background:none;border:none;padding:0;cursor:pointer;font:inherit;color:${item.assignee === '미배정' ? '#94a3b8' : '#b6bbcc'};text-decoration:underline dotted;">${escapeHtml(item.assignee)}</button>
+                          <button type="button" onclick="window.assignCase('${escapeHtml(item.id)}')" title="클릭하여 담당자 지정" style="background:none;border:none;padding:0;cursor:pointer;font:inherit;color:${item.assignee === '미배정' ? '#94a3b8' : '#b6bbcc'};text-decoration:underline dotted;">${hl(item.assignee, caseTerms)}</button>
                         </div>
                       </td>
                       <!-- 생성일 -->
