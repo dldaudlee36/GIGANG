@@ -478,8 +478,13 @@ def build_snapshot(ctx, ui: Dict[str, Any]) -> Dict[str, Any]:
 
     # 케이스 (인시던트 1건 = 케이스 1건)
     cases = []
+    raw_by_evt = {f"EVT-RLY-{it.get('id', 0)}": it for it in raw}
     for inc, p in zip(incidents_raw, incidents):
         ip, user = _pc_ip(inc.actor)
+        src_ev = next((raw_by_evt[e] for e in inc.event_ids if e in raw_by_evt), {})
+        pc_name = src_ev.get("pc_name") or ""
+        if src_ev.get("local_ip"):  # actor 문자열에 IP 가 없으면 이벤트의 실제 IP 를 쓴다
+            ip = src_ev["local_ip"]
         cases.append({
             "id": inc.incident_id,
             "title": inc.title,
@@ -488,7 +493,7 @@ def build_snapshot(ctx, ui: Dict[str, Any]) -> Dict[str, Any]:
             "severity": p["severity"],
             "status": ("신규" if inc.incident_id not in assignees else "진행 중")
             if inc.status.value == "ACTIVE" else p["status"],
-            "asset": {"isFlow": False, "name": user or ip, "ip": ip},
+            "asset": {"isFlow": False, "name": user or ip, "ip": ip, "pcName": pc_name},
             "assignee": assignees.get(inc.incident_id, "미배정"),
             "createdAt": p["createdAt"],
             "updatedAt": p["createdAt"],

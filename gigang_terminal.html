@@ -3671,21 +3671,28 @@
                   <span style="font-size:11px;color:#b6bbcc;">위험도순</span>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px;">
-                  ${((state.casesData || []).slice().sort((x, y) => y.score - x.score).slice(0, 4).map(c => ({ name: c.asset.name, ip: c.asset.ip || c.asset.srcIp || '-', type: 'ENDPOINT', score: c.score }))).length === 0 ? '<div style="font-size:11.5px;color:#94a3b8;">수집된 데이터 없음</div>' : 
-                  ((state.casesData || []).slice().sort((x, y) => y.score - x.score).slice(0, 4).map(c => ({ name: c.asset.name, ip: c.asset.ip || c.asset.srcIp || '-', type: 'ENDPOINT', score: c.score })).map(ent => `
+                  ${(() => {
+                    const m = {};
+                    (state.casesData || []).forEach(c => {
+                      const name = c.asset.pcName || c.asset.name;
+                      const ip = c.asset.ip || c.asset.srcIp || '-';
+                      const k = name + '|' + ip;
+                      if (!m[k] || c.score > m[k].score) m[k] = { name, ip, score: c.score };
+                    });
+                    const top = Object.values(m).sort((x, y) => y.score - x.score).slice(0, 4);
+                    if (!top.length) return '<div style="font-size:11.5px;color:#94a3b8;">수집된 데이터 없음</div>';
+                    return top.map(ent => `
                     <div style="padding:10px;background:rgba(13,45,60,0.4);border-radius:4px;border:1px solid rgba(var(--color-accent-code),0.15);display:flex;align-items:center;justify-content:space-between;">
                       <div style="display:flex;flex-direction:column;gap:2px;overflow:hidden;padding-right:8px;">
-                        <div style="display:flex;align-items:center;gap:6px;">
-                          <span style="font-size:10px;font-family:'IBM Plex Mono', monospace;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.1);color:#b6bbcc;">${ent.type}</span>
-                          <span style="font-size:12px;font-weight:600;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ent.name}</span>
-                        </div>
+                        <span style="font-size:12px;font-weight:600;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(ent.name)}</span>
                         <span style="font-family:'IBM Plex Mono', monospace;font-size:11px;color:#b6bbcc;">${ent.ip}</span>
                       </div>
                       <span style="font-family:'IBM Plex Mono', monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;flex-shrink:0;${ent.score >= 90 ? 'background:rgba(248,113,113,0.2);color:#f87171;border:1px solid rgba(248,113,113,0.4);' : (ent.score >= 80 ? 'background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);' : 'background:rgba(167,139,250,0.2);color:#c084fc;border:1px solid rgba(167,139,250,0.4);')}">
                         ${ent.score}점
                       </span>
                     </div>
-                  `).join('')) }
+                  `).join('');
+                  })()}
                 </div>
               </div>
 
@@ -4827,7 +4834,7 @@
       const typeTotal = typeCounts.reduce((a, t) => a + t[1], 0) || 1;
       const typeNames = { PASTE_ATTEMPT: '붙여넣기', FILE_UPLOAD_ATTEMPT: '파일 업로드', COPY_ATTEMPT: '복사', CLIPBOARD_COPY: '클립보드 복사', DB_DOWNLOAD: 'DB 다운로드', DB_SELECT: 'DB 조회', DB_IMAGE_CAPTURE: 'DB 화면 캡처', SCREEN_CAPTURE: '화면 캡처', SITE_BLOCKED: '사이트 차단', WEB_ACCESS: '웹 접속', DOWNLOAD_STARTED: '다운로드 시작', DOWNLOAD_COMPLETED: '다운로드 완료', DOWNLOAD_INTERRUPTED: '다운로드 중단' };
       const typeName = t => typeNames[t] || t;
-      const domCounts = Object.entries(state.pipelineLogs.reduce((m, l) => { const d = String(l.site || '-').replace(/^https?:\/\//, '').split('/')[0].split(':')[0].toLowerCase(); if (d && d !== '-') m[d] = (m[d] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const domCounts = Object.entries(state.pipelineLogs.reduce((m, l) => { const d = String(l.site || '-').replace(/^https?:\/\//, '').split('/')[0].split(':')[0].toLowerCase(); if (d && d !== '-' && !d.endsWith('.ts.net')) m[d] = (m[d] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 5);
       const domMax = domCounts.length ? domCounts[0][1] : 1;
       const highCount = state.incidents.filter(i => i.severity === 'HIGH').length;
       const watchCount = state.incidents.filter(i => i.severity === 'WATCH').length;
@@ -4888,7 +4895,7 @@
                   </div>
                   <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="width:${Math.max(3, d[1] / domMax * 100)}%;height:100%;background:${i === 0 ? 'var(--accent)' : '#64748b'};border-radius:4px;"></div></div>
                 </div>`).join('')}</div>` : '<div style="text-align:center;color:var(--muted);padding:20px 0;">수집된 데이터 없음</div>'}
-            `, `<span class="neo-meta">상위 5개</span>`)}
+            `, `<span class="neo-meta">상위 5개 · 내부(.ts.net) 제외</span>`)}
             ${win('탐지 유형별 분포', `
             ${typeCounts.length ? `<div style="display:flex;flex-direction:column;gap:10px;">${typeCounts.map((t, i) => `
               <div style="display:grid;grid-template-columns:104px 1fr 84px;gap:12px;align-items:center;">
