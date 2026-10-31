@@ -3244,6 +3244,14 @@
     /* =========================================================================
        ACTIVE INCIDENTS (PROMPT 2) HANDLERS & HELPERS
        ========================================================================= */
+    window.toggleActiveInc = function(id) {
+      state.activeOpen = Object.assign({}, state.activeOpen || {}, { [id]: !(state.activeOpen || {})[id] });
+      renderStage();
+    };
+    window.moreActiveInc = function() {
+      state.activeLimit = (state.activeLimit || 10) + 10;
+      renderStage();
+    };
     window.setIncidentFilterMode = function(mode) {
       state.incidentFilterMode = mode;
       renderStage();
@@ -3419,28 +3427,6 @@
         return true;
       });
 
-      // Gauge SVG generator
-      const renderGauge = (score) => {
-        const radius = 18;
-        const circumference = 113.097;
-        const offset = circumference - (score / 100) * circumference;
-        let stroke = '#25c9ba';
-        if (score >= 90) stroke = '#f87171';
-        else if (score >= 80) stroke = '#f59e0b';
-        else if (score >= 60) stroke = '#c084fc';
-
-        return `
-          <div style="position:relative;width:46px;height:46px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="46" height="46" viewBox="0 0 46 46" style="transform:rotate(-90deg);">
-              <circle cx="23" cy="23" r="18" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3.5"></circle>
-              <circle cx="23" cy="23" r="18" fill="none" stroke="${stroke}" stroke-width="3.5"
-                stroke-dasharray="113.097" stroke-dashoffset="${offset}" stroke-linecap="round"></circle>
-            </svg>
-            <span style="position:absolute;font-family:'IBM Plex Mono', monospace;font-size:12px;font-weight:700;color:#ffffff;">${score}</span>
-          </div>
-        `;
-      };
-
       return `
         <div style="width:100%;min-height:100%;display:flex;flex-direction:column;gap:18px;color:#f6f7f8;font-family:var(--active-font);">
           
@@ -3558,7 +3544,7 @@
                 <div style="display:flex;align-items:center;gap:8px;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#25c9ba" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                   <h2 style="font-size:16px;font-weight:600;color:#ffffff;margin:0;">활성 보안 인시던트 목록</h2>
-                  <span style="font-family:'IBM Plex Mono', monospace;font-size:12px;color:#25c9ba;">(${incidents.length}건)</span>
+                  <span style="font-family:'IBM Plex Mono', monospace;font-size:12px;color:#25c9ba;">(${incidents.length}건 · 위험도순)</span>
                 </div>
                 <span style="font-size:11.5px;color:#b6bbcc;">3-Hop 상관분석 및 실시간 차단 상태</span>
               </div>
@@ -3566,66 +3552,45 @@
               <!-- 인시던트 카드 목록 -->
               <div style="display:flex;flex-direction:column;gap:14px;">
                 ${incidents.length === 0 ? '<div style="padding:40px 0;text-align:center;font-size:13px;color:#94a3b8;">수집된 데이터 없음 — ' + ((state.meta && state.meta.fetchError) ? escapeHtml(state.meta.fetchError) : '인시던트가 탐지되지 않았거나 수집이 꺼져 있습니다.') + '</div>' : ''}
-                ${incidents.map(inc => `
-                  <article style="background:var(--color-pannel-dark);padding:18px;border-radius:0;box-shadow:0 0 0 1px rgba(var(--color-accent-code), 0.22) inset;display:flex;flex-direction:column;gap:14px;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='rgba(2, 28, 38, 0.95)'">
-                    
-                    <!-- 카드 상단: 뱃지 + 원형 위험 점수 게이지 -->
-                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
-                      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
-                        <span style="padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:700;letter-spacing:0.02em;${(inc.severity === '심각' ? 'background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);' : 'background:rgba(167,139,250,0.2);color:#c084fc;border:1px solid rgba(167,139,250,0.45);')}">
-                          ${inc.severity}
-                        </span>
-                        <span style="padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:600;background:rgba(37,201,186,0.15);color:#25c9ba;border:1px solid rgba(var(--color-accent-code),0.35);">
-                          ${inc.status}
-                        </span>
-                        <span style="font-family:'IBM Plex Mono', monospace;font-size:12px;font-weight:600;color:#ffffff;">
-                          ${inc.id}
-                        </span>
+                ${(() => {
+                  const sorted = incidents.slice().sort((x, y) => (y.riskScore || 0) - (x.riskScore || 0));
+                  const limit = state.activeLimit || 10;
+                  const shown = sorted.slice(0, limit);
+                  const open = state.activeOpen || {};
+                  const sevPill = inc => inc.severity === '심각'
+                    ? 'background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);'
+                    : 'background:rgba(167,139,250,0.18);color:#c084fc;border:1px solid rgba(167,139,250,0.4);';
+                  const rows = shown.map(inc => {
+                    const isOpen = !!open[inc.id];
+                    return `
+                  <article style="background:rgba(13,45,60,0.35);border:1px solid rgba(var(--color-accent-code),0.18);">
+                    <div onclick="window.toggleActiveInc('${escapeHtml(inc.id)}')" style="cursor:pointer;display:grid;grid-template-columns:64px minmax(0,1fr) 150px 44px 18px;align-items:center;gap:12px;padding:10px 14px;">
+                      <span style="padding:2px 0;text-align:center;border-radius:9999px;font-size:11px;font-weight:700;${sevPill(inc)}">${inc.severity}</span>
+                      <div style="min-width:0;">
+                        <div style="font-size:13px;font-weight:600;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(inc.title)}</div>
+                        <div style="margin-top:3px;font-size:11.5px;color:#b6bbcc;font-family:'IBM Plex Mono', monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(inc.correlationFlow)}</div>
                       </div>
-                      ${renderGauge(inc.riskScore)}
+                      <span style="font-size:11.5px;color:#b6bbcc;font-family:'IBM Plex Mono', monospace;">${escapeHtml(String(inc.time).slice(5, 16))}</span>
+                      <span style="font-family:'IBM Plex Mono', monospace;font-size:13px;font-weight:700;color:${inc.riskScore >= 90 ? '#f87171' : (inc.riskScore >= 80 ? '#fbbf24' : '#c084fc')};text-align:right;">${inc.riskScore}</span>
+                      <span style="color:#94a3b8;font-size:11px;">${isOpen ? '▲' : '▼'}</span>
                     </div>
-
-                    <!-- 제목 & 메타 정보 -->
-                    <div>
-                      <h3 style="font-size:15px;font-weight:600;color:#ffffff;line-height:1.4;margin:0;letter-spacing:-0.01em;">
-                        ${escapeHtml(inc.title)}
-                      </h3>
-                      <div style="margin-top:6px;display:flex;align-items:center;gap:8px;font-size:12px;color:#b6bbcc;">
-                        <span style="font-family:'IBM Plex Mono', monospace;color:#25c9ba;font-weight:500;">${escapeHtml(inc.hostIp)}</span>
-                        <span style="color:#94a3b8;">·</span>
-                        <span>자산 ${inc.assetCount}개</span>
-                        <span style="color:#94a3b8;">·</span>
-                        <span>연관 이벤트 ${inc.eventCount}건</span>
+                    ${isOpen ? `
+                    <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:10px;">
+                      <div style="font-size:12px;color:#b6bbcc;line-height:1.55;background:rgba(2,16,22,0.6);padding:10px 12px;border-left:3px solid #25c9ba;">
+                        <span style="color:#25c9ba;font-weight:600;">[분석 소견]</span> ${escapeHtml(inc.aiSummary)}
                       </div>
-                    </div>
-
-                    <!-- 3-Hop 상관분석 경로 흐름 박스 -->
-                    <div style="background:rgba(13,45,60,0.6);border:1px solid rgba(var(--color-accent-code),0.25);border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:10px;font-family:'IBM Plex Mono', monospace;font-size:11.5px;color:#ffffff;overflow-x:auto;">
-                      <span style="color:#25c9ba;font-weight:700;font-size:11px;padding:1px 6px;border-radius:4px;background:rgba(37,201,186,0.2);flex-shrink:0;">연관 경로</span>
-                      <span style="white-space:nowrap;color:#e8f1f5;">${escapeHtml(inc.correlationFlow)}</span>
-                    </div>
-
-                    <!-- AI 분석 소견 (Gemini / Correlation Insight) -->
-                    <div style="font-size:12px;color:#b6bbcc;line-height:1.55;background:rgba(2,16,22,0.6);padding:10px 12px;border-left:3px solid #25c9ba;">
-                      <span style="color:#25c9ba;font-weight:600;">[분석 소견]</span> ${escapeHtml(inc.aiSummary)}
-                    </div>
-
-                    <!-- 카드 푸터: 생성 시간 & 킬체인 분석 이동 버튼 -->
-                    <div style="border-top:1px solid rgba(37,201,186,0.15);padding-top:12px;display:flex;align-items:center;justify-content:space-between;font-size:12px;">
-                      <div style="display:flex;align-items:center;gap:6px;color:#b6bbcc;font-family:'IBM Plex Mono', monospace;">
-                        <span>발생 시각:</span>
-                        <span style="color:#ffffff;">${inc.time}</span>
-                        <span style="color:#94a3b8;">·</span>
-                        <span>담당: ${escapeHtml(inc.assignee)}</span>
+                      <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;">
+                        <div style="color:#b6bbcc;font-family:'IBM Plex Mono', monospace;">${escapeHtml(inc.id)} · ${escapeHtml(inc.hostIp)} · 연관 이벤트 ${inc.eventCount}건 · 담당: ${escapeHtml(inc.assignee)}</div>
+                        <button type="button" onclick="window.openKillchainFor('${escapeHtml(inc.id)}')" style="height:28px;padding:0 14px;border-radius:9999px;font-size:11.5px;font-weight:600;color:#25c9ba;background:transparent;border:1px solid rgba(var(--color-accent-code),0.4);cursor:pointer;">킬체인 상세 분석 →</button>
                       </div>
-                      <button type="button" onclick="window.openKillchainFor('${escapeHtml(inc.id)}')" style="height:28px;padding:0 14px;border-radius:9999px;font-size:11.5px;font-weight:600;color:#25c9ba;background:rgba(13,45,60,0.7);border:1px solid rgba(var(--color-accent-code),0.45);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;" onmouseover="this.style.background='#25c9ba';this.style.color='#021c26'" onmouseout="this.style.background='rgba(13,45,60,0.7)';this.style.color='#25c9ba'">
-                        <span>킬체인 상세 분석</span>
-                        <span>→</span>
-                      </button>
-                    </div>
-
-                  </article>
-                `).join('')}
+                    </div>` : ''}
+                  </article>`;
+                  }).join('');
+                  const more = sorted.length > limit
+                    ? `<button type="button" onclick="window.moreActiveInc()" style="height:34px;border-radius:6px;font-size:12px;font-weight:600;color:#25c9ba;background:transparent;border:1px solid rgba(var(--color-accent-code),0.35);cursor:pointer;">더 보기 (${limit}/${sorted.length}건 표시)</button>`
+                    : '';
+                  return rows + more;
+                })()}
               </div>
             </section>
 
