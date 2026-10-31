@@ -245,7 +245,7 @@ def refresh(ctx, force: bool = False) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # 스냅샷 (화면에 넘기는 데이터)
 # ---------------------------------------------------------------------------
-def _hop(step_no: int, ev: Any) -> Dict[str, str]:
+def _hop(step_no: int, ev: Any, step_label: str | None = None) -> Dict[str, str]:
     action = ev.action.value if hasattr(ev.action, "value") else str(ev.action)
     label = _ACTION_LABEL.get(action, action)
     target = ev.target.domain or ev.target.hostname or ev.target.dst_ip or "-"
@@ -259,7 +259,7 @@ def _hop(step_no: int, ev: Any) -> Dict[str, str]:
     if extra.get("text_length"):
         detail += f" · {extra['text_length']}자"
     return {
-        "step": f"Step {step_no} · {label}",
+        "step": step_label or f"Step {step_no} · {label}",
         "nodeLabel": (ev.log_source.value if hasattr(ev.log_source, "value") else str(ev.log_source)).upper(),
         "nodeSub": str(target),
         "time": _kst(ev.timestamp).split(" ")[-1],
@@ -269,71 +269,115 @@ def _hop(step_no: int, ev: Any) -> Dict[str, str]:
     }
 
 
-def _build_hops(inc, events_by_id: Dict[str, Any]) -> List[Dict[str, str]]:
-    evs = [events_by_id[i] for i in inc.event_ids if i in events_by_id]
-    evs.sort(key=lambda e: e.timestamp)
-    if evs and len(evs) < 3:
-        # 같은 사용자의 직전 30분 이벤트(기밀 DB 조회 → AI 접속)를 앞 단계로 보강한다.
-        ip, user = _pc_ip(inc.actor)
-        # 실제 이벤트 기반 인시던트의 actor 는 "kim" 처럼 괄호 없는 사용자명이다.
-        user = user or evs[-1].actor.user_id or ip
-        last = evs[-1].timestamp
-        have = {e.event_id for e in evs}
-        related = [e for e in events_by_id.values()
-                   if e.event_id not in have and e.actor.user_id == user
-                   and timedelta(0) <= last - e.timestamp <= timedelta(minutes=30)]
-        evs = sorted(related + evs, key=lambda e: e.timestamp)
-    if len(evs) >= 3:
-        picks = [evs[0], evs[len(evs) // 2], evs[-1]]
+_OUTBOUND = ("PASTE_ATTEMPT", "FILE_UPLOAD_ATTEMPT", "ALLOW", "HTTP_POST")
+_DOWNLOADS = ("DOWNLOAD_COMPLETED", "DB_DOWNLOAD")
+
+
+def _act(ev) -> str:
+    return ev.action.value if hasattr(ev.action, "value") else str(ev.action)
+
+
+def _x(ev) -> Dict[str, Any]:
+    return ev.payload.extra or {}
+
+
+def _hhmmss(ev) -> str:
+    return _kst(ev.timestamp).split(" ")[-1]
+
+
+def _find_source(ev, events_by_id: Dict[str, Any], policy: Dict[str, Any]):
+    """외부 입력·첨부 이벤트가 어떤 회사 자료 취득 이벤트에서 왔는지 엔진과 같은 기준으로 찾는다.
+    반환: (source_event, 연결 방식 설명) 또는 (None, '')."""
+    user, x = ev.actor.user_id, _x(ev)
+    others = [e for e in events_by_id.values() if e.event_id != ev.event_id]
+    link = x.get("match") if isinstance(x.get("match"), dict) else {}
+    tid = link.get("source_trace_id")
+    if tid and x.get("match_status") == "matched":  # 1순위: 확장프로그램이 기록한 해시 일치
+        src = next((e for e in others if _x(e).get("trace_id") == tid), None)
+        if src:
+            return src, "내용 해시 일치"
+    if _act(ev) == "FILE_UPLOAD_ATTEMPT" and ev.payload.file_name:  # 2순위: 다운로드 파일 이름·크기 일치
+        src = next((e for e in sorted(others, key=lambda e: e.timestamp, reverse=True)
+                    if _act(e) in _DOWNLOADS and e.actor.user_id == user
+                    and e.payload.file_name == ev.payload.file_name and e.payload.file_size == ev.payload.file_size), None)
+        if src:
+            return src, "파일 이름·크기 일치"
+    if _act(ev) == "PASTE_ATTEMPT" and not policy.get("portal_only", True):  # 3순위: 글자 수 근사(엔진도 portal_only 가 꺼졌을 때만)
+        try:
+            n = int(x.get("text_length") or 0)
+        except (TypeError, ValueError):
+            n = 0
+        for e in sorted(others, key=lambda e: e.timestamp, reverse=True):
+            gap = (ev.timestamp - e.timestamp).total_seconds() / 60
+            try:
+                m = int(_x(e).get("text_length") or 0)
+            except (TypeError, ValueError):
+                m = 0
+            if (_act(e) == "CLIPBOARD_COPY" and e.actor.user_id == user and 0 <= gap <= policy.get("paste_match_minutes", 60)
+                    and n > 0 and m > 0 and abs(m - n) <= max(10, m * policy.get("paste_match_tolerance", 0.15))):
+                return e, "글자 수 근사 일치"
+    return None, ""
+
+
+def _find_outbound(src, events_by_id: Dict[str, Any]):
+    """취득 이벤트(복사·다운로드)에서 시작해, 그 자료가 외부로 입력·첨부된 가장 이른 이벤트를 찾는다."""
+    tid = _x(src).get("trace_id")
+    if not tid:
+        return None
+    outs = [e for e in events_by_id.values() if _act(e) in _OUTBOUND
+            and (_x(e).get("match") or {}).get("source_trace_id") == tid and e.timestamp >= src.timestamp]
+    return min(outs, key=lambda e: e.timestamp) if outs else None
+
+
+def _slot(step: str, label: str, sub: str, t: str, actor: str, detail: str, real: bool) -> Dict[str, Any]:
+    return {"step": step, "nodeLabel": label, "nodeSub": sub, "time": t, "actor": actor, "detail": detail, "real": real}
+
+
+def _pending(step: str, label: str, detail: str, t: str, actor: str) -> Dict[str, Any]:
+    """해당 단계 이벤트가 없을 때의 자리표시. real=False 로 화면에서 점선·'보강 정보'로 구분된다."""
+    return _slot(step, label, "미관측", t, actor, detail, False)
+
+
+def _build_hops(inc, events_by_id: Dict[str, Any], policy: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
+    """3-Hop = 회사 자료 취득(HOP 1) → 단말 경유(HOP 2) → 외부 입력·첨부(HOP 3).
+    현재 탐지 기준: 외부 입력·첨부 이벤트가 취득 이벤트와 해시·파일·글자 수로 연결될 때만 경로가 성립한다."""
+    policy = policy or {}
+    S1, S2, S3 = "Step 1 · 회사 자료 취득", "Step 2 · 단말 경유", "Step 3 · 외부 입력·첨부"
+    ev = next((events_by_id[i] for i in inc.event_ids if i in events_by_id), None)
+    created = _kst(inc.created_at).split(" ")[-1]
+    if ev is None:  # 이벤트 기반이 아닌 인시던트(WATCH 알림·자가 치유 등)
+        return [_pending(S1, "COMPANY-DB", "연결된 취득 이벤트 없음", created, inc.actor),
+                _pending(S2, "ENDPOINT", "연결된 단말 경유 이벤트 없음", created, inc.actor),
+                _pending(S3, "EXTERNAL", inc.evidences[-1] if inc.evidences else (inc.summary or "외부 전송 미관측"), created, inc.actor)]
+
+    who = f"{ev.actor.user_id or '-'} ({ev.actor.src_ip})" if ev.actor.src_ip else (ev.actor.user_id or "-")
+    pc = _x(ev).get("pc_name") or ev.actor.user_id or "-"
+    if _act(ev) in _OUTBOUND:
+        src, how = _find_source(ev, events_by_id, policy)
+        out = ev
+    else:  # 취득 단계 인시던트: 이 자료가 나중에 외부로 나갔는지 뒤쪽을 찾는다
+        src, how = ev, ""
+        out = _find_outbound(ev, events_by_id)
+        if out:
+            how = "내용 해시 일치"
+
+    hop3 = _hop(3, out, S3) if out else _pending(S3, "EXTERNAL", "외부 입력·첨부 미관측", _hhmmss(ev), who)
+    if src is None:
+        return [_pending(S1, "COMPANY-DB", "연결된 회사 자료 취득 이벤트 없음", _hhmmss(ev), who),
+                _pending(S2, "ENDPOINT", "단말 경유 미확인", _hhmmss(ev), who), hop3]
+    hop1 = _hop(1, src, S1)
+    if out:
+        sec = int((out.timestamp - src.timestamp).total_seconds())
+        gap = f"{sec}초" if sec < 120 else f"{sec // 60}분"
+        hop2 = _slot(S2, "ENDPOINT", str(pc), _hhmmss(src), who, f"단말 경유 · {how} · 취득 후 {gap}", True)
     else:
-        picks = evs
-    hops = _fill_hops(inc, picks, evs)
-    return hops
+        hop2 = _pending(S2, "ENDPOINT", "단말 경유 미확인", _hhmmss(src), who)
+    return [hop1, hop2, hop3]
 
 
-def _endpoint_hop(inc, evs: List[Any]) -> Dict[str, str]:
-    """HOP 1(발원 단말). 이벤트가 1건뿐이어도 엔진이 가진 사용자·PC 정보로 채운다."""
-    ip, user = _pc_ip(inc.actor)
-    if evs:  # 이벤트가 있으면 이벤트의 실제 사용자·IP가 가장 정확하다
-        user, ip = evs[0].actor.user_id or user, evs[0].actor.src_ip or ip
-    elif not user:  # "User" 처럼 괄호 없는 actor 문자열은 사용자명으로 본다
-        ip, user = "", ip
-    t = _kst(evs[0].timestamp).split(" ")[-1] if evs else _kst(inc.created_at).split(" ")[-1]
-    return {"step": "Step 1 · 발원 단말", "nodeLabel": "ENDPOINT", "nodeSub": user or ip or "-",
-            "time": t, "actor": f"{user or '-'} ({ip})" if ip else (user or "-"),
-            "detail": f"발원 단말: {user or '-'} ({ip})" if ip else f"발원 단말: {user or '-'}",
-            "real": False}
-
-
-def _target_hop(inc, evs: List[Any]) -> Dict[str, str]:
-    """HOP 3(표적). 마지막 이벤트의 대상 도메인과 엔진 점수를 쓴다."""
-    last = evs[-1] if evs else None
-    domain = (last.target.domain or last.target.hostname or last.target.dst_ip) if last else ""
-    t = _kst(last.timestamp).split(" ")[-1] if last else _kst(inc.created_at).split(" ")[-1]
-    note = inc.evidences[-1] if inc.evidences else (inc.summary or "근거 없음")
-    return {"step": "Step 3 · 표적", "nodeLabel": "TARGET", "nodeSub": str(domain or inc.target_asset or "-"),
-            "time": t, "actor": inc.actor, "detail": note, "real": False}
-
-
-def _fill_hops(inc, picks: List[Any], evs: List[Any]) -> List[Dict[str, str]]:
-    """항상 3칸을 실제 데이터로 채운다. 이벤트가 모자라면 단말/표적을 엔진 정보로 보강한다.
-    없는 사실은 만들지 않는다(시각은 실제 이벤트 시각 또는 인시던트 생성 시각)."""
-    if len(picks) >= 3:
-        return [_hop(i + 1, e) for i, e in enumerate(picks[:3])]
-    if len(picks) == 2:
-        return [_hop(1, picks[0]), _hop(2, picks[1]), _target_hop(inc, evs)]
-    if len(picks) == 1:
-        mid = _hop(2, picks[0])
-        return [_endpoint_hop(inc, evs), mid, _target_hop(inc, evs)]
-    ep = _endpoint_hop(inc, evs)
-    mid = {"step": "Step 2 · 근거", "nodeLabel": "SENSOR", "nodeSub": "-", "time": ep["time"],
-           "actor": inc.actor, "detail": inc.evidences[0] if inc.evidences else "이벤트 기록 없음", "real": False}
-    return [ep, mid, _target_hop(inc, evs)]
-
-
-def _incident_payload(inc, events_by_id) -> Dict[str, Any]:
+def _incident_payload(inc, events_by_id, policy=None) -> Dict[str, Any]:
     sev = _SEVERITY_LABEL.get(inc.severity.value, inc.severity.value)
-    hops = _build_hops(inc, events_by_id)
+    hops = _build_hops(inc, events_by_id, policy)
     return {
         "id": inc.incident_id,
         "title": inc.title,
@@ -375,7 +419,7 @@ def build_snapshot(ctx, ui: Dict[str, Any]) -> Dict[str, Any]:
 
     engine = ctx.correlation_engine
     incidents_raw = engine.get_all_incidents()
-    incidents = [_incident_payload(i, events_by_id) for i in incidents_raw]
+    incidents = [_incident_payload(i, events_by_id, getattr(engine, "policy", None)) for i in incidents_raw]
 
     # 인시던트별 이벤트 → 로그 점수 연결
     score_by_event: Dict[str, int] = {}
