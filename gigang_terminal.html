@@ -2333,8 +2333,8 @@
     /* 열을 좁혀도 글자가 줄바꿈되지 않고 한 줄로 잘리게 한다 */
     .v-terminal.neo .case-table td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     /* 거버넌스 표: 진단 소견(5번째 열)만 줄바꿈 허용, 나머지는 한 줄로 고정 */
-    .v-terminal.neo .gov-table.resized td:not(:nth-child(5)) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .v-terminal.neo .gov-table.resized td:nth-child(5) { overflow: hidden; }
+    .v-terminal.neo .gov-table.resized td:not(:nth-child(6)) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .v-terminal.neo .gov-table.resized td:nth-child(6) { overflow: hidden; }
     .v-terminal.neo .case-table td button { white-space: nowrap; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
     .col-resizer { position: absolute; top: 0; right: 0; bottom: 0; width: 8px; cursor: col-resize; z-index: 3; }
     .col-resizer::after { content: ''; position: absolute; top: 25%; bottom: 25%; left: 4px; width: 1px; background: transparent; transition: background 0.15s; }
@@ -3335,7 +3335,7 @@
     /* 표 열 너비 조절: 헤더 오른쪽 경계를 드래그. 너비는 브라우저(localStorage)에 저장된다.
        key = 'case'(케이스 목록, 9열) | 'gov'(AI 거버넌스 표, 6열) */
     const COL_MIN = 60;
-    const COL_COUNTS = { case: 9, gov: 6 };
+    const COL_COUNTS = { case: 9, gov: 7 };
     Object.keys(COL_COUNTS).forEach(key => {
       try {
         const saved = JSON.parse(localStorage.getItem('gigang.' + key + 'ColWidths') || 'null');
@@ -4184,7 +4184,7 @@
     }
 
     function renderGovernanceSubView(cfg) {
-      const govColWidths = (Array.isArray(state.govColWidths) && state.govColWidths.length === 6) ? state.govColWidths : null;
+      const govColWidths = (Array.isArray(state.govColWidths) && state.govColWidths.length === 7) ? state.govColWidths : null;
       const GOV_HANDLE = i => `<span class="col-resizer" onmousedown="window.startColResize(event,${i},'gov')" onclick="event.stopPropagation()" title="드래그하여 너비 조절"></span>`;
       const q = (state.govSearch || '').trim().toLowerCase();
       let rows = state.govAssets.filter(a =>
@@ -4291,15 +4291,16 @@
 
           <div class="table-scroll" style="border:1px solid var(--border);border-radius:6px;overflow-x:auto;overflow-y:hidden;">
             <table class="data-table gov-table${govColWidths ? ' resized' : ''}" style="${govColWidths ? `table-layout:fixed;width:100%;min-width:${govColWidths.reduce((a, b) => a + b, 0)}px;` : ''}">
-              ${govColWidths ? `<colgroup>${govColWidths.map((w, i, a) => `<col style="width:${i === a.length - 1 ? 'auto' : w + 'px'};">`).join('')}</colgroup>` : '<colgroup>' + '<col>'.repeat(6) + '</colgroup>'}
+              ${govColWidths ? `<colgroup>${govColWidths.map((w, i, a) => `<col style="width:${i === a.length - 1 ? 'auto' : w + 'px'};">`).join('')}</colgroup>` : '<colgroup>' + '<col>'.repeat(7) + '</colgroup>'}
               <thead>
                 <tr>
                   <th style="cursor:pointer;" onclick="window.sortGov('domain')">도메인 · 분류${GOV_HANDLE(0)}</th>
-                  <th style="cursor:pointer;" onclick="window.sortGov('riskScore')">위험도 · 상태${GOV_HANDLE(1)}</th>
-                  <th class="num" style="cursor:pointer;" onclick="window.sortGov('liveHits')">실시간 접속${GOV_HANDLE(2)}</th>
-                  <th>누적 · 반출 시도${GOV_HANDLE(3)}</th>
-                  <th>진단 소견${GOV_HANDLE(4)}</th>
-                  <th class="num">차단 정책${GOV_HANDLE(5)}</th>
+                  <th style="cursor:pointer;" onclick="window.sortGov('riskScore')">위험도${GOV_HANDLE(1)}</th>
+                  <th>상태${GOV_HANDLE(2)}</th>
+                  <th class="num" style="cursor:pointer;" onclick="window.sortGov('liveHits')">실시간 접속${GOV_HANDLE(3)}</th>
+                  <th>누적 · 반출 시도${GOV_HANDLE(4)}</th>
+                  <th>진단 소견${GOV_HANDLE(5)}</th>
+                  <th class="num">차단 정책${GOV_HANDLE(6)}</th>
                 </tr>
               </thead>
               <tbody>
@@ -4318,10 +4319,10 @@
                         <div style="font-size:12px;color:var(--muted);margin-top:3px;">${escapeHtml(r.service)} · ${escapeHtml(r.category)}</div>
                       </td>
                       <td>
-                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;white-space:nowrap;">
-                          <span class="${pillClassForSeverity(r.riskLevel)}">${escapeHtml(r.riskLevel)} · ${r.riskScore == null ? '점수 없음' : r.riskScore + '점'}</span>
-                          <span class="${pillClassForSeverity(r.govStatus)}">${escapeHtml(r.govStatus)}</span>
-                        </div>
+                        <span class="${pillClassForSeverity(r.riskLevel)}" style="white-space:nowrap;">${escapeHtml(r.riskLevel)} · ${r.riskScore == null ? '점수 없음' : r.riskScore + '점'}</span>
+                      </td>
+                      <td>
+                        <span class="${pillClassForSeverity(r.govStatus)}" style="white-space:nowrap;">${escapeHtml(r.govStatus)}</span>
                       </td>
                       <td class="num">
                         <div style="font-weight:600;color:var(--text);">${r.liveHits}건 <span style="font-weight:400;color:var(--muted);font-size:12px;">(${r.liveDevices}대)</span></div>
@@ -4349,7 +4350,7 @@
                   `;
                 }).join('') : `
                   <tr>
-                    <td colspan="6" style="padding:36px 20px;text-align:center;">
+                    <td colspan="7" style="padding:36px 20px;text-align:center;">
                       <div style="font-size:14.5px;font-weight:600;color:var(--text);margin-bottom:6px;">일치하는 도메인이 없습니다 (0건)</div>
                       <div style="font-size:13px;color:var(--muted);margin-bottom:14px;">검색어('${escapeHtml(state.govSearch)}')를 변경하거나 필터를 초기화하세요.</div>
                       <button type="button" class="${cfg.btnClass}" onclick="window.setGovSearch('')">필터 초기화</button>
