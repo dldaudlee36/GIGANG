@@ -265,6 +265,7 @@ def _hop(step_no: int, ev: Any) -> Dict[str, str]:
         "time": _kst(ev.timestamp).split(" ")[-1],
         "actor": f"{ev.actor.user_id or '-'} ({ev.actor.src_ip})",
         "detail": detail,
+        "real": True,
     }
 
 
@@ -300,7 +301,8 @@ def _endpoint_hop(inc, evs: List[Any]) -> Dict[str, str]:
     t = _kst(evs[0].timestamp).split(" ")[-1] if evs else _kst(inc.created_at).split(" ")[-1]
     return {"step": "Step 1 · 발원 단말", "nodeLabel": "ENDPOINT", "nodeSub": user or ip or "-",
             "time": t, "actor": f"{user or '-'} ({ip})" if ip else (user or "-"),
-            "detail": f"발원 단말: {user or '-'} ({ip})" if ip else f"발원 단말: {user or '-'}"}
+            "detail": f"발원 단말: {user or '-'} ({ip})" if ip else f"발원 단말: {user or '-'}",
+            "real": False}
 
 
 def _target_hop(inc, evs: List[Any]) -> Dict[str, str]:
@@ -310,7 +312,7 @@ def _target_hop(inc, evs: List[Any]) -> Dict[str, str]:
     t = _kst(last.timestamp).split(" ")[-1] if last else _kst(inc.created_at).split(" ")[-1]
     note = inc.evidences[-1] if inc.evidences else (inc.summary or "근거 없음")
     return {"step": "Step 3 · 표적", "nodeLabel": "TARGET", "nodeSub": str(domain or inc.target_asset or "-"),
-            "time": t, "actor": inc.actor, "detail": note}
+            "time": t, "actor": inc.actor, "detail": note, "real": False}
 
 
 def _fill_hops(inc, picks: List[Any], evs: List[Any]) -> List[Dict[str, str]]:
@@ -325,12 +327,13 @@ def _fill_hops(inc, picks: List[Any], evs: List[Any]) -> List[Dict[str, str]]:
         return [_endpoint_hop(inc, evs), mid, _target_hop(inc, evs)]
     ep = _endpoint_hop(inc, evs)
     mid = {"step": "Step 2 · 근거", "nodeLabel": "SENSOR", "nodeSub": "-", "time": ep["time"],
-           "actor": inc.actor, "detail": inc.evidences[0] if inc.evidences else "이벤트 기록 없음"}
+           "actor": inc.actor, "detail": inc.evidences[0] if inc.evidences else "이벤트 기록 없음", "real": False}
     return [ep, mid, _target_hop(inc, evs)]
 
 
 def _incident_payload(inc, events_by_id) -> Dict[str, Any]:
     sev = _SEVERITY_LABEL.get(inc.severity.value, inc.severity.value)
+    hops = _build_hops(inc, events_by_id)
     return {
         "id": inc.incident_id,
         "title": inc.title,
@@ -347,7 +350,8 @@ def _incident_payload(inc, events_by_id) -> Dict[str, Any]:
         "eventCount": len(inc.event_ids),
         "reasons": list(inc.evidences),
         "actions": list(inc.soar_actions),
-        "hops": _build_hops(inc, events_by_id),
+        "hops": hops,
+        "hopsReal": sum(1 for h in hops if h.get("real")),
     }
 
 
