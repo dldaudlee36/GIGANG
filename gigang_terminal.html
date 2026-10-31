@@ -3351,9 +3351,10 @@
       const widths = Array.from(table.querySelectorAll('thead tr:first-child th')).map(th => Math.round(th.getBoundingClientRect().width));
       const startX = e.clientX, startW = widths[idx];
       const apply = () => {
-        cols.forEach((c, i) => { c.style.width = widths[i] + 'px'; });
-        table.style.width = widths.reduce((a, b) => a + b, 0) + 'px';
-        table.style.minWidth = '0';
+        // 마지막 열은 남는 폭을 흡수해 표가 항상 컨테이너 끝까지 이어지게 한다(오른쪽이 끊겨 보이는 문제 방지)
+        cols.forEach((c, i) => { c.style.width = i === cols.length - 1 ? 'auto' : widths[i] + 'px'; });
+        table.style.width = '100%';
+        table.style.minWidth = widths.reduce((a, b) => a + b, 0) + 'px';
         table.style.tableLayout = 'fixed';
         table.classList.add('resized');
       };
@@ -3947,9 +3948,9 @@
 
             <!-- 테이블 헤더 + 본문 테이블 (가로 스크롤 및 고정 컬럼 비율 적용) -->
             <div style="width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;">
-              <table class="case-table" style="${caseColWidths ? `width:${caseColWidths.reduce((a, b) => a + b, 0)}px;min-width:0;` : 'width:100%;min-width:1240px;'}border-collapse:collapse;text-align:left;table-layout:fixed;">
+              <table class="case-table" style="${caseColWidths ? `width:100%;min-width:${caseColWidths.reduce((a, b) => a + b, 0)}px;` : 'width:100%;min-width:1240px;'}border-collapse:collapse;text-align:left;table-layout:fixed;">
                 <colgroup>
-                  ${(caseColWidths || [150, null, 84, 84, 160, 110, 145, 145, 78]).map(w => `<col style="width:${w ? w + 'px' : 'auto'};">`).join('')}
+                  ${(caseColWidths || [150, null, 84, 84, 160, 110, 145, 145, 78]).map((w, i, a) => `<col style="width:${w && !(caseColWidths && i === a.length - 1) ? w + 'px' : 'auto'};">`).join('')}
                 </colgroup>
                 <thead>
                   <tr style="height:40px;background:rgba(3,16,22,0.7);font-size:11.5px;font-weight:600;color:rgba(255,255,255,0.85);white-space:nowrap;">
@@ -4289,8 +4290,8 @@
           </div>
 
           <div class="table-scroll" style="border:1px solid var(--border);border-radius:6px;overflow-x:auto;overflow-y:hidden;">
-            <table class="data-table gov-table${govColWidths ? ' resized' : ''}" style="${govColWidths ? `table-layout:fixed;min-width:0;width:${govColWidths.reduce((a, b) => a + b, 0)}px;` : ''}">
-              ${govColWidths ? `<colgroup>${govColWidths.map(w => `<col style="width:${w}px;">`).join('')}</colgroup>` : '<colgroup>' + '<col>'.repeat(6) + '</colgroup>'}
+            <table class="data-table gov-table${govColWidths ? ' resized' : ''}" style="${govColWidths ? `table-layout:fixed;width:100%;min-width:${govColWidths.reduce((a, b) => a + b, 0)}px;` : ''}">
+              ${govColWidths ? `<colgroup>${govColWidths.map((w, i, a) => `<col style="width:${i === a.length - 1 ? 'auto' : w + 'px'};">`).join('')}</colgroup>` : '<colgroup>' + '<col>'.repeat(6) + '</colgroup>'}
               <thead>
                 <tr>
                   <th style="cursor:pointer;" onclick="window.sortGov('domain')">도메인 · 분류${GOV_HANDLE(0)}</th>
