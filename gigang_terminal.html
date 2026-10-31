@@ -2744,7 +2744,7 @@
         const h = src[i] || {};
         const f = (v) => { const t = String(v == null ? '' : v).trim(); return t || '-'; };
         out.push({ step: f(h.step || ('Step ' + (i + 1))), nodeLabel: f(h.nodeLabel), nodeSub: f(h.nodeSub),
-                   time: f(h.time), actor: f(h.actor), detail: f(h.detail) });
+                   time: f(h.time), actor: f(h.actor), detail: f(h.detail), real: h.real === true });
       }
       return out;
     }
@@ -3169,35 +3169,38 @@
 
               <!-- HOP 1 NODE (폭 240px, 여유로운 내부 간격) -->
               <g class="hop-node-group ${state.activeHopIdx === 0 ? 'is-active-hop' : ''}" transform="translate(40, 54)" onclick="window.selectHop(0)" style="cursor:pointer;">
-                <rect class="hop-card-box" width="240" height="116" rx="8" fill="${nodeBg}" stroke="${state.activeHopIdx === 0 ? accentColor : nodeBorder}" stroke-width="${state.activeHopIdx === 0 ? '2.4' : '1.5'}"/>
+                <rect class="hop-card-box" width="240" height="116" rx="8" fill="${nodeBg}" stroke="${state.activeHopIdx === 0 ? accentColor : nodeBorder}" stroke-width="${state.activeHopIdx === 0 ? '2.4' : '1.5'}" ${sh[0].real ? '' : 'stroke-dasharray="6,4"'}/>
                 <rect x="14" y="14" width="62" height="20" rx="4" fill="${accentColor}" fill-opacity="0.18"/>
                 <text x="45" y="28" text-anchor="middle" fill="${accentColor}" font-size="11.5" font-weight="700" font-family="IBM Plex Mono, monospace">HOP 01</text>
                 <text x="226" y="28" text-anchor="end" fill="${textSub}" font-size="11.5" font-weight="500" font-family="IBM Plex Mono, monospace">${h0.time}</text>
                 <text x="14" y="56" fill="${textMain}" font-size="13.5" font-weight="700">${h0.nodeLabel}</text>
                 <text x="14" y="76" fill="${textSub}" font-size="11.5" font-family="IBM Plex Mono, monospace">${h0.nodeSub}</text>
                 <text x="14" y="100" fill="${textSub}" font-size="11.5">발원: ${h0.actor}</text>
+                ${sh[0].real ? '' : `<text x="226" y="108" text-anchor="end" fill="${textSub}" font-size="10" font-style="normal" font-family="IBM Plex Mono, monospace">보강 정보</text>`}
               </g>
 
               <!-- HOP 2 NODE (폭 240px, 여유로운 내부 간격) -->
               <g class="hop-node-group ${state.activeHopIdx === 1 ? 'is-active-hop' : ''}" transform="translate(360, 54)" onclick="window.selectHop(1)" style="cursor:pointer;">
-                <rect class="hop-card-box" width="240" height="116" rx="8" fill="${nodeBg}" stroke="${accentColor}" stroke-width="${state.activeHopIdx === 1 ? '2.4' : '1.5'}"/>
+                <rect class="hop-card-box" width="240" height="116" rx="8" fill="${nodeBg}" stroke="${accentColor}" stroke-width="${state.activeHopIdx === 1 ? '2.4' : '1.5'}" ${sh[1].real ? '' : 'stroke-dasharray="6,4"'}/>
                 <rect x="14" y="14" width="62" height="20" rx="4" fill="${accentColor}" fill-opacity="0.18"/>
                 <text x="45" y="28" text-anchor="middle" fill="${accentColor}" font-size="11.5" font-weight="700" font-family="IBM Plex Mono, monospace">HOP 02</text>
                 <text x="226" y="28" text-anchor="end" fill="${textSub}" font-size="11.5" font-weight="500" font-family="IBM Plex Mono, monospace">${h1.time}</text>
                 <text x="14" y="56" fill="${textMain}" font-size="13.5" font-weight="700">${h1.nodeLabel}</text>
                 <text x="14" y="76" fill="${textSub}" font-size="11.5" font-family="IBM Plex Mono, monospace">${h1.nodeSub}</text>
                 <text x="14" y="100" fill="${textSub}" font-size="11.5">${h1.actor}</text>
+                ${sh[1].real ? '' : `<text x="226" y="108" text-anchor="end" fill="${textSub}" font-size="10" font-style="normal" font-family="IBM Plex Mono, monospace">보강 정보</text>`}
               </g>
 
               <!-- HOP 3 NODE (폭 240px, 표적 / 반출 차단) -->
               <g class="hop-node-group ${state.activeHopIdx === 2 ? 'is-active-hop' : ''}" transform="translate(680, 54)" onclick="window.selectHop(2)" style="cursor:pointer;">
-                <rect class="hop-card-box" width="240" height="116" rx="8" fill="${nodeBg}" stroke="${dangerColor}" stroke-width="${state.activeHopIdx === 2 ? '2.5' : '1.8'}"/>
+                <rect class="hop-card-box" width="240" height="116" rx="8" fill="${nodeBg}" stroke="${dangerColor}" stroke-width="${state.activeHopIdx === 2 ? '2.5' : '1.8'}" ${sh[2].real ? '' : 'stroke-dasharray="6,4"'}/>
                 <rect x="14" y="14" width="104" height="20" rx="4" fill="${dangerColor}" fill-opacity="0.18"/>
                 <text x="66" y="28" text-anchor="middle" fill="${dangerColor}" font-size="11.5" font-weight="700" font-family="IBM Plex Mono, monospace">HOP 03 · 표적</text>
                 <text x="226" y="28" text-anchor="end" fill="${dangerColor}" font-size="12" font-weight="700" font-family="IBM Plex Mono, monospace">${inc.score}점</text>
                 <text x="14" y="56" fill="${textMain}" font-size="13.5" font-weight="700">${h2.nodeLabel}</text>
                 <text x="14" y="76" fill="${dangerColor}" font-size="11.5" font-family="IBM Plex Mono, monospace">${h2.nodeSub}</text>
                 <text x="14" y="100" fill="${textSub}" font-size="11.5">${h2.actor}</text>
+                ${sh[2].real ? '' : `<text x="226" y="108" text-anchor="end" fill="${textSub}" font-size="10" font-style="normal" font-family="IBM Plex Mono, monospace">보강 정보</text>`}
               </g>
             </g>
           </svg>
@@ -4099,7 +4102,9 @@
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
               <span>인시던트 명세 및 3-Hop 네트워크 경로</span>
             </span>
-            <span class="mono" style="font-size:12px;color:var(--muted);">HOP 01 → HOP 02 → HOP 03</span>
+            ${(() => { const n = safeHops(inc).filter(h => h.real).length;
+              const ok = n >= 3;
+              return `<span style="display:inline-flex;align-items:center;gap:10px;"><span class="mono" style="font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:9999px;border:1px solid ${ok ? '#25c9ba' : '#f0b429'};color:${ok ? '#25c9ba' : '#f0b429'};">${ok ? '3-Hop 성립' : '부분 경로 ' + n + '/3'}</span><span class="mono" style="font-size:12px;color:var(--muted);">HOP 01 → HOP 02 → HOP 03</span></span>`; })()}
           </div>
 
           <div class="cw-prop-table" style="margin-bottom:24px;">
@@ -4143,6 +4148,7 @@
                     <div class="cw-prop-key" style="flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;">
                       <span style="font-weight:600;color:${isAct ? '#7ee0f2' : 'var(--text)'};">${escapeHtml(h.step.split('·')[0].trim())}</span>
                       <span class="mono" style="font-size:11.5px;color:var(--muted);">${escapeHtml(h.time)} KST</span>
+                      ${h.real ? '' : '<span class="mono" style="font-size:10.5px;color:#f0b429;">보강 정보 · 이벤트 아님</span>'}
                     </div>
                     <div class="cw-prop-val">
                       <div class="mono" style="font-size:13px;font-weight:600;color:var(--accent);">${escapeHtml(h.nodeLabel)} · ${escapeHtml(h.nodeSub)}</div>
