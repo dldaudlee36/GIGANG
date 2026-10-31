@@ -45,16 +45,29 @@ const GIGANGBlocking = (() => {
             await show(details.tabId, url.hostname, 'policy');
         })().catch(() => {});
     });
+    // 이미 열려 있는 탭도 정책에 걸리면 차단 화면으로 보낸다(탐색 이벤트만으로는 못 막는 구멍).
+    async function sweep(list) {
+        if (!list.length || await GIGANGMode.paused()) return;
+        const tabs = await chrome.tabs.query({url:['http://*/*','https://*/*']});
+        for (const tab of tabs) {
+            try {
+                const host = new URL(tab.url).hostname;
+                if (!matches(host, list) || await permission(host)) continue;
+                await show(tab.id, host, 'policy');
+            } catch {}
+        }
+    }
+    async function refreshAndSweep() { await sweep(await refresh()); }
     chrome.alarms.onAlarm.addListener(alarm => {
-        if (alarm.name === 'gigang-policy') void refresh();
+        if (alarm.name === 'gigang-policy') void refreshAndSweep();
     });
     chrome.runtime.onInstalled.addListener(() => {
-        void chrome.alarms.create('gigang-policy', {periodInMinutes:1});
-        void refresh();
+        void chrome.alarms.create('gigang-policy', {periodInMinutes:0.5});
+        void refreshAndSweep();
     });
     chrome.runtime.onStartup.addListener(() => {
-        void chrome.alarms.create('gigang-policy', {periodInMinutes:1});
-        void refresh();
+        void chrome.alarms.create('gigang-policy', {periodInMinutes:0.5});
+        void refreshAndSweep();
     });
     async function permission(host) {
         try {
@@ -64,5 +77,5 @@ const GIGANGBlocking = (() => {
             return response.ok && body.allowed && Date.parse(body.authorization?.expires_at)>Date.now() ? body.authorization : null;
         } catch { return null; }
     }
-    return {show, refresh, matches, permission};
+    return {show, refresh, sweep, matches, permission};
 })();
