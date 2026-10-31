@@ -4574,17 +4574,18 @@
               <div class="cw-section-head">
                 <span class="cw-section-title">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                  <span>호스트별 수집 요약 (${state.pcSummary.length})</span>
+                  <span>호스트별 수집 요약 · 최근 ${state.pipelineLogs.length}건</span>
                 </span>
               </div>
               <div class="cw-prop-table">
                 ${state.pcSummary.map(p => `
                   <div class="cw-prop-row">
-                    <div class="cw-prop-key mono" style="font-weight:600;color:var(--text);">${p.pcName}</div>
+                    <div class="cw-prop-key mono" style="font-weight:600;color:var(--text);">${escapeHtml(p.pcName)}</div>
                     <div class="cw-prop-val" style="flex-direction:row;align-items:center;justify-content:space-between;">
                       <div>
-                        <span class="mono" style="color:var(--muted);">${p.ip}</span>
-                        <span style="font-size:12px;color:var(--muted);margin-left:8px;">(${p.user})</span>
+                        <span class="mono" style="color:var(--muted);">${escapeHtml(p.ips?.length ? p.ips.join(' / ') : p.ip)}</span>
+                        <span style="font-size:12px;color:var(--muted);margin-left:8px;">(${escapeHtml(p.user)})</span>
+                        <div style="font-size:11px;color:var(--muted);margin-top:4px;">${p.identityMode === 'device' ? '기기 ID: ' + escapeHtml(p.deviceId.slice(0, 12)) : p.identityMode === 'legacy' ? '기기 ID 없음 · 이름+IP 기준 추정' : '기기 구분 불가 · 여러 PC의 로그일 수 있음'}</div>
                       </div>
                       <span class="pill pill-neu mono">${p.count}건</span>
                     </div>

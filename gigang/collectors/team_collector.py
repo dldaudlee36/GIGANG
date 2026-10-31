@@ -331,6 +331,7 @@ def fetch_railway_events(timeout: int = 5, force: bool = False) -> List[Dict[str
                 item["file_size"] = file_size
                 item["file_size_formatted"] = _format_file_size(file_size) if file_size is not None else "-"
                 item["local_ip"] = local_ip
+                item["device_id"] = item.get("device_id") or raw_info.get("device_id") or ""
                 item["event_type"] = ev_type
                 item["source"] = source
                 enriched.append(item)
