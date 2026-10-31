@@ -4362,9 +4362,9 @@
                       </td>
                       <td class="num">
                         <div style="display:inline-flex;align-items:center;gap:10px;">
-                          <span class="mono" style="font-size:12px;font-weight:600;color:${r.blocked ? 'var(--negative)' : 'var(--muted)'};">${r.blocked ? '차단중' : '허용'}</span>
+                          <span class="mono" style="font-size:12px;font-weight:600;color:${r.blocked ? 'var(--negative)' : 'var(--muted)'};">${r.blocked ? (r.blockedBy && r.blockedBy !== r.domain ? '차단중 (' + escapeHtml(r.blockedBy) + ')' : '차단중') : '허용'}</span>
                           <label class="switch-toggle danger-switch" aria-label="${escapeHtml(r.domain)} 브라우저 차단 정책 토글">
-                            <input type="checkbox" ${r.blocked ? 'checked' : ''} onchange="window.toggleDomainBlock('${escapeHtml(r.domain)}', this.checked)" />
+                            <input type="checkbox" ${r.blocked ? 'checked' : ''} onchange="window.toggleDomainBlock('${escapeHtml(r.blocked && r.blockedBy ? r.blockedBy : r.domain)}', this.checked)" />
                             <span class="switch-slider"></span>
                           </label>
                         </div>

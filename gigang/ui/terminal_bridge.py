@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+import re
 import os
 import time
 from datetime import datetime, timedelta, timezone
@@ -54,6 +55,24 @@ def _norm_domain(domain: str) -> str:
     value = (domain or "").strip().lower()
     value = value.removeprefix("https://").removeprefix("http://")
     return value.split("/", 1)[0].split(":", 1)[0].strip(".")
+
+
+_HOST_RE = re.compile(r"(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]")
+
+
+def valid_domain(d: str) -> bool:
+    """정책에 넣을 수 있는 도메인인가: 점이 있는 FQDN, 알파벳 TLD, localhost/IP 불가."""
+    return bool(d) and len(d) <= 253 and d != "localhost" and bool(_HOST_RE.fullmatch(d))
+
+
+def blocked_by(domain: str, blocked: set) -> str:
+    """도메인을 막고 있는 차단 항목(자기 자신 또는 상위 도메인). 없으면 빈 문자열."""
+    parts = domain.split(".")
+    for i in range(len(parts) - 1):
+        cand = ".".join(parts[i:])
+        if cand in blocked:
+            return cand
+    return ""
 
 
 def _kst(dt: Optional[datetime], utc: bool = True) -> str:
@@ -105,8 +124,8 @@ def fetch_blocklist() -> Tuple[set, bool]:
 
 def set_domain_block(domain: str, blocked: bool) -> Tuple[bool, str]:
     d = _norm_domain(domain)
-    if not d:
-        return False, "도메인 형식이 올바르지 않습니다."
+    if not valid_domain(d):
+        return False, "도메인 형식이 올바르지 않습니다. (예: example.com)"
     key = _api_key()
     if not key:
         return False, "RAILWAY_API_KEY가 설정되어 있지 않아 차단 정책을 저장할 수 없습니다."
@@ -117,6 +136,8 @@ def set_domain_block(domain: str, blocked: bool) -> Tuple[bool, str]:
             return False, "Railway 인증에 실패했습니다. RAILWAY_API_KEY를 확인하세요."
         if r.status_code == 404:
             return False, "Railway에 /policy API가 배포되어 있지 않습니다."
+        if r.status_code == 400:
+            return False, "Railway 서버가 도메인 형식을 거부했습니다."
         r.raise_for_status()
         if r.json().get("domain") != d:
             return False, "Railway 정책 응답 형식이 올바르지 않습니다."
@@ -532,18 +553,19 @@ def build_snapshot(ctx, ui: Dict[str, Any]) -> Dict[str, Any]:
     gov = []
     for a in ctx.governance_engine.get_all_assets():
         st = stats.get(a.domain, {})
+        by = blocked_by(a.domain, blocked)
         gov.append({
             "domain": a.domain, "service": a.service_name, "category": a.category,
-            "riskLevel": {"HIGH": "HIGH", "MEDIUM": "MEDIUM", "LOW": "LOW"}.get(a.risk_level.value, a.risk_level.value),
+            "riskLevel": {"HIGH": "HIGH", "MEDIUM": "WATCH", "LOW": "NORMAL"}.get(a.risk_level.value, a.risk_level.value),
             "riskScore": inc_score_by_domain.get(a.domain),
-            "govStatus": "차단" if a.domain in blocked else {
+            "govStatus": "차단" if by else {
                 "APPROVED": "승인", "CONDITIONAL": "조건부 승인", "UNAPPROVED": "미승인", "BLOCKED": "차단"
             }.get(a.sanction_status.value, a.sanction_status.value),
             "liveHits": a.access_count, "liveDevices": len(devices_by_domain.get(a.domain, ())),
             "users": a.user_count, "freqLabel": a.usage_frequency,
             "totalCumulative": st.get("count", a.access_count),
             "exfilAttempts": exfil_by_domain.get(a.domain, 0),
-            "aiOpinion": a.ai_diagnosis, "blocked": a.domain in blocked,
+            "aiOpinion": a.ai_diagnosis, "blocked": bool(by), "blockedBy": by,
         })
 
     # 최근 7일 일자별 이벤트 수 (KST 기준)
@@ -629,15 +651,15 @@ def handle_action(ctx, ui: Dict[str, Any], action: str, p: Dict[str, Any]) -> Tu
         return True, "Gemini 판별 " + ("ON" if ui["gemini"] else "OFF (규칙 엔진)")
     if action == "diagnose":
         d = _norm_domain(str(p.get("domain", "")))
-        if not d or "." not in d:
-            return False, "도메인 형식이 올바르지 않습니다."
+        if not valid_domain(d):
+            return False, "도메인 형식이 올바르지 않습니다. (예: example.com)"
         use_gemini = bool(ui.get("gemini", bool(_gemini_key()))) and bool(_gemini_key())
         key = _gemini_key() if use_gemini else None
         asset = ctx.governance_engine.analyze_and_register_domain(
             d, api_key=key, live_context=ctx.governance_engine.get_railway_domain_stats().get(d))
         ui["diag"] = {
             "domain": asset.domain, "service": asset.service_name, "category": asset.category,
-            "riskLevel": asset.risk_level.value, "opinion": asset.ai_diagnosis,
+            "riskLevel": {"MEDIUM": "WATCH", "LOW": "NORMAL"}.get(asset.risk_level.value, asset.risk_level.value), "opinion": asset.ai_diagnosis,
             "engine": governance.LAST_ENGINE["name"] if use_gemini else "Rule Engine",
             "hits": asset.access_count,
         }

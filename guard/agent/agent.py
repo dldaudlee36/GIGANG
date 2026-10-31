@@ -75,7 +75,7 @@ def normalize_domain(value):
     value = value.strip().lower()
     value = re.sub(r'^https?://', '', value)
     value = value.split('/', 1)[0].split(':', 1)[0].strip('.')
-    if not value or len(value) > 253 or not re.fullmatch(r'[a-z0-9.-]+', value):
+    if not value or len(value) > 253 or not re.fullmatch(r'(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]', value):
         return ''
     return value
 
