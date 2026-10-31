@@ -2743,6 +2743,7 @@
       siteSearch: '',
       pipeIpFilter: 'ALL',
       pipeTypeFilter: 'ALL',
+      pipeSearch: '',
       pcSummary: [],
       siteAccessGroups: [],
       pipelineLogs: []
@@ -3057,7 +3058,13 @@
       renderStage();
     };
 
+    window.setPipeSearch = function(val) {
+      state.pipeSearch = val;
+      renderStage();
+    };
+
     window.resetPipeFilters = function() {
+      state.pipeSearch = '';
       state.pipeIpFilter = 'ALL';
       state.pipeTypeFilter = 'ALL';
       renderStage();
@@ -4445,10 +4452,16 @@
         g.ip.toLowerCase().includes(sq)
       );
 
+      const pipeTerms = searchTerms(state.pipeSearch);
       const filteredLogs = state.pipelineLogs.filter(l => {
         const ipOk = state.pipeIpFilter === 'ALL' || l.ip === state.pipeIpFilter;
         const typeOk = state.pipeTypeFilter === 'ALL' || l.type === state.pipeTypeFilter;
-        return ipOk && typeOk;
+        if (!ipOk || !typeOk) return false;
+        if (!pipeTerms.length) return true;
+        return !!hitFields(pipeTerms, [
+          ['ID', l.id], ['사용자', l.user], ['단말', l.pcName], ['IP', l.ip], ['분류', l.type],
+          ['도메인', l.site], ['파일', l.fileName], ['센서', l.source]
+        ]);
       });
 
       const attachCount = state.pipelineLogs.filter(l => (l.type.includes('ATTACH') || l.type.includes('UPLOAD'))).length;
@@ -4651,16 +4664,15 @@
               <span>통합 감사 및 에이전트 로그</span>
             </span>
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;">
+              <div style="width:300px;">${renderSearchBox('pipe-search', state.pipeSearch || '', '사용자 · 단말 · IP · 분류 · 도메인 · 파일 검색', 'window.setPipeSearch')}</div>
+              ${pipeTerms.length ? `<span class="gk-chip" style="font-family:'IBM Plex Mono', monospace;">${filteredLogs.length} / ${state.pipelineLogs.length}건 일치</span>` : ''}
               <select class="${cfg.selectClass}" onchange="window.setPipeIpFilter(this.value)" aria-label="로컬 IP로 로그 골라 보기">
                 <option value="ALL" ${state.pipeIpFilter === 'ALL' ? 'selected' : ''}>모든 호스트 IP</option>
                 ${Array.from(new Set(state.pipelineLogs.map(l => l.ip).filter(Boolean))).sort().map(ip => `<option value="${escapeHtml(ip)}" ${state.pipeIpFilter === ip ? 'selected' : ''}>${escapeHtml(ip)}</option>`).join('')}
               </select>
               <select class="${cfg.selectClass}" onchange="window.setPipeTypeFilter(this.value)" aria-label="이벤트 종류로 로그 골라 보기">
                 <option value="ALL" ${state.pipeTypeFilter === 'ALL' ? 'selected' : ''}>모든 이벤트 분류</option>
-                <option value="FILE_ATTACH_BLOCK" ${state.pipeTypeFilter === 'FILE_ATTACH_BLOCK' ? 'selected' : ''}>FILE_ATTACH_BLOCK</option>
-                <option value="DB_SENSITIVE_READ" ${state.pipeTypeFilter === 'DB_SENSITIVE_READ' ? 'selected' : ''}>DB_SENSITIVE_READ</option>
-                <option value="PROMPT_PASTE_WATCH" ${state.pipeTypeFilter === 'PROMPT_PASTE_WATCH' ? 'selected' : ''}>PROMPT_PASTE_WATCH</option>
-                <option value="SSH_BRUTE_PIVOT" ${state.pipeTypeFilter === 'SSH_BRUTE_PIVOT' ? 'selected' : ''}>SSH_BRUTE_PIVOT</option>
+                ${Array.from(new Set(state.pipelineLogs.map(l => l.type).filter(Boolean))).sort().map(t => `<option value="${escapeHtml(t)}" ${state.pipeTypeFilter === t ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('')}
               </select>
               <button type="button" class="${cfg.btnClass}" onclick="window.refreshPipelineLogs()">새로고침</button>
             </div>
@@ -4690,13 +4702,13 @@
                         <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">${escapeHtml(l.time.split(' ')[1] || l.time)}</div>
                       </td>
                       <td>
-                        <div class="mono" style="font-weight:600;color:var(--text);">${escapeHtml(l.user)}</div>
-                        <div class="mono" style="font-size:11.5px;color:var(--muted);margin-top:2px;">${escapeHtml(l.pcName)} (${escapeHtml(l.ip)})</div>
+                        <div class="mono" style="font-weight:600;color:var(--text);">${hl(l.user, pipeTerms)}</div>
+                        <div class="mono" style="font-size:11.5px;color:var(--muted);margin-top:2px;">${hl(l.pcName, pipeTerms)} (${hl(l.ip, pipeTerms)})</div>
                       </td>
-                      <td><span class="${pillClassForSeverity((l.score || 0) >= 85 ? 'HIGH' : ((l.score || 0) >= 60 ? 'WATCH' : 'LOW'))}">${escapeHtml(l.type)}</span></td>
-                      <td class="mono" style="font-weight:600;color:var(--text);">${escapeHtml(l.site)}</td>
+                      <td><span class="${pillClassForSeverity((l.score || 0) >= 85 ? 'HIGH' : ((l.score || 0) >= 60 ? 'WATCH' : 'LOW'))}">${hl(l.type, pipeTerms)}</span></td>
+                      <td class="mono" style="font-weight:600;color:var(--text);">${hl(l.site, pipeTerms)}</td>
                       <td class="mono" style="font-size:12px;">
-                        ${hasFile ? `<span style="color:var(--text);font-weight:600;">${escapeHtml(l.fileName)}</span> <span style="color:var(--muted);">(${escapeHtml(l.fileSize)})</span>` : ''}
+                        ${hasFile ? `<span style="color:var(--text);font-weight:600;">${hl(l.fileName, pipeTerms)}</span> <span style="color:var(--muted);">(${escapeHtml(l.fileSize)})</span>` : ''}
                         ${hasFile && hasPaste ? `<span style="color:var(--muted);margin:0 4px;">·</span>` : ''}
                         ${hasPaste ? `<span style="color:var(--warning);">프롬프트 ${l.pasteChars.toLocaleString()}자</span>` : ''}
                         ${!hasFile && !hasPaste ? `<span style="color:var(--muted);">-</span>` : ''}
