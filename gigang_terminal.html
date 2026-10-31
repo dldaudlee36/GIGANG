@@ -3175,8 +3175,8 @@
                 <text x="226" y="28" text-anchor="end" fill="${textSub}" font-size="11.5" font-weight="500" font-family="IBM Plex Mono, monospace">${h0.time}</text>
                 <text x="14" y="56" fill="${textMain}" font-size="13.5" font-weight="700">${h0.nodeLabel}</text>
                 <text x="14" y="76" fill="${textSub}" font-size="11.5" font-family="IBM Plex Mono, monospace">${h0.nodeSub}</text>
-                <text x="14" y="100" fill="${textSub}" font-size="11.5">발원: ${h0.actor}</text>
-                ${sh[0].real ? '' : `<text x="226" y="108" text-anchor="end" fill="${textSub}" font-size="10" font-style="normal" font-family="IBM Plex Mono, monospace">보강 정보</text>`}
+                <text x="14" y="100" fill="${textSub}" font-size="11.5">${sh[0].real ? '발원: ' : ''}${h0.actor}</text>
+                ${sh[0].real ? '' : `<text x="226" y="108" text-anchor="end" fill="${textSub}" font-size="10" font-style="normal" font-family="IBM Plex Mono, monospace">미관측</text>`}
               </g>
 
               <!-- HOP 2 NODE (폭 240px, 여유로운 내부 간격) -->
@@ -3188,7 +3188,7 @@
                 <text x="14" y="56" fill="${textMain}" font-size="13.5" font-weight="700">${h1.nodeLabel}</text>
                 <text x="14" y="76" fill="${textSub}" font-size="11.5" font-family="IBM Plex Mono, monospace">${h1.nodeSub}</text>
                 <text x="14" y="100" fill="${textSub}" font-size="11.5">${h1.actor}</text>
-                ${sh[1].real ? '' : `<text x="226" y="108" text-anchor="end" fill="${textSub}" font-size="10" font-style="normal" font-family="IBM Plex Mono, monospace">보강 정보</text>`}
+                ${sh[1].real ? '' : `<text x="226" y="108" text-anchor="end" fill="${textSub}" font-size="10" font-style="normal" font-family="IBM Plex Mono, monospace">미관측</text>`}
               </g>
 
               <!-- HOP 3 NODE (폭 240px, 표적 / 반출 차단) -->
@@ -3200,7 +3200,7 @@
                 <text x="14" y="56" fill="${textMain}" font-size="13.5" font-weight="700">${h2.nodeLabel}</text>
                 <text x="14" y="76" fill="${dangerColor}" font-size="11.5" font-family="IBM Plex Mono, monospace">${h2.nodeSub}</text>
                 <text x="14" y="100" fill="${textSub}" font-size="11.5">${h2.actor}</text>
-                ${sh[2].real ? '' : `<text x="226" y="108" text-anchor="end" fill="${textSub}" font-size="10" font-style="normal" font-family="IBM Plex Mono, monospace">보강 정보</text>`}
+                ${sh[2].real ? '' : `<text x="226" y="108" text-anchor="end" fill="${textSub}" font-size="10" font-style="normal" font-family="IBM Plex Mono, monospace">미관측</text>`}
               </g>
             </g>
           </svg>
@@ -4148,7 +4148,7 @@
                     <div class="cw-prop-key" style="flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;">
                       <span style="font-weight:600;color:${isAct ? '#7ee0f2' : 'var(--text)'};">${escapeHtml(h.step.split('·')[0].trim())}</span>
                       <span class="mono" style="font-size:11.5px;color:var(--muted);">${escapeHtml(h.time)} KST</span>
-                      ${h.real ? '' : '<span class="mono" style="font-size:10.5px;color:#f0b429;">보강 정보 · 이벤트 아님</span>'}
+                      ${h.real ? '' : '<span class="mono" style="font-size:10.5px;color:#f0b429;">미관측 · 해당 이벤트 없음</span>'}
                     </div>
                     <div class="cw-prop-val">
                       <div class="mono" style="font-size:13px;font-weight:600;color:var(--accent);">${escapeHtml(h.nodeLabel)} · ${escapeHtml(h.nodeSub)}</div>
