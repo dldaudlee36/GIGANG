@@ -2327,6 +2327,8 @@
     .v-terminal.neo .case-table th:not(:last-child) {
       border-right: 1px solid rgba(var(--color-accent-code), 0.22);
     }
+    /* 본문 행에도 열 구분선을 이어 그린다 */
+    .v-terminal.neo .case-table td:not(:last-child) { border-right: 1px solid rgba(var(--color-accent-code), 0.14); }
     .v-terminal.neo .case-table th, .v-terminal.neo .gov-table th { position: relative; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     /* 열을 좁혀도 글자가 줄바꿈되지 않고 한 줄로 잘리게 한다 */
     .v-terminal.neo .case-table td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
