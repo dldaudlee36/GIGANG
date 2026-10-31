@@ -2736,6 +2736,20 @@
     /* =========================================================================
        2. UTILITIES & INTERACTIVE ACTION HANDLERS
        ========================================================================= */
+    // 3-Hop 칸은 항상 3개, 모든 필드는 문자열로 보장한다(누락·null·초장문으로 화면이 깨지지 않게).
+    function safeHops(inc) {
+      const src = Array.isArray(inc && inc.hops) ? inc.hops : [];
+      const out = [];
+      for (let i = 0; i < 3; i++) {
+        const h = src[i] || {};
+        const f = (v) => { const t = String(v == null ? '' : v).trim(); return t || '-'; };
+        out.push({ step: f(h.step || ('Step ' + (i + 1))), nodeLabel: f(h.nodeLabel), nodeSub: f(h.nodeSub),
+                   time: f(h.time), actor: f(h.actor), detail: f(h.detail) });
+      }
+      return out;
+    }
+    function clip(v, n) { const t = String(v == null ? '' : v); return t.length > n ? t.slice(0, n - 1) + '…' : t; }
+
     function escapeHtml(str) {
       return String(str ?? '')
         .replace(/&/g, '&amp;')
@@ -3039,8 +3053,7 @@
     window.selectHop = function(idx) {
       state.activeHopIdx = Number(idx) || 0;
       const inc = getSelectedIncident();
-      const hop = inc.hops[state.activeHopIdx] || inc.hops[0];
-      if (!hop) return;
+      const hop = safeHops(inc)[state.activeHopIdx] || safeHops(inc)[0];
       triggerHaptic(8);
       showToast(`${inc.id} · ${hop.step}`, `${hop.nodeLabel} (${hop.time} KST) — ${hop.detail}`);
       renderStage({ animate: false });
@@ -3115,9 +3128,11 @@
       const dangerColor = isDark ? '#f87171' : '#c4242a';
       const heightPx = compact ? 220 : 275;
 
-      const h0 = inc.hops[0];
-      const h1 = inc.hops[1];
-      const h2 = inc.hops[2];
+      const sh = safeHops(inc);
+      const E = (v, n) => escapeHtml(clip(v, n));
+      const h0 = { ...sh[0], time: E(sh[0].time, 10), nodeLabel: E(sh[0].nodeLabel, 20), nodeSub: E(sh[0].nodeSub, 28), actor: E(sh[0].actor, 30) };
+      const h1 = { ...sh[1], time: E(sh[1].time, 10), nodeLabel: E(sh[1].nodeLabel, 20), nodeSub: E(sh[1].nodeSub, 28), actor: E(sh[1].actor, 32) };
+      const h2 = { ...sh[2], time: E(sh[2].time, 10), nodeLabel: E(sh[2].nodeLabel, 20), nodeSub: E(sh[2].nodeSub, 28), actor: E(sh[2].actor, 32) };
 
       return `
         <div class="topology-viewport" id="topo-viewport" style="height:${heightPx}px;background:${bg};border:1px solid ${nodeBorder};">
@@ -3188,12 +3203,12 @@
           </svg>
         </div>
         ${(() => {
-          const selHop = inc.hops[state.activeHopIdx] || inc.hops[2];
+          const selHop = safeHops(inc)[state.activeHopIdx] || safeHops(inc)[2];
           return `
             <div style="margin-top:8px;padding:8px 14px;border-radius:6px;background:${bg};border:1px solid ${nodeBorder};display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span class="mono" style="font-weight:700;color:${state.activeHopIdx === 2 ? dangerColor : accentColor};">[${selHop.step}]</span>
-                <span style="color:${textMain};font-weight:500;">${selHop.detail}</span>
+                <span class="mono" style="font-weight:700;color:${state.activeHopIdx === 2 ? dangerColor : accentColor};">[${escapeHtml(selHop.step)}]</span>
+                <span style="color:${textMain};font-weight:500;">${escapeHtml(selHop.detail)}</span>
               </div>
             </div>
           `;
@@ -4121,17 +4136,17 @@
               <span class="pill pill-neu mono">Step 1–3</span>
             </div>
             <div class="cw-prop-table">
-              ${inc.hops.map((h, idx) => {
+              ${safeHops(inc).map((h, idx) => {
                 const isAct = state.activeHopIdx === idx;
                 return `
                   <div class="cw-prop-row" onclick="window.selectHop(${idx})" style="cursor:pointer;background:${isAct ? 'rgba(53,149,168,0.12)' : 'transparent'};">
                     <div class="cw-prop-key" style="flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;">
-                      <span style="font-weight:600;color:${isAct ? '#7ee0f2' : 'var(--text)'};">${h.step.split('·')[0].trim()}</span>
-                      <span class="mono" style="font-size:11.5px;color:var(--muted);">${h.time} KST</span>
+                      <span style="font-weight:600;color:${isAct ? '#7ee0f2' : 'var(--text)'};">${escapeHtml(h.step.split('·')[0].trim())}</span>
+                      <span class="mono" style="font-size:11.5px;color:var(--muted);">${escapeHtml(h.time)} KST</span>
                     </div>
                     <div class="cw-prop-val">
-                      <div class="mono" style="font-size:13px;font-weight:600;color:var(--accent);">${h.nodeLabel} · ${h.nodeSub}</div>
-                      <div style="font-size:13.5px;color:var(--text);line-height:1.5;">${h.detail}</div>
+                      <div class="mono" style="font-size:13px;font-weight:600;color:var(--accent);">${escapeHtml(h.nodeLabel)} · ${escapeHtml(h.nodeSub)}</div>
+                      <div style="font-size:13.5px;color:var(--text);line-height:1.5;">${escapeHtml(h.detail)}</div>
                     </div>
                   </div>
                 `;

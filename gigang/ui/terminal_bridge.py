@@ -284,14 +284,47 @@ def _build_hops(inc, events_by_id: Dict[str, Any]) -> List[Dict[str, str]]:
         picks = [evs[0], evs[len(evs) // 2], evs[-1]]
     else:
         picks = evs
-    hops = [_hop(i + 1, e) for i, e in enumerate(picks)]
-    # 이벤트가 3건보다 적으면 엔진이 남긴 판단 근거로 빈 칸을 채운다 (없는 사실은 만들지 않는다)
-    while len(hops) < 3:
-        n = len(hops)
-        ev_txt = inc.evidences[n] if n < len(inc.evidences) else "이벤트 기록 없음"
-        hops.append({"step": f"Step {n + 1} · 근거", "nodeLabel": "-", "nodeSub": "-",
-                     "time": "-", "actor": inc.actor, "detail": ev_txt})
+    hops = _fill_hops(inc, picks, evs)
     return hops
+
+
+def _endpoint_hop(inc, evs: List[Any]) -> Dict[str, str]:
+    """HOP 1(발원 단말). 이벤트가 1건뿐이어도 엔진이 가진 사용자·PC 정보로 채운다."""
+    ip, user = _pc_ip(inc.actor)
+    if evs:  # 이벤트가 있으면 이벤트의 실제 사용자·IP가 가장 정확하다
+        user, ip = evs[0].actor.user_id or user, evs[0].actor.src_ip or ip
+    elif not user:  # "User" 처럼 괄호 없는 actor 문자열은 사용자명으로 본다
+        ip, user = "", ip
+    t = _kst(evs[0].timestamp).split(" ")[-1] if evs else _kst(inc.created_at).split(" ")[-1]
+    return {"step": "Step 1 · 발원 단말", "nodeLabel": "ENDPOINT", "nodeSub": user or ip or "-",
+            "time": t, "actor": f"{user or '-'} ({ip})" if ip else (user or "-"),
+            "detail": f"발원 단말: {user or '-'} ({ip})" if ip else f"발원 단말: {user or '-'}"}
+
+
+def _target_hop(inc, evs: List[Any]) -> Dict[str, str]:
+    """HOP 3(표적). 마지막 이벤트의 대상 도메인과 엔진 점수를 쓴다."""
+    last = evs[-1] if evs else None
+    domain = (last.target.domain or last.target.hostname or last.target.dst_ip) if last else ""
+    t = _kst(last.timestamp).split(" ")[-1] if last else _kst(inc.created_at).split(" ")[-1]
+    note = inc.evidences[-1] if inc.evidences else (inc.summary or "근거 없음")
+    return {"step": "Step 3 · 표적", "nodeLabel": "TARGET", "nodeSub": str(domain or inc.target_asset or "-"),
+            "time": t, "actor": inc.actor, "detail": note}
+
+
+def _fill_hops(inc, picks: List[Any], evs: List[Any]) -> List[Dict[str, str]]:
+    """항상 3칸을 실제 데이터로 채운다. 이벤트가 모자라면 단말/표적을 엔진 정보로 보강한다.
+    없는 사실은 만들지 않는다(시각은 실제 이벤트 시각 또는 인시던트 생성 시각)."""
+    if len(picks) >= 3:
+        return [_hop(i + 1, e) for i, e in enumerate(picks[:3])]
+    if len(picks) == 2:
+        return [_hop(1, picks[0]), _hop(2, picks[1]), _target_hop(inc, evs)]
+    if len(picks) == 1:
+        mid = _hop(2, picks[0])
+        return [_endpoint_hop(inc, evs), mid, _target_hop(inc, evs)]
+    ep = _endpoint_hop(inc, evs)
+    mid = {"step": "Step 2 · 근거", "nodeLabel": "SENSOR", "nodeSub": "-", "time": ep["time"],
+           "actor": inc.actor, "detail": inc.evidences[0] if inc.evidences else "이벤트 기록 없음"}
+    return [ep, mid, _target_hop(inc, evs)]
 
 
 def _incident_payload(inc, events_by_id) -> Dict[str, Any]:

@@ -17,3 +17,14 @@ def test_snapshot_without_backend_reports_no_data(monkeypatch):
     snap = tb.build_snapshot(get_context(), {})
     assert snap["meta"]["hasApiKey"] is False
     assert snap["pipelineLogs"] == [] and snap["govAssets"] == []
+
+
+def test_hops_always_three_filled():
+    from datetime import datetime, timezone
+    from types import SimpleNamespace as N
+    from gigang.ui import terminal_bridge as tb
+    inc = N(actor="User", created_at=datetime.now(timezone.utc), evidences=["근거"], summary="s",
+            target_asset="t", event_ids=[])
+    hops = tb._build_hops(inc, {})
+    assert len(hops) == 3
+    assert all(h["nodeLabel"] != "-" and h["time"] != "-" and h["detail"] for h in hops)
