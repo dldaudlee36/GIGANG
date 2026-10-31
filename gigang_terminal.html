@@ -538,6 +538,17 @@
       justify-content: space-between;
       margin-bottom: 8px;
     }
+    .gk-search { position: relative; display: flex; align-items: center; flex: 1; min-width: 0; }
+    .gk-search > svg { position: absolute; left: 13px; pointer-events: none; transition: stroke .15s; }
+    .gk-search input { width: 100%; height: 38px; padding: 0 38px 0 38px; background: rgba(13,45,60,0.7); color: #f6f7f8; font-size: 13px; border-radius: 8px; border: 1px solid rgba(37,201,186,0.25); outline: none; transition: border-color .15s, box-shadow .15s, background .15s; font-family: inherit; }
+    .gk-search input::placeholder { color: #7d8aa0; }
+    .gk-search input:focus { border-color: #25c9ba; background: rgba(13,45,60,0.95); box-shadow: 0 0 0 3px rgba(37,201,186,0.15); }
+    .gk-search:focus-within > svg { stroke: #25c9ba; }
+    .gk-search input::-webkit-search-cancel-button { display: none; }
+    .gk-search-clear { position: absolute; right: 8px; width: 24px; height: 24px; border-radius: 9999px; border: none; background: rgba(148,163,184,0.18); color: #cbd5e1; font-size: 14px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .gk-search-clear:hover { background: rgba(37,201,186,0.3); color: #fff; }
+    .gk-hit { background: rgba(37,201,186,0.28); color: #ffffff; border-radius: 3px; padding: 0 1px; }
+    .gk-chip { font-size: 10.5px; padding: 1px 7px; border-radius: 9999px; background: rgba(37,201,186,0.12); color: #25c9ba; border: 1px solid rgba(37,201,186,0.3); white-space: nowrap; }
     .case-search-box {
       background: #111419;
       border: 1px solid #242933;
@@ -2673,6 +2684,7 @@
       // Page: Case Management Store (Prompt 1)
             // Page: Active Incidents Store (Prompt 2)
       incidentFilterMode: 'ALL',
+      activeSearch: '',
       incidentActiveTab: 'active',
       activeIncidentsData: [],
       caseFilters: {
@@ -3254,8 +3266,14 @@
       state.activeLimit = (state.activeLimit || 10) + 10;
       renderStage();
     };
+    window.setActiveSearch = function(val) {
+      state.activeSearch = val;
+      state.activeLimit = 10;
+      renderStage();
+    };
     window.setIncidentFilterMode = function(mode) {
       state.incidentFilterMode = mode;
+      state.activeLimit = 10;
       renderStage();
     };
     window.setIncidentActiveTab = function(tab) {
@@ -3266,6 +3284,7 @@
 
     window.setCaseSearch = function(val) {
       state.caseFilters.search = val;
+      state.caseFilters.page = 1;
       renderStage();
     };
     window.setCaseSeverity = function(val) {
@@ -3421,13 +3440,58 @@
        ACTIVE INCIDENTS DASHBOARD SUBVIEW (PROMPT 2 IMPLEMENTATION)
        Strict No Orange Border | box-shadow: 0 0 0 1px rgba(var(--color-accent-code), 0.22) inset
        ========================================================================= */
+    // 검색 공용: 질의어는 공백으로 나눈 모든 단어가 (어느 필드든) 포함돼야 일치(AND, 대소문자 무시)
+    function searchTerms(q) { return String(q || '').toLowerCase().split(/\s+/).filter(Boolean); }
+    function hitFields(terms, fields) {
+      // fields: [[라벨, 값], ...] → 모든 단어가 일치하면 일치한 필드 라벨 목록, 아니면 null
+      const hay = fields.map(([l, v]) => [l, String(v == null ? '' : v).toLowerCase()]);
+      const labels = new Set();
+      for (const t of terms) {
+        const hit = hay.filter(([, v]) => v.includes(t));
+        if (!hit.length) return null;
+        hit.forEach(([l]) => labels.add(l));
+      }
+      return Array.from(labels);
+    }
+    function hl(text, terms) {
+      const raw = String(text == null ? '' : text);
+      if (!terms || !terms.length) return escapeHtml(raw);
+      const low = raw.toLowerCase();
+      const mark = new Array(raw.length).fill(false);
+      terms.forEach(t => { let i = low.indexOf(t); while (i !== -1) { for (let k = i; k < i + t.length; k++) mark[k] = true; i = low.indexOf(t, i + t.length); } });
+      let out = '', cur = '', on = false;
+      for (let i = 0; i < raw.length; i++) {
+        if (mark[i] !== on) { out += on ? '<mark class="gk-hit">' + escapeHtml(cur) + '</mark>' : escapeHtml(cur); cur = ''; on = mark[i]; }
+        cur += raw[i];
+      }
+      return out + (on ? '<mark class="gk-hit">' + escapeHtml(cur) + '</mark>' : escapeHtml(cur));
+    }
+    function renderSearchBox(id, value, placeholder, handler) {
+      return `<div class="gk-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input id="${id}" type="search" value="${escapeHtml(value)}" oninput="${handler}(this.value)" placeholder="${escapeHtml(placeholder)}" aria-label="${escapeHtml(placeholder)}" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search" />
+        ${value ? `<button type="button" class="gk-search-clear" aria-label="검색어 지우기" onclick="${handler}('');document.getElementById('${id}') && document.getElementById('${id}').focus();">×</button>` : ''}
+      </div>`;
+    }
+
     function renderActiveIncidentsSubView(cfg) {
       const mode = state.incidentFilterMode || 'ALL';
 
-      const incidents = (state.activeIncidentsData || []).filter(item => {
+      const searchTerms_ = searchTerms(state.activeSearch);
+      const hitMap = {};
+      const modeFiltered = (state.activeIncidentsData || []).filter(item => {
         if (mode === 'HIGH') return item.severity === '심각';
         if (mode === 'WATCH') return item.severity === '선제 관찰' || item.severity === '관찰';
         return true;
+      });
+      const incidents = modeFiltered.filter(item => {
+        if (!searchTerms_.length) return true;
+        const h = hitFields(searchTerms_, [
+          ['ID', item.id], ['제목', item.title], ['단말', item.pcName], ['IP', item.ip || item.hostIp],
+          ['도메인', (item.target || '') + ' ' + (item.correlationFlow || '')], ['담당', item.assignee]
+        ]);
+        if (h) hitMap[item.id] = h;
+        return !!h;
       });
 
       return `
@@ -3547,14 +3611,23 @@
                 <div style="display:flex;align-items:center;gap:8px;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#25c9ba" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                   <h2 style="font-size:16px;font-weight:600;color:#ffffff;margin:0;">활성 보안 인시던트 목록</h2>
-                  <span style="font-family:'IBM Plex Mono', monospace;font-size:12px;color:#25c9ba;">(${incidents.length}건 · 위험도순)</span>
+                  <span style="font-family:'IBM Plex Mono', monospace;font-size:12px;color:#25c9ba;">(${searchTerms_.length ? incidents.length + ' / ' + modeFiltered.length + '건 일치' : incidents.length + '건'} · 위험도순)</span>
                 </div>
                 <span style="font-size:11.5px;color:#b6bbcc;">3-Hop 상관분석 및 실시간 차단 상태</span>
               </div>
 
+              <!-- 검색 -->
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  ${renderSearchBox('active-search', state.activeSearch || '', 'ID · 제목 · 단말명 · IP · 도메인 · 담당자로 검색', 'window.setActiveSearch')}
+                </div>
+                <div style="font-size:11px;color:#7d8aa0;">공백으로 여러 단어를 입력하면 모두 포함된 건만 표시합니다. 위험도 탭과 함께 적용됩니다.</div>
+              </div>
+
               <!-- 인시던트 카드 목록 -->
               <div style="display:flex;flex-direction:column;gap:14px;">
-                ${incidents.length === 0 ? '<div style="padding:40px 0;text-align:center;font-size:13px;color:#94a3b8;">수집된 데이터 없음 — ' + ((state.meta && state.meta.fetchError) ? escapeHtml(state.meta.fetchError) : '인시던트가 탐지되지 않았거나 수집이 꺼져 있습니다.') + '</div>' : ''}
+                ${incidents.length === 0 && searchTerms_.length ? `<div style="padding:40px 0;text-align:center;font-size:13px;color:#94a3b8;display:flex;flex-direction:column;align-items:center;gap:12px;"><span>'${escapeHtml(state.activeSearch)}'와 일치하는 인시던트가 없습니다.</span><button type="button" onclick="window.setActiveSearch('')" style="height:32px;padding:0 16px;border-radius:9999px;font-size:12px;font-weight:600;color:#25c9ba;background:transparent;border:1px solid rgba(37,201,186,0.4);cursor:pointer;">검색 초기화</button></div>` : ''}
+                ${incidents.length === 0 && !searchTerms_.length ? '<div style="padding:40px 0;text-align:center;font-size:13px;color:#94a3b8;">수집된 데이터 없음 — ' + ((state.meta && state.meta.fetchError) ? escapeHtml(state.meta.fetchError) : '인시던트가 탐지되지 않았거나 수집이 꺼져 있습니다.') + '</div>' : ''}
                 ${(() => {
                   const sorted = incidents.slice().sort((x, y) => (y.riskScore || 0) - (x.riskScore || 0));
                   const limit = state.activeLimit || 10;
@@ -3570,8 +3643,9 @@
                     <div onclick="window.toggleActiveInc('${escapeHtml(inc.id)}')" style="cursor:pointer;display:grid;grid-template-columns:64px minmax(0,1fr) 150px 44px 18px;align-items:center;gap:12px;padding:10px 14px;">
                       <span style="padding:2px 0;text-align:center;border-radius:9999px;font-size:11px;font-weight:700;${sevPill(inc)}">${inc.severity}</span>
                       <div style="min-width:0;">
-                        <div style="font-size:13px;font-weight:600;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(inc.title)}</div>
-                        <div style="margin-top:3px;font-size:11.5px;color:#b6bbcc;font-family:'IBM Plex Mono', monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(inc.correlationFlow)}</div>
+                        <div style="font-size:13px;font-weight:600;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${hl(inc.title, searchTerms_)}</div>
+                        <div style="margin-top:3px;font-size:11.5px;color:#b6bbcc;font-family:'IBM Plex Mono', monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${hl(inc.correlationFlow, searchTerms_)}</div>
+                        ${hitMap[inc.id] && hitMap[inc.id].some(l => ['ID', '단말', 'IP', '담당'].includes(l)) ? `<div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;font-size:11px;color:#b6bbcc;font-family:'IBM Plex Mono', monospace;">${[['ID', inc.id], ['단말', inc.pcName], ['IP', inc.ip || inc.hostIp], ['담당', inc.assignee]].filter(([l]) => hitMap[inc.id].includes(l)).map(([l, v]) => `<span class="gk-chip">${l} · ${hl(v, searchTerms_)}</span>`).join('')}</div>` : ''}
                       </div>
                       <span style="font-size:11.5px;color:#b6bbcc;font-family:'IBM Plex Mono', monospace;">${escapeHtml(String(inc.time).slice(5, 16))}</span>
                       <span style="font-family:'IBM Plex Mono', monospace;font-size:13px;font-weight:700;color:${inc.riskScore >= 90 ? '#f87171' : (inc.riskScore >= 80 ? '#fbbf24' : '#c084fc')};text-align:right;">${inc.riskScore}</span>
@@ -3723,11 +3797,11 @@
           if (created < dateBounds[0] || created > dateBounds[1]) return false;
         }
         if (f.search && f.search.trim()) {
-          const q = f.search.toLowerCase().trim();
-          const matchId = item.id.toLowerCase().includes(q);
-          const matchTitle = item.title.toLowerCase().includes(q);
-          const matchDesc = item.description.toLowerCase().includes(q);
-          if (!matchId && !matchTitle && !matchDesc) return false;
+          const a = item.asset || {};
+          if (!hitFields(searchTerms(f.search), [
+            ['ID', item.id], ['제목', item.title], ['설명', item.description],
+            ['단말', a.pcName], ['단말', a.name], ['IP', a.ip], ['IP', a.srcIp], ['담당', item.assignee]
+          ])) return false;
         }
         return true;
       });
@@ -3854,10 +3928,7 @@
               <!-- 검색창 -->
               <div style="display:flex;flex-direction:column;gap:6px;">
                 <label style="font-size:11px;color:#b6bbcc;font-weight:normal;">통합 검색</label>
-                <div style="position:relative;display:flex;align-items:center;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" style="position:absolute;left:12px;pointer-events:none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                  <input type="text" value="${f.search || ''}" oninput="window.setCaseSearch(this.value)" placeholder="케이스 ID · 제목 · 설명으로 검색" aria-label="케이스 검색" style="width:100%;height:38px;padding-left:36px;padding-right:12px;background:rgba(13,45,60,0.7);color:#f6f7f8;font-size:13px;border-radius:6px;border:1px solid rgba(var(--color-accent-code),0.25);outline:none;" onfocus="this.style.borderColor='#25c9ba'" onblur="this.style.borderColor='rgba(37,201,186,0.2)'" />
-                </div>
+                ${renderSearchBox('case-search', f.search || '', '케이스 ID · 제목 · 단말명 · IP · 담당자로 검색', 'window.setCaseSearch')}
               </div>
               <!-- 심각도 -->
               <div style="display:flex;flex-direction:column;gap:6px;">
@@ -4959,7 +5030,15 @@
 
     function renderStage({ animate = true } = {}) {
       if (!stage) return;
+      // 입력창에서 타이핑 중 전체를 다시 그려도 포커스·커서 위치를 유지한다
+      const ae = document.activeElement;
+      const keep = (ae && ae.id && ae.tagName === 'INPUT' && stage.contains(ae))
+        ? { id: ae.id, s: ae.selectionStart, e: ae.selectionEnd } : null;
       stage.innerHTML = renderVariantTerminal();
+      if (keep) {
+        const el = document.getElementById(keep.id);
+        if (el) { el.focus(); try { el.setSelectionRange(keep.s, keep.e); } catch (err) {} }
+      }
       const canvas = stage.querySelector('.term-canvas');
       if (canvas && animate) {
         canvas.classList.add('soft-settle');

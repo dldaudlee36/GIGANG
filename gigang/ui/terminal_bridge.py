@@ -505,11 +505,15 @@ def build_snapshot(ctx, ui: Dict[str, Any]) -> Dict[str, Any]:
         if inc.status.value == "RESOLVED":
             continue
         ip, user = _pc_ip(inc.actor)
+        src_ev = next((raw_by_evt[e] for e in inc.event_ids if e in raw_by_evt), {})
+        if src_ev.get("local_ip"):
+            ip = src_ev["local_ip"]
         active.append({
             "id": inc.incident_id, "title": inc.title,
             "severity": "심각" if p["severity"] == "HIGH" else "선제 관찰",
             "status": p["status"], "riskScore": inc.score,
-            "hostIp": inc.actor, "assetCount": 1, "eventCount": len(inc.event_ids),
+            "hostIp": inc.actor, "ip": ip, "pcName": src_ev.get("pc_name") or "",
+            "target": inc.target_asset, "assetCount": 1, "eventCount": len(inc.event_ids),
             "correlationFlow": " → ".join(
                 [h.from_node for h in inc.network_hops[:1]] + [h.to_node for h in inc.network_hops]
             ) or f"{inc.actor} → {inc.target_asset}",
