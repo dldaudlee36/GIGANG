@@ -2980,7 +2980,7 @@
         state.govSortAsc = !state.govSortAsc;
       } else {
         state.govSortCol = col;
-        state.govSortAsc = false;
+        state.govSortAsc = (col === 'domain' || col === 'govStatus');  // 문자 열은 오름차순부터, 숫자 열은 내림차순부터
       }
       renderStage();
     };
@@ -4197,8 +4197,9 @@
 
       rows.sort((a, b) => {
         const col = state.govSortCol;
-        const va = a[col];
-        const vb = b[col];
+        const key = r => col === 'blocked' ? (r.blocked ? 1 : 0) : r[col];
+        const va = key(a) == null ? -1 : key(a);
+        const vb = key(b) == null ? -1 : key(b);
         if (typeof va === 'number' && typeof vb === 'number') {
           return state.govSortAsc ? va - vb : vb - va;
         }
@@ -4294,13 +4295,12 @@
               ${govColWidths ? `<colgroup>${govColWidths.map((w, i, a) => `<col style="width:${i === a.length - 1 ? 'auto' : w + 'px'};">`).join('')}</colgroup>` : '<colgroup>' + '<col>'.repeat(7) + '</colgroup>'}
               <thead>
                 <tr>
-                  <th style="cursor:pointer;" onclick="window.sortGov('domain')">도메인 · 분류${GOV_HANDLE(0)}</th>
-                  <th style="cursor:pointer;" onclick="window.sortGov('riskScore')">위험도${GOV_HANDLE(1)}</th>
-                  <th>상태${GOV_HANDLE(2)}</th>
-                  <th class="num" style="cursor:pointer;" onclick="window.sortGov('liveHits')">실시간 접속${GOV_HANDLE(3)}</th>
-                  <th>누적 · 반출 시도${GOV_HANDLE(4)}</th>
-                  <th>진단 소견${GOV_HANDLE(5)}</th>
-                  <th class="num">차단 정책${GOV_HANDLE(6)}</th>
+                  ${[['domain', '도메인 · 분류', ''], ['riskScore', '위험도', ''], ['govStatus', '상태', ''], ['liveHits', '실시간 접속', 'num'], ['totalCumulative', '누적 · 반출 시도', ''], [null, '진단 소견', ''], ['blocked', '차단 정책', 'num']].map(([col, label, cls], i) => {
+                    const icon = !col ? '' : (state.govSortCol === col
+                      ? `<span style="color:#25c9ba;font-size:10px;margin-left:4px;font-weight:bold;">${state.govSortAsc ? '▲' : '▼'}</span>`
+                      : '<span style="color:#94a3b8;font-size:10px;margin-left:4px;">↕</span>');
+                    return `<th class="${cls}" ${col ? `style="cursor:pointer;" onclick="window.sortGov('${col}')" title="${label} 정렬"` : ''}>${label}${icon}${GOV_HANDLE(i)}</th>`;
+                  }).join('')}
                 </tr>
               </thead>
               <tbody>
