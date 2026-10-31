@@ -2760,7 +2760,7 @@
           <span class="mono" style="min-width:150px;font-size:12px;font-weight:700;color:${ok ? '#25c9ba' : '#f0b429'};">${escapeHtml(h.step.split('·').slice(1).join('·').trim())}</span>
           <span style="font-size:13px;color:var(--text);">${ok ? escapeHtml(h.detail) + ' · ' + escapeHtml(h.nodeSub) + ' · ' + escapeHtml(h.time) + ' KST' : '<span style="color:var(--muted);">' + escapeHtml(h.detail) + '</span>'}</span>
         </div>`;
-      return `<div style="margin:16px;padding:16px 18px;border:1px dashed #f0b429;border-radius:8px;">
+      return `<div style="margin:16px;padding:4px 2px;">
         <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;">3-Hop 경로 미성립 · 확인된 단계 ${done.length}/3</div>
         <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px;">세 단계가 해시·파일·글자 수로 연결되지 않아 경로 그림을 그리지 않습니다. 연결 확인된 사실만 표시합니다.</div>
         ${sh.map(h => row(h, h.real)).join('')}
