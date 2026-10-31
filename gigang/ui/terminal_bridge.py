@@ -273,7 +273,9 @@ def _build_hops(inc, events_by_id: Dict[str, Any]) -> List[Dict[str, str]]:
     evs.sort(key=lambda e: e.timestamp)
     if evs and len(evs) < 3:
         # 같은 사용자의 직전 30분 이벤트(기밀 DB 조회 → AI 접속)를 앞 단계로 보강한다.
-        user = _pc_ip(inc.actor)[1]
+        ip, user = _pc_ip(inc.actor)
+        # 실제 이벤트 기반 인시던트의 actor 는 "kim" 처럼 괄호 없는 사용자명이다.
+        user = user or evs[-1].actor.user_id or ip
         last = evs[-1].timestamp
         have = {e.event_id for e in evs}
         related = [e for e in events_by_id.values()
