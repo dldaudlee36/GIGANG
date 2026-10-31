@@ -4918,36 +4918,6 @@
             `, `<span class="neo-meta">현재 수집분</span>`)}
           </div>
 
-          ${win('우선 대응 인시던트', `
-            <div class="table-scroll" style="border:1px solid var(--border);border-radius:4px;overflow:hidden;">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>인시던트</th>
-                    <th>시나리오</th>
-                    <th>발원지 → 타깃</th>
-                    <th>발생 시각</th>
-                    <th class="num">위험도</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${state.incidents.length === 0 ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px 0;">수집된 데이터 없음</td></tr>' : ''}
-                  ${state.incidents.map(item => {
-                    const sel = item.id === inc.id;
-                    return `
-                      <tr class="interactive-row ${sel ? 'selected-row' : ''}" style="cursor:pointer;" onclick="window.selectIncident('${escapeHtml(item.id)}')">
-                        <td class="mono col-id" style="border-left:1px solid ${sel ? 'var(--color-accent)' : 'transparent'};">${escapeHtml(item.id)}</td>
-                        <td style="color:var(--text);font-weight:400;">${escapeHtml(item.shortTitle)}</td>
-                        <td class="mono" style="font-size:12px;color:var(--muted);">${escapeHtml(item.source.split('·')[0].trim())} <span style="color:var(--accent);">→</span> ${escapeHtml(item.target.split('(')[0].trim())}</td>
-                        <td class="mono" style="font-size:12px;color:var(--muted);">${item.time}</td>
-                        <td class="num col-score"><span class="${pillClassForSeverity(item.severity)}">${item.severity} · ${item.score}</span></td>
-                      </tr>
-                    `;
-                  }).join('')}
-                </tbody>
-              </table>
-            </div>
-          `, `<button type="button" class="neo-link" onclick="window.openKillchainFor('${escapeHtml(inc.id)}')">${ico.link}<span>${inc.id} 킬체인</span></button>`)}
         `;
       } else if (state.page === 'active_incidents') {
         bodyContent = renderActiveIncidentsSubView(cfg);
