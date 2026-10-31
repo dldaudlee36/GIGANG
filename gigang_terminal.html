@@ -2239,6 +2239,7 @@
       background: radial-gradient(circle, var(--muted) 1.2px, transparent 1.6px) 0 0 / 6px 4px repeat-x;
       opacity: 0.75;
     }
+    .neo-grid-ico, .neo-win-dots, .v-terminal.neo .cw-section-title::before, .v-terminal.neo .cw-section-head::after { display: none; }
     .neo-win-body { padding: 20px; min-width: 0; }
 
     /* 2) Hollow-to-Solid Action Button */
@@ -3693,7 +3694,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid rgba(var(--color-accent-code),0.15);">
                   <div style="display:flex;align-items:center;gap:6px;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#25c9ba" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                    <h3 style="font-size:13px;font-weight:600;color:#ffffff;margin:0;">자동 방어 정책 상태</h3>
+                    <h3 style="font-size:13px;font-weight:600;color:#ffffff;margin:0;">연동 상태</h3>
                   </div>
                   <span style="font-size:11px;color:${(state.meta && state.meta.railwayLive) ? '#4ade80' : '#f87171'};font-weight:600;">${(state.meta && state.meta.railwayLive) ? '수집 중' : '수집 중지'}</span>
                 </div>
@@ -4778,7 +4779,6 @@
 
     function renderVariantTerminal() {
       const inc = getSelectedIncident();
-      const wUser = state.watchUsers.find(w => w.state === 'WATCH') || { user: '없음', ttlSeconds: 0 };
       const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
       const themeMap = {
         ocean: '#25c9ba',
@@ -4816,15 +4816,13 @@
       const win = (title, body, extraHead = '') => `
         <section class="neo-window">
           <header class="neo-win-head">
-            <span class="neo-grid-ico" aria-hidden="true"></span>
             <span class="neo-win-title">${title}</span>
             ${extraHead}
-            <span class="neo-win-dots" aria-hidden="true"></span>
           </header>
           <div class="neo-win-body">${body}</div>
         </section>`;
 
-      const normalCount = Math.max(0, ((state.meta && state.meta.totalEvents) || 0) - state.incidents.reduce((a, i) => a + (i.eventCount || 0), 0));
+      const normalCount = state.incidents.filter(i => i.severity === 'NORMAL').length;
       const typeCounts = Object.entries(state.pipelineLogs.reduce((m, l) => { const t = l.type || '-'; m[t] = (m[t] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]);
       const typeTotal = typeCounts.reduce((a, t) => a + t[1], 0) || 1;
       const typeNames = { PASTE_ATTEMPT: '붙여넣기', FILE_UPLOAD_ATTEMPT: '파일 업로드', COPY_ATTEMPT: '복사', CLIPBOARD_COPY: '클립보드 복사', DB_DOWNLOAD: 'DB 다운로드', DB_SELECT: 'DB 조회', DB_IMAGE_CAPTURE: 'DB 화면 캡처', SCREEN_CAPTURE: '화면 캡처', SITE_BLOCKED: '사이트 차단', WEB_ACCESS: '웹 접속', DOWNLOAD_STARTED: '다운로드 시작', DOWNLOAD_COMPLETED: '다운로드 완료', DOWNLOAD_INTERRUPTED: '다운로드 중단' };
@@ -4847,22 +4845,6 @@
             <button type="button" class="term-btn" onclick="window.syncRailwayLogs()">${ico.sync}<span>동기화</span></button>
           </div>
 
-          <section class="neo-window">
-            <header class="neo-win-head">
-              <span class="neo-grid-ico" aria-hidden="true"></span>
-              <span class="neo-win-title">긴급 알림</span>
-              <span class="pill pill-neg mono">${highCount}건</span>
-              <span class="neo-win-dots" aria-hidden="true"></span>
-            </header>
-            <div class="neo-alert-body">
-              <p class="neo-help" style="font-size:12px;">
-                대응이 필요한 고위험 인시던트 <em style="color:var(--negative);">${highCount}건</em> ·
-                WATCH <em>${wUser.user}</em> · 골든타임 TTL <em class="mono" data-ttl-display="1">${formatTTL(state.ttlSeconds)}</em>
-              </p>
-              <button type="button" class="term-btn term-btn-primary" onclick="window.openKillchainFor('${firstOf('HIGH')}')">킬체인 분석 열기</button>
-            </div>
-          </section>
-
           <div class="neo-kpi-grid">
             <div class="neo-kpi">
               <span class="neo-num">${(state.meta && state.meta.totalEvents) || 0}</span>
@@ -4876,7 +4858,7 @@
             </div>
             <div class="neo-kpi">
               <span class="neo-num" style="color:var(--negative);">${highCount}</span>
-              <span class="neo-kpi-label" style="color:#f87171;">HIGH</span>
+              <span class="neo-kpi-label" style="color:#f87171;">고위험 (HIGH)</span>
               <button type="button" class="neo-link" onclick="window.openKillchainFor('${firstOf('HIGH')}')">${ico.link}<span>상세 보기</span></button>
             </div>
             <div class="neo-kpi">
@@ -4886,36 +4868,17 @@
             </div>
             <div class="neo-kpi">
               <span class="neo-num" style="color:var(--accent);">${normalCount}</span>
-              <span class="neo-kpi-label">정상 통과</span>
-              <button type="button" class="neo-link" onclick="window.setPage('pipeline')">${ico.link}<span>상세 보기</span></button>
+              <span class="neo-kpi-label">정상 (NORMAL)</span>
+              <button type="button" class="neo-link" onclick="window.setPage('cases')">${ico.link}<span>상세 보기</span></button>
             </div>
             <div class="neo-kpi">
               <span class="neo-num mono" style="color:var(--accent);font-weight:300;" data-ttl-display="1">${formatTTL(state.ttlSeconds)}</span>
               <span class="neo-kpi-label" style="color:var(--accent);">골든타임 TTL · 30분</span>
-              <button type="button" class="neo-link" onclick="window.setPage('governance')">${ico.link}<span>상세 보기</span></button>
+              <button type="button" class="neo-link" onclick="window.setPage('active_incidents')">${ico.link}<span>상세 보기</span></button>
             </div>
           </div>
 
           <div class="neo-split">
-            ${win('심각도별 분포', `
-              <div class="neo-cells c3">
-                <div class="neo-cell t-pt">
-                  <span class="neo-label" style="color:#fbbf24;">High</span>
-                  <span class="neo-num" style="color:#f59e0b;">${sevCount('HIGH')}</span>
-                  <button type="button" class="neo-link" onclick="window.openKillchainFor('${firstOf('HIGH')}')">${ico.link}<span>상세 보기</span></button>
-                </div>
-                <div class="neo-cell t-warn">
-                  <span class="neo-label" style="color:#c084fc;">Watch (선제 관찰)</span>
-                  <span class="neo-num" style="color:#c084fc;">${sevCount('WATCH')}</span>
-                  <button type="button" class="neo-link" onclick="window.openKillchainFor('${firstOf('WATCH')}')">${ico.link}<span>상세 보기</span></button>
-                </div>
-                <div class="neo-cell">
-                  <span class="neo-label">Normal</span>
-                  <span class="neo-num">${normalCount}</span>
-                  <button type="button" class="neo-link" onclick="window.setPage('pipeline')">${ico.link}<span>상세 보기</span></button>
-                </div>
-              </div>
-            `)}
             ${win('접속 상위 도메인', `
               ${domCounts.length ? `<div style="display:flex;flex-direction:column;gap:12px;padding-top:4px;">${domCounts.map((d, i) => `
                 <div>
@@ -4926,16 +4889,15 @@
                   <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="width:${Math.max(3, d[1] / domMax * 100)}%;height:100%;background:${i === 0 ? 'var(--accent)' : '#64748b'};border-radius:4px;"></div></div>
                 </div>`).join('')}</div>` : '<div style="text-align:center;color:var(--muted);padding:20px 0;">수집된 데이터 없음</div>'}
             `, `<span class="neo-meta">상위 5개</span>`)}
-          </div>
-
-          ${win('탐지 유형별 분포', `
+            ${win('탐지 유형별 분포', `
             ${typeCounts.length ? `<div style="display:flex;flex-direction:column;gap:10px;">${typeCounts.map((t, i) => `
-              <div style="display:grid;grid-template-columns:140px 1fr 90px;gap:14px;align-items:center;">
+              <div style="display:grid;grid-template-columns:104px 1fr 84px;gap:12px;align-items:center;">
                 <span style="font-size:13px;color:var(--text);">${escapeHtml(typeName(t[0]))}</span>
                 <div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden;"><div style="width:${Math.max(2, t[1] / typeTotal * 100)}%;height:100%;background:${i === 0 ? 'var(--accent)' : '#64748b'};border-radius:5px;"></div></div>
                 <span class="mono" style="font-size:12px;color:var(--muted);text-align:right;">${t[1]}건 · ${Math.round(t[1] / typeTotal * 100)}%</span>
               </div>`).join('')}</div>` : '<div style="text-align:center;color:var(--muted);padding:20px 0;">수집된 데이터 없음</div>'}
           `, `<span class="neo-meta">현재 수집분 · ${typeCounts.length}개 유형</span>`)}
+          </div>
 
         `;
       } else if (state.page === 'active_incidents') {
