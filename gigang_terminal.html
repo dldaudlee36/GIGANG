@@ -4825,7 +4825,10 @@
         </section>`;
 
       const normalCount = Math.max(0, ((state.meta && state.meta.totalEvents) || 0) - state.incidents.reduce((a, i) => a + (i.eventCount || 0), 0));
-      const typeCounts = Object.entries(state.pipelineLogs.reduce((m, l) => { const t = l.type || '-'; m[t] = (m[t] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      const typeCounts = Object.entries(state.pipelineLogs.reduce((m, l) => { const t = l.type || '-'; m[t] = (m[t] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]);
+      const typeTotal = typeCounts.reduce((a, t) => a + t[1], 0) || 1;
+      const typeNames = { PASTE_ATTEMPT: '붙여넣기', FILE_UPLOAD_ATTEMPT: '파일 업로드', COPY_ATTEMPT: '복사', CLIPBOARD_COPY: '클립보드 복사', DB_DOWNLOAD: 'DB 다운로드', DB_SELECT: 'DB 조회', DB_IMAGE_CAPTURE: 'DB 화면 캡처', SCREEN_CAPTURE: '화면 캡처', SITE_BLOCKED: '사이트 차단', WEB_ACCESS: '웹 접속', DOWNLOAD_STARTED: '다운로드 시작', DOWNLOAD_COMPLETED: '다운로드 완료', DOWNLOAD_INTERRUPTED: '다운로드 중단' };
+      const typeName = t => typeNames[t] || t;
       const highCount = state.incidents.filter(i => i.severity === 'HIGH').length;
       const watchCount = state.incidents.filter(i => i.severity === 'WATCH').length;
       const sevCount = sev => state.incidents.filter(i => i.severity === sev).length;
@@ -4891,7 +4894,7 @@
             </div>
           </div>
 
-          <div class="neo-split">
+          <div style="margin-bottom:18px;">
             ${win('심각도별 분포', `
               <div class="neo-cells c3">
                 <div class="neo-cell t-pt">
@@ -4911,12 +4914,16 @@
                 </div>
               </div>
             `)}
-            ${win('탐지 유형별 분포', `
-              <div class="neo-cells c3">
-                ${typeCounts.length ? typeCounts.map((t, i) => `<div class="neo-cell ${i === 0 ? 't-acc' : ''}"><span class="neo-label">${escapeHtml(t[0])}</span><span class="neo-num">${t[1]}</span><span class="neo-meta">수집 로그 기준</span></div>`).join('') : '<div class="neo-cell"><span class="neo-meta">수집된 데이터 없음</span></div>'}
-              </div>
-            `, `<span class="neo-meta">현재 수집분</span>`)}
           </div>
+
+          ${win('탐지 유형별 분포', `
+            ${typeCounts.length ? `<div style="display:flex;flex-direction:column;gap:10px;">${typeCounts.map((t, i) => `
+              <div style="display:grid;grid-template-columns:140px 1fr 90px;gap:14px;align-items:center;">
+                <span style="font-size:13px;color:var(--text);">${escapeHtml(typeName(t[0]))}</span>
+                <div style="height:10px;background:var(--border);border-radius:5px;overflow:hidden;"><div style="width:${Math.max(2, t[1] / typeTotal * 100)}%;height:100%;background:${i === 0 ? 'var(--accent)' : '#64748b'};border-radius:5px;"></div></div>
+                <span class="mono" style="font-size:12px;color:var(--muted);text-align:right;">${t[1]}건 · ${Math.round(t[1] / typeTotal * 100)}%</span>
+              </div>`).join('')}</div>` : '<div style="text-align:center;color:var(--muted);padding:20px 0;">수집된 데이터 없음</div>'}
+          `, `<span class="neo-meta">현재 수집분 · ${typeCounts.length}개 유형</span>`)}
 
         `;
       } else if (state.page === 'active_incidents') {
