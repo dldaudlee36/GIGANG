@@ -1,22 +1,58 @@
 """Read central device grants. An unavailable/stale policy never grants access."""
 import hashlib
 import os
-import socket
+import sys
+import tempfile
+import uuid
+from pathlib import Path
 import threading
 import time
 from datetime import datetime
 import requests
 
 
-def device_id():
+def identity_file():
+    """Use machine-local state outside the application/update directory."""
+    override = os.environ.get('GIGANG_DEVICE_ID_FILE')
+    if override:
+        return Path(override).expanduser()
+    if sys.platform == 'win32':
+        root = Path(os.environ.get('PROGRAMDATA', r'C:\ProgramData'))
+    elif sys.platform == 'darwin':
+        root = Path.home() / 'Library' / 'Application Support'
+    else:
+        root = Path(os.environ.get('XDG_STATE_HOME', str(Path.home() / '.local' / 'state')))
+    return root / 'GIGANG' / 'device_uuid'
+
+
+def device_id(path=None):
+    path = Path(path) if path is not None else identity_file()
     try:
-        import winreg
-        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SOFTWARE\Microsoft\Cryptography', 0,
-                            winreg.KEY_READ | winreg.KEY_WOW64_64KEY) as key:
-            value = winreg.QueryValueEx(key, 'MachineGuid')[0]
-    except (ImportError, OSError):
-        value = socket.gethostname() + ':' + os.environ.get('COMPUTERNAME', '')
-    return hashlib.sha256(('gigang-device:' + value).encode()).hexdigest()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.exists():
+            # Publish a complete file atomically, without replacing a competing
+            # first launch's UUID. Never derive identity from cloned OS metadata.
+            with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8',
+                                             dir=path.parent, delete=False) as stream:
+                temporary = Path(stream.name)
+                stream.write(str(uuid.uuid4()))
+                stream.flush()
+                os.fsync(stream.fileno())
+            try:
+                try:
+                    os.link(temporary, path)
+                except FileExistsError:
+                    pass
+            finally:
+                temporary.unlink(missing_ok=True)
+        value = str(uuid.UUID(path.read_text(encoding='utf-8').strip()))
+    except (OSError, ValueError) as error:
+        raise RuntimeError(
+            'GIGANG 기기 ID 파일을 읽거나 저장할 수 없습니다: ' + str(path) +
+            '. 권한과 파일 내용을 확인하세요. 기존 ID를 임의로 삭제하지 마세요.'
+        ) from error
+    # Preserve the server's existing 64-character lowercase hex contract.
+    return hashlib.sha256(('gigang-device-uuid-v1:' + value).encode()).hexdigest()
 
 
 def canonical_host(domain):
