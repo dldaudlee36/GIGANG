@@ -4829,6 +4829,8 @@
       const typeTotal = typeCounts.reduce((a, t) => a + t[1], 0) || 1;
       const typeNames = { PASTE_ATTEMPT: '붙여넣기', FILE_UPLOAD_ATTEMPT: '파일 업로드', COPY_ATTEMPT: '복사', CLIPBOARD_COPY: '클립보드 복사', DB_DOWNLOAD: 'DB 다운로드', DB_SELECT: 'DB 조회', DB_IMAGE_CAPTURE: 'DB 화면 캡처', SCREEN_CAPTURE: '화면 캡처', SITE_BLOCKED: '사이트 차단', WEB_ACCESS: '웹 접속', DOWNLOAD_STARTED: '다운로드 시작', DOWNLOAD_COMPLETED: '다운로드 완료', DOWNLOAD_INTERRUPTED: '다운로드 중단' };
       const typeName = t => typeNames[t] || t;
+      const domCounts = Object.entries(state.pipelineLogs.reduce((m, l) => { const d = String(l.site || '-').replace(/^https?:\/\//, '').split('/')[0].split(':')[0].toLowerCase(); if (d && d !== '-') m[d] = (m[d] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const domMax = domCounts.length ? domCounts[0][1] : 1;
       const highCount = state.incidents.filter(i => i.severity === 'HIGH').length;
       const watchCount = state.incidents.filter(i => i.severity === 'WATCH').length;
       const sevCount = sev => state.incidents.filter(i => i.severity === sev).length;
@@ -4894,7 +4896,7 @@
             </div>
           </div>
 
-          <div style="margin-bottom:18px;">
+          <div class="neo-split">
             ${win('심각도별 분포', `
               <div class="neo-cells c3">
                 <div class="neo-cell t-pt">
@@ -4914,6 +4916,16 @@
                 </div>
               </div>
             `)}
+            ${win('접속 상위 도메인', `
+              ${domCounts.length ? `<div style="display:flex;flex-direction:column;gap:12px;padding-top:4px;">${domCounts.map((d, i) => `
+                <div>
+                  <div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;margin-bottom:5px;">
+                    <span class="mono" style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(d[0])}">${escapeHtml(d[0])}</span>
+                    <span class="mono" style="color:var(--muted);flex:none;">${d[1]}건</span>
+                  </div>
+                  <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;"><div style="width:${Math.max(3, d[1] / domMax * 100)}%;height:100%;background:${i === 0 ? 'var(--accent)' : '#64748b'};border-radius:4px;"></div></div>
+                </div>`).join('')}</div>` : '<div style="text-align:center;color:var(--muted);padding:20px 0;">수집된 데이터 없음</div>'}
+            `, `<span class="neo-meta">상위 5개</span>`)}
           </div>
 
           ${win('탐지 유형별 분포', `
