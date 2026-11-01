@@ -21,6 +21,7 @@ import requests
 
 from gigang.collectors import team_collector as tc
 from gigang.engine import governance
+from gigang.ui.host_summary import summarize_hosts
 
 KST = timezone(timedelta(hours=9))
 _ROOT = Path(__file__).resolve().parents[2]
@@ -459,6 +460,7 @@ def build_snapshot(ctx, ui: Dict[str, Any]) -> Dict[str, Any]:
             "user": it.get("user_name") or "-",
             "pcName": it.get("pc_name") or "-",
             "ip": it.get("local_ip") or "-",
+            "deviceId": it.get("device_id") or "",
             "type": it.get("event_type") or "WEB_ACCESS",
             "site": it.get("target") or "-",
             "fileName": it.get("file_name") or "",
@@ -468,13 +470,7 @@ def build_snapshot(ctx, ui: Dict[str, Any]) -> Dict[str, Any]:
             "score": score_by_event.get(ev_id),
         })
 
-    pcs: Dict[Tuple[str, str], Dict[str, Any]] = {}
-    for l in logs:
-        k = (l["pcName"], l["ip"])
-        s = pcs.setdefault(k, {"pcName": l["pcName"], "ip": l["ip"], "count": 0,
-                               "lastTime": l["time"], "user": l["user"]})
-        s["count"] += 1
-    pc_summary = sorted(pcs.values(), key=lambda s: s["lastTime"], reverse=True)
+    pc_summary = summarize_hosts(logs)
 
     # 케이스 (인시던트 1건 = 케이스 1건)
     cases = []
