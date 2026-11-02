@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GIGANG Content Match Sensor",
-  "version": "3.8.3",
+  "version": "3.8.6",
   "description": "보안 정책에 따른 외부 서비스 이용 및 자료 첨부 관리",
   "permissions": [
     "storage",
@@ -29,6 +29,7 @@
         "lifecycle_content.js",
         "image_match.js",
         "image_content.js",
+        "transfer_guard.js",
         "content.js"
       ],
       "run_at": "document_start",

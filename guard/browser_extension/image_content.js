@@ -89,8 +89,9 @@
                 const b=await crypto.subtle.digest('SHA-256',await f.arrayBuffer());
                 fingerprint=Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('');
             }
-            await chrome.runtime.sendMessage({type:'GIGANG_EVENT',event_type:'FILE_UPLOAD_ATTEMPT',fingerprint,
+            const reply=await chrome.runtime.sendMessage({type:'GIGANG_EVENT',event_type:'FILE_UPLOAD_ATTEMPT',fingerprint,preflight:true,
                 metadata:{timestamp:new Date().toISOString(),file_name:f.name,file_size:f.size}});
+            if(reply?.status!=='saved' || reply.decision!=='allow') throw new Error('FILE_NOT_ALLOWED');
         }
     }
     function attachNotice() {document.getElementById('gigang-image-guard')?.remove();}

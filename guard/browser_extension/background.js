@@ -77,6 +77,12 @@ async function deliver(message, sender) {
         return {status: 'failed', error: error.message};
     }
 
+    let policyBlocked = false;
+    if (message.preflight === true) {
+        await GIGANGBlocking.refresh();
+        const saved = await chrome.storage.local.get("gigangLeakBlockPolicy");
+        policyBlocked = GIGANGBlocking.matches(parsed.data.target, saved.gigangLeakBlockPolicy || []);
+    }
     const observed = Date.now();
     const trace = message.trace_id || crypto.randomUUID();
     parsed.data.trace_id = trace;
@@ -95,7 +101,7 @@ async function deliver(message, sender) {
         const grant=await GIGANGBlocking.permission(parsed.data.target);
         if(grant) parsed.data.authorization=grant;
     }
-    if (parsed.data.match_status === 'matched' && sender.tab && !parsed.data.authorization) {
+    if (parsed.data.match_status === 'matched' && sender.tab && !parsed.data.authorization && message.preflight !== true) {
         await GIGANGBlocking.show(sender.tab.id, parsed.data.target, 'matched', message.event_type).catch(() => {});
     }
     const record = {event_type: message.event_type, ...parsed.data};
@@ -119,7 +125,8 @@ async function deliver(message, sender) {
                 digest:message.fingerprint,trace_id:trace,timestamp:parsed.data.timestamp,observed,inspection:Object.fromEntries(
                     ["pattern_hits","text_length","inspectable","reason","file_kind"].filter(k=>parsed.data[k]!==undefined).map(k=>[k,parsed.data[k]]))});
         }
-        return {status: 'saved', event_type: message.event_type, match_status: parsed.data.match_status};
+        return {status: 'saved', event_type: message.event_type, match_status: parsed.data.match_status,
+            decision: policyBlocked || (parsed.data.match_status === 'matched' && !parsed.data.authorization) ? 'block' : 'allow'};
     } catch (error) {
         const code = error.name === 'TimeoutError' || error.name === 'AbortError' ? 'TIMEOUT' :
             /^HTTP_|^INVALID_AGENT_RESPONSE$/.test(error.message) ? error.message : 'AGENT_UNREACHABLE';
