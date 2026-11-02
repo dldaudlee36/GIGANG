@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "GIGANG Content Match Sensor",
-  "version": "3.8.6",
-  "description": "보안 정책에 따른 외부 서비스 이용 및 자료 첨부 관리",
+  "version": "3.8.7",
+  "description": "보안 정책에 따른 AI 서비스 이용 및 자료 첨부 관리",
   "permissions": [
     "storage",
     "downloads",
@@ -11,13 +11,14 @@
     "alarms"
   ],
   "host_permissions": [
-    "http://127.0.0.1/*"
+    "http://127.0.0.1/*",
+    "https://*.up.railway.app/*"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "GIGANG 감지 상태",
+    "default_title": "GIGANG 감시 상태",
     "default_popup": "popup.html"
   },
   "content_scripts": [
