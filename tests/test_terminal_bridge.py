@@ -35,3 +35,34 @@ def test_hops_always_three_filled():
     hops = tb._build_hops(inc, {})
     assert len(hops) == 3
     assert all(h["nodeLabel"] != "-" and h["time"] != "-" and h["detail"] for h in hops)
+
+
+def test_set_domain_policy_mutual_exclusion(tmp_path, monkeypatch):
+    test_file = tmp_path / "blocked_domains.json"
+    monkeypatch.setattr(tb, "_BLOCK_FILE", test_file)
+    monkeypatch.setattr(tb, "_api_key", lambda: "test_key")
+
+    class MockResp:
+        status_code = 200
+        def json(self): return {"domain": "claude.ai", "blocked": False}
+        def raise_for_status(self): pass
+
+    monkeypatch.setattr(tb.requests, "post", lambda *a, **kw: MockResp())
+
+    # 1. leak block
+    ok, msg = tb.set_domain_policy("claude.ai", "leak")
+    assert ok is True
+    full, leak = tb._local_policies()
+    assert "claude.ai" in leak and "claude.ai" not in full
+
+    # 2. full block switches mutually
+    ok, msg = tb.set_domain_policy("claude.ai", "full")
+    assert ok is True
+    full, leak = tb._local_policies()
+    assert "claude.ai" in full and "claude.ai" not in leak
+
+    # 3. allow clears both
+    ok, msg = tb.set_domain_policy("claude.ai", "allow")
+    assert ok is True
+    full, leak = tb._local_policies()
+    assert "claude.ai" not in full and "claude.ai" not in leak
