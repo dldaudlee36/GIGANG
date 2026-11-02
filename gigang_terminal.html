@@ -3002,6 +3002,27 @@
     };
 
     window.setDomainPolicy = function(domain, policy) {
+      if (state.govAssets && Array.isArray(state.govAssets)) {
+        const cleanTarget = (domain || '').toLowerCase().replace(/^www\./, '');
+        state.govAssets.forEach(a => {
+          const cleanA = (a.domain || '').toLowerCase().replace(/^www\./, '');
+          if (cleanA === cleanTarget || cleanA.endsWith('.' + cleanTarget) || a.domain === domain) {
+            a.policy = policy;
+            a.blocked = (policy === 'full');
+            a.leakBlocked = (policy === 'leak');
+            if (policy === 'full') {
+              a.blockedBy = domain;
+              a.leakBlockedBy = '';
+            } else if (policy === 'leak') {
+              a.leakBlockedBy = domain;
+              a.blockedBy = '';
+            } else {
+              a.blockedBy = '';
+              a.leakBlockedBy = '';
+            }
+          }
+        });
+      }
       window.gigangAct('set_domain_policy', { domain, policy });
       renderStage({ animate: false });
     };

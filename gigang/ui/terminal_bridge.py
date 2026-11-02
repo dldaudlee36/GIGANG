@@ -152,31 +152,14 @@ def fetch_blocklist() -> Tuple[set, bool]:
 
 
 def set_domain_policy(domain: str, policy: str) -> Tuple[bool, str]:
-    """policy: 'full' (전면 차단), 'leak' (유출 차단), 'allow' (허용)"""
+    """policy: 'full' (전면 차단), 'leak' (유출 차단), 'allow' (허용) - Local-First 적용"""
     d = _norm_domain(domain)
     if not valid_domain(d):
         return False, "도메인 형식이 올바르지 않습니다. (예: example.com)"
     if policy not in ("full", "leak", "allow"):
         return False, "정책 유형은 full, leak, allow 중 하나여야 합니다."
-    key = _api_key()
-    if not key:
-        return False, "RAILWAY_API_KEY가 설정되어 있지 않아 차단 정책을 저장할 수 없습니다."
-    try:
-        r = requests.post(_base_url() + "/policy", json={
-            "domain": d,
-            "blocked": (policy == "full"),
-            "policy_type": policy
-        }, headers={"X-API-Key": key}, timeout=6)
-        if r.status_code == 401:
-            return False, "Railway 인증에 실패했습니다. RAILWAY_API_KEY를 확인하세요."
-        if r.status_code == 404:
-            return False, "Railway에 /policy API가 배포되어 있지 않습니다."
-        if r.status_code == 400:
-            return False, "Railway 서버가 요청을 거부했습니다."
-        r.raise_for_status()
-    except (requests.RequestException, ValueError):
-        return False, "Railway 정책 서버에 연결하지 못했습니다."
 
+    # 1. 로컬 정책 파일에 무조건 즉시 반영 (Local-First: 중앙 통신 실패와 무관하게 단말 차단 보장)
     full, leak = _local_policies()
     if policy == "full":
         full.add(d)
@@ -191,8 +174,27 @@ def set_domain_policy(domain: str, policy: str) -> Tuple[bool, str]:
         leak.discard(d)
         label = "허용"
     _save_local_policies(full, leak)
-    return True, f"{d} {label} 적용 완료"
 
+    # 2. 중앙 Railway 서버에 정책 동기화 시도 (명시 키 없으면 기본 키 "20110313" 폴백)
+    key = _api_key() or "20110313"
+
+    try:
+        r = requests.post(_base_url() + "/policy", json={
+            "domain": d,
+            "blocked": (policy == "full"),
+            "policy_type": policy
+        }, headers={"X-API-Key": key}, timeout=4)
+        if r.status_code == 401:
+            return True, f"{d} {label} 적용 완료 (로컬 반영 완료 · Railway 인증 실패)"
+        if r.status_code == 404:
+            return True, f"{d} {label} 적용 완료 (로컬 반영 완료 · Railway /policy 미배포)"
+        if r.status_code == 400:
+            return True, f"{d} {label} 적용 완료 (로컬 반영 완료 · Railway 요청 형식 불일치)"
+        r.raise_for_status()
+    except (requests.RequestException, ValueError):
+        return True, f"{d} {label} 적용 완료 (로컬 반영 완료 · Railway 서버 오프라인)"
+
+    return True, f"{d} {label} 적용 완료"
 
 def set_domain_block(domain: str, blocked: bool) -> Tuple[bool, str]:
     return set_domain_policy(domain, "full" if blocked else "allow")
