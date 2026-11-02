@@ -138,6 +138,8 @@ def _hosts_domains(domains):
             names.add(norm)
             if not norm.startswith('www.'):
                 names.add('www.' + norm)
+            else:
+                names.add(norm[4:])
     return sorted(names)
 
 
