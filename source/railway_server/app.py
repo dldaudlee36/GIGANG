@@ -20,8 +20,8 @@ GIGANG 중앙 수집 서버 (Railway 배포본 소스 사본)
   POST /events  Agent가 로그를 보내는 곳          — 인증 없음
   GET  /events  대시보드가 로그를 가져가는 곳     — API 키 필요, 최신 100건
   GET  /logs    브라우저로 로그를 바로 보는 화면  — 인증 없음
-  GET  /policy  사용자 Agent가 읽는 중앙 차단 목록
-  POST /policy  관리자 대시보드가 차단/해제 변경 — API 키 필요
+  GET  /policy  사용자 Agent가 읽는 중앙 차단 목록 (전면 차단 · 유출 차단)
+  POST /policy  관리자 대시보드가 차단(전면·유출)/해제 변경 — API 키 필요
 
 [⚠ 보안상 확인이 필요한 부분]
   1) POST /events 에 인증이 없다.
@@ -84,14 +84,21 @@ def _normalize_domain(value):
 
 
 def _ensure_policy_table(cur):
-    """Railway PostgreSQL에 중앙 브라우저 차단 정책 테이블을 자동 생성한다."""
+    """Railway PostgreSQL에 중앙 브라우저 차단 정책 테이블을 자동 생성하고 컬럼을 보장한다."""
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS browser_block_policy
         (
             domain TEXT PRIMARY KEY,
+            policy_type VARCHAR(32) NOT NULL DEFAULT 'full',
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
+        """
+    )
+    cur.execute(
+        """
+        ALTER TABLE browser_block_policy
+        ADD COLUMN IF NOT EXISTS policy_type VARCHAR(32) NOT NULL DEFAULT 'full'
         """
     )
 
@@ -104,7 +111,7 @@ def _policy_snapshot():
         conn.commit()
         cur.execute(
             """
-            SELECT domain, updated_at
+            SELECT domain, policy_type, updated_at
             FROM browser_block_policy
             ORDER BY domain ASC
             """
@@ -115,8 +122,11 @@ def _policy_snapshot():
             stamps = [row.get("updated_at") for row in rows if row.get("updated_at") is not None]
             if stamps:
                 updated_at = max(stamps).astimezone(timezone.utc).isoformat()
+        full_domains = [row["domain"] for row in rows if (row.get("policy_type") or "full") != "leak"]
+        leak_domains = [row["domain"] for row in rows if row.get("policy_type") == "leak"]
         return {
-            "blocked_domains": [row["domain"] for row in rows],
+            "blocked_domains": full_domains,
+            "leak_blocked_domains": leak_domains,
             "updated_at": updated_at,
         }
     finally:
@@ -127,7 +137,7 @@ def _policy_snapshot():
 @app.route("/policy", methods=["GET"])
 def get_policy():
     """
-    모든 사용자 Agent가 읽는 중앙 차단 목록.
+    모든 사용자 Agent가 읽는 중앙 차단 목록 (전면 차단 + 유출 차단).
 
     읽기만 공개한다. 실제 차단/해제 변경은 아래 POST에서 API 키로 보호한다.
     POC 단계에서는 사용자 PC에 관리자 API 키를 배포하지 않기 위한 구조다.
@@ -141,29 +151,38 @@ def get_policy():
 
 @app.route("/policy", methods=["POST"])
 def update_policy():
-    """관리자 대시보드가 도메인을 중앙 차단/해제하는 API."""
+    """관리자 대시보드가 도메인을 중앙 차단(전면/유출)/해제하는 API."""
     if request.headers.get("X-API-Key") != API_KEY:
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.get_json(silent=True) or {}
     domain = _normalize_domain(data.get("domain"))
     blocked = data.get("blocked")
-    if not domain or type(blocked) is not bool:
-        return jsonify({"error": "domain and boolean blocked are required"}), 400
+    policy_type = data.get("policy_type")
+
+    if policy_type in ("full", "leak", "allow"):
+        target_policy = policy_type
+    elif type(blocked) is bool:
+        target_policy = "full" if blocked else "allow"
+    else:
+        return jsonify({"error": "domain and valid policy_type ('full'|'leak'|'allow') or boolean blocked are required"}), 400
+
+    if not domain:
+        return jsonify({"error": "valid domain is required"}), 400
 
     conn = get_db_connection()
     cur = conn.cursor()
     try:
         _ensure_policy_table(cur)
-        if blocked:
+        if target_policy in ("full", "leak"):
             cur.execute(
                 """
-                INSERT INTO browser_block_policy(domain, updated_at)
-                VALUES (%s, NOW())
+                INSERT INTO browser_block_policy(domain, policy_type, updated_at)
+                VALUES (%s, %s, NOW())
                 ON CONFLICT (domain)
-                DO UPDATE SET updated_at = EXCLUDED.updated_at
+                DO UPDATE SET policy_type = EXCLUDED.policy_type, updated_at = EXCLUDED.updated_at
                 """,
-                (domain,),
+                (domain, target_policy),
             )
         else:
             cur.execute("DELETE FROM browser_block_policy WHERE domain = %s", (domain,))
@@ -178,16 +197,24 @@ def update_policy():
     try:
         snapshot = _policy_snapshot()
     except Exception:
-        snapshot = {"blocked_domains": [], "updated_at": None}
+        snapshot = {"blocked_domains": [], "leak_blocked_domains": [], "updated_at": None}
     return jsonify({
-        "status": "blocked" if blocked else "allowed",
+        "status": "blocked" if target_policy == "full" else ("leak_blocked" if target_policy == "leak" else "allowed"),
+        "policy_type": target_policy,
         "domain": domain,
         **snapshot,
     }), 200
 
 
-
-from site_access import install as install_site_access
+try:
+    from site_access import install as install_site_access
+except (ImportError, AttributeError):
+    import importlib.util
+    _sa_path = os.path.join(os.path.dirname(__file__), "site_access.py")
+    _spec = importlib.util.spec_from_file_location("_railway_site_access", _sa_path)
+    _mod = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_mod)
+    install_site_access = _mod.install
 classify_site_event = install_site_access(app, get_db_connection, psycopg2.extras.RealDictCursor, API_KEY, _normalize_domain)
 
 def save_event(
