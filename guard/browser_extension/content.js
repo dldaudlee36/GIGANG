@@ -86,7 +86,11 @@
                 leakListStamp = Date.now();
             }
             const host = location.hostname.toLowerCase();
-            return (leakListCached || []).some(d => host === d || host.endsWith('.' + d));
+            const cleanHost = host.replace(/^www\./, '');
+            return (leakListCached || []).some(d => {
+                const cleanD = (d || '').toLowerCase().replace(/^www\./, '');
+                return cleanHost === cleanD || cleanHost.endsWith('.' + cleanD) || host === d || host.endsWith('.' + d);
+            });
         } catch { return false; }
     }
     document.addEventListener('paste', async event => {

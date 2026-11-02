@@ -6,7 +6,11 @@ const GIGANGBlocking = (() => {
             /^(?:[a-z0-9-]+\.)+[a-z0-9-]+$/i.test(x)).map(x => x.toLowerCase()) : [];
     }
     function matches(host, list) {
-        return list.some(domain => host === domain || host.endsWith('.' + domain));
+        const cleanHost = (host || '').toLowerCase().replace(/^www\./, '');
+        return list.some(domain => {
+            const cleanDomain = (domain || '').toLowerCase().replace(/^www\./, '');
+            return cleanHost === cleanDomain || cleanHost.endsWith('.' + cleanDomain) || host === domain || host.endsWith('.' + domain);
+        });
     }
     async function refresh() {
         try {

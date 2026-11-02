@@ -66,3 +66,11 @@ def test_set_domain_policy_mutual_exclusion(tmp_path, monkeypatch):
     assert ok is True
     full, leak = tb._local_policies()
     assert "claude.ai" not in full and "claude.ai" not in leak
+
+def test_blocked_by_www_bidirectional():
+    from gigang.ui.terminal_bridge import blocked_by
+    assert blocked_by("claude.ai", {"www.claude.ai"}) == "www.claude.ai"
+    assert blocked_by("www.claude.ai", {"claude.ai"}) == "claude.ai"
+    assert blocked_by("sub.claude.ai", {"www.claude.ai"}) == "www.claude.ai"
+    assert blocked_by("other.com", {"claude.ai"}) == ""
+

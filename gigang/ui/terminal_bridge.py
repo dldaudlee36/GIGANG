@@ -67,12 +67,17 @@ def valid_domain(d: str) -> bool:
 
 
 def blocked_by(domain: str, blocked: set) -> str:
-    """도메인을 막고 있는 차단 항목(자기 자신 또는 상위 도메인). 없으면 빈 문자열."""
+    """도메인을 막고 있는 차단 항목(자기 자신 또는 상위 도메인, www 상호 호환). 없으면 빈 문자열."""
     parts = domain.split(".")
     for i in range(len(parts) - 1):
         cand = ".".join(parts[i:])
         if cand in blocked:
             return cand
+    clean = domain.lower().removeprefix("www.")
+    for b in blocked:
+        b_clean = b.lower().removeprefix("www.")
+        if clean == b_clean or clean.endswith("." + b_clean):
+            return b
     return ""
 
 
