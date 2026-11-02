@@ -92,62 +92,105 @@ def _event_dt(item: Dict[str, Any]) -> datetime:
 # ---------------------------------------------------------------------------
 # 중앙 차단 정책 (Railway /policy)
 # ---------------------------------------------------------------------------
-def _local_blocklist() -> set:
+def _local_policies() -> Tuple[set, set]:
     try:
         payload = json.loads(_BLOCK_FILE.read_text(encoding="utf-8"))
-        return {_norm_domain(d) for d in payload.get("blocked_domains", []) if isinstance(d, str)}
+        full = {_norm_domain(d) for d in payload.get("blocked_domains", []) if isinstance(d, str)}
+        leak = {_norm_domain(d) for d in payload.get("leak_blocked_domains", []) if isinstance(d, str)}
+        return full, leak
     except (OSError, ValueError, AttributeError):
-        return set()
+        return set(), set()
 
 
-def _save_local_blocklist(domains: set) -> None:
+def _local_blocklist() -> set:
+    full, _ = _local_policies()
+    return full
+
+
+def _save_local_policies(full: set, leak: set) -> None:
     _RUNTIME.mkdir(parents=True, exist_ok=True)
+    clean_full = sorted({_norm_domain(d) for d in full if _norm_domain(d)})
+    # 상호 배타성: 전면 차단에 있으면 유출 차단에서 제외
+    clean_leak = sorted({_norm_domain(d) for d in leak if _norm_domain(d) and d not in clean_full})
     tmp = _BLOCK_FILE.with_suffix(".tmp")
     tmp.write_text(json.dumps({
-        "blocked_domains": sorted(domains),
+        "blocked_domains": clean_full,
+        "leak_blocked_domains": clean_leak,
         "updated_at": datetime.now(KST).isoformat(timespec="seconds"),
     }, ensure_ascii=False, indent=2), encoding="utf-8")
     tmp.replace(_BLOCK_FILE)
 
 
-def fetch_blocklist() -> Tuple[set, bool]:
-    """중앙 서버의 차단 목록. 읽기는 공개 API. 실패하면 로컬 사본과 False 를 돌려준다."""
+def _save_local_blocklist(domains: set) -> None:
+    _, leak = _local_policies()
+    _save_local_policies(domains, leak)
+
+
+def fetch_policies() -> Tuple[set, set, bool]:
+    """중앙 서버의 정책 목록 (전면 차단, 유출 차단). 읽기는 공개 API."""
     try:
         r = requests.get(_base_url() + "/policy", timeout=4)
         r.raise_for_status()
         data = r.json()
-        domains = {_norm_domain(d) for d in data.get("blocked_domains", [])}
-        _save_local_blocklist(domains)
-        return domains, True
+        full = {_norm_domain(d) for d in data.get("blocked_domains", [])}
+        leak = {_norm_domain(d) for d in data.get("leak_blocked_domains", [])}
+        _save_local_policies(full, leak)
+        return full, leak, True
     except (requests.RequestException, ValueError, AttributeError):
-        return _local_blocklist(), False
+        full, leak = _local_policies()
+        return full, leak, False
 
 
-def set_domain_block(domain: str, blocked: bool) -> Tuple[bool, str]:
+def fetch_blocklist() -> Tuple[set, bool]:
+    full, _, ok = fetch_policies()
+    return full, ok
+
+
+def set_domain_policy(domain: str, policy: str) -> Tuple[bool, str]:
+    """policy: 'full' (전면 차단), 'leak' (유출 차단), 'allow' (허용)"""
     d = _norm_domain(domain)
     if not valid_domain(d):
         return False, "도메인 형식이 올바르지 않습니다. (예: example.com)"
+    if policy not in ("full", "leak", "allow"):
+        return False, "정책 유형은 full, leak, allow 중 하나여야 합니다."
     key = _api_key()
     if not key:
         return False, "RAILWAY_API_KEY가 설정되어 있지 않아 차단 정책을 저장할 수 없습니다."
     try:
-        r = requests.post(_base_url() + "/policy", json={"domain": d, "blocked": bool(blocked)},
-                          headers={"X-API-Key": key}, timeout=6)
+        r = requests.post(_base_url() + "/policy", json={
+            "domain": d,
+            "blocked": (policy == "full"),
+            "policy_type": policy
+        }, headers={"X-API-Key": key}, timeout=6)
         if r.status_code == 401:
             return False, "Railway 인증에 실패했습니다. RAILWAY_API_KEY를 확인하세요."
         if r.status_code == 404:
             return False, "Railway에 /policy API가 배포되어 있지 않습니다."
         if r.status_code == 400:
-            return False, "Railway 서버가 도메인 형식을 거부했습니다."
+            return False, "Railway 서버가 요청을 거부했습니다."
         r.raise_for_status()
-        if r.json().get("domain") != d:
-            return False, "Railway 정책 응답 형식이 올바르지 않습니다."
     except (requests.RequestException, ValueError):
         return False, "Railway 정책 서버에 연결하지 못했습니다."
-    local = _local_blocklist()
-    (local.add if blocked else local.discard)(d)
-    _save_local_blocklist(local)
-    return True, f"{d} {'차단' if blocked else '차단 해제'} 완료"
+
+    full, leak = _local_policies()
+    if policy == "full":
+        full.add(d)
+        leak.discard(d)
+        label = "전면 차단"
+    elif policy == "leak":
+        leak.add(d)
+        full.discard(d)
+        label = "유출 차단"
+    else:
+        full.discard(d)
+        leak.discard(d)
+        label = "허용"
+    _save_local_policies(full, leak)
+    return True, f"{d} {label} 적용 완료"
+
+
+def set_domain_block(domain: str, blocked: bool) -> Tuple[bool, str]:
+    return set_domain_policy(domain, "full" if blocked else "allow")
 
 
 # ---------------------------------------------------------------------------
@@ -556,21 +599,30 @@ def build_snapshot(ctx, ui: Dict[str, Any]) -> Dict[str, Any]:
         if it.get("event_type") in ("FILE_UPLOAD_ATTEMPT", "PASTE_ATTEMPT"):
             exfil_by_domain[dom] = exfil_by_domain.get(dom, 0) + 1
     gov = []
+    full_blocked, leak_blocked, _ = fetch_policies()
     for a in ctx.governance_engine.get_all_assets():
         st = stats.get(a.domain, {})
-        by = blocked_by(a.domain, blocked)
+        by_full = blocked_by(a.domain, full_blocked)
+        by_leak = blocked_by(a.domain, leak_blocked)
+        pol = "full" if by_full else ("leak" if by_leak else "allow")
+        gov_status_text = "전면 차단" if by_full else ("유출 차단" if by_leak else {
+            "APPROVED": "승인", "CONDITIONAL": "조건부 승인", "UNAPPROVED": "미승인", "BLOCKED": "차단"
+        }.get(a.sanction_status.value, a.sanction_status.value))
         gov.append({
             "domain": a.domain, "service": a.service_name, "category": a.category,
             "riskLevel": {"HIGH": "HIGH", "MEDIUM": "WATCH", "LOW": "NORMAL"}.get(a.risk_level.value, a.risk_level.value),
             "riskScore": inc_score_by_domain.get(a.domain),
-            "govStatus": "차단" if by else {
-                "APPROVED": "승인", "CONDITIONAL": "조건부 승인", "UNAPPROVED": "미승인", "BLOCKED": "차단"
-            }.get(a.sanction_status.value, a.sanction_status.value),
+            "govStatus": gov_status_text,
             "liveHits": a.access_count, "liveDevices": len(devices_by_domain.get(a.domain, ())),
             "users": a.user_count, "freqLabel": a.usage_frequency,
             "totalCumulative": st.get("count", a.access_count),
             "exfilAttempts": exfil_by_domain.get(a.domain, 0),
-            "aiOpinion": a.ai_diagnosis, "blocked": bool(by), "blockedBy": by,
+            "aiOpinion": a.ai_diagnosis,
+            "policy": pol,
+            "blocked": bool(by_full),
+            "blockedBy": by_full,
+            "leakBlocked": bool(by_leak),
+            "leakBlockedBy": by_leak,
         })
 
     # 최근 7일 일자별 이벤트 수 (KST 기준)
@@ -638,6 +690,11 @@ def handle_action(ctx, ui: Dict[str, Any], action: str, p: Dict[str, Any]) -> Tu
         if on:
             refresh(ctx, force=True)
         return True, "실시간 수집 " + ("ON" if on else "OFF")
+    if action == "set_domain_policy":
+        ok, msg = set_domain_policy(str(p.get("domain", "")), str(p.get("policy", "allow")))
+        if ok:
+            refresh(ctx, force=False)
+        return ok, msg
     if action == "block_domain":
         ok, msg = set_domain_block(str(p.get("domain", "")), bool(p.get("blocked")))
         if ok:

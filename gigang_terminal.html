@@ -1423,6 +1423,9 @@
     .switch-toggle.danger-switch input:checked + .switch-slider {
       background-color: #c4242a;
     }
+    .switch-toggle.warn-switch input:checked + .switch-slider {
+      background-color: #d97706;
+    }
     .switch-toggle input:checked + .switch-slider::before {
       transform: translateX(14px);
     }
@@ -2998,9 +3001,13 @@
       renderStage();
     };
 
+    window.setDomainPolicy = function(domain, policy) {
+      window.gigangAct('set_domain_policy', { domain, policy });
+      renderStage({ animate: false });
+    };
+
     window.toggleDomainBlock = function(domain, checked) {
-      window.gigangAct('block_domain', { domain, blocked: Boolean(checked) });
-      renderStage({ animate: false });  // 서버 응답이 오기 전 체크 상태를 원래대로 되돌림
+      window.setDomainPolicy(domain, checked ? 'full' : 'allow');
     };
 
     // Page 4 & site_access.py Handlers
@@ -4421,12 +4428,27 @@
                         ${escapeHtml(r.aiOpinion)}
                       </td>
                       <td class="num">
-                        <div style="display:inline-flex;align-items:center;gap:10px;">
-                          <span class="mono" style="font-size:12px;font-weight:600;color:${r.blocked ? 'var(--negative)' : 'var(--muted)'};">${r.blocked ? (r.blockedBy && r.blockedBy !== r.domain ? '차단중 (' + escapeHtml(r.blockedBy) + ')' : '차단중') : '허용'}</span>
-                          <label class="switch-toggle danger-switch" aria-label="${escapeHtml(r.domain)} 브라우저 차단 정책 토글">
-                            <input type="checkbox" ${r.blocked ? 'checked' : ''} onchange="window.toggleDomainBlock('${escapeHtml(r.blocked && r.blockedBy ? r.blockedBy : r.domain)}', this.checked)" />
-                            <span class="switch-slider"></span>
-                          </label>
+                        <div class="gov-policy-controls" style="display:inline-flex;flex-direction:column;gap:5px;align-items:flex-end;">
+                          <div style="display:flex;align-items:center;gap:6px;">
+                            <span class="mono" style="font-size:11px;font-weight:${r.policy === 'leak' ? '700' : '500'};color:${r.policy === 'leak' ? '#fbbf24' : 'var(--muted)'};">
+                              유출 차단
+                            </span>
+                            <label class="switch-toggle warn-switch" style="transform:scale(0.8);transform-origin:right center;" title="${escapeHtml(r.domain)} 접속 허용, 복사·붙여넣기 및 파일 업로드 차단">
+                              <input type="checkbox" ${r.policy === 'leak' ? 'checked' : ''}
+                                onchange="window.setDomainPolicy('${escapeHtml(r.leakBlocked && r.leakBlockedBy ? r.leakBlockedBy : r.domain)}', this.checked ? 'leak' : 'allow')" />
+                              <span class="switch-slider"></span>
+                            </label>
+                          </div>
+                          <div style="display:flex;align-items:center;gap:6px;">
+                            <span class="mono" style="font-size:11px;font-weight:${r.policy === 'full' ? '700' : '500'};color:${r.policy === 'full' ? 'var(--negative)' : 'var(--muted)'};">
+                              전면 차단
+                            </span>
+                            <label class="switch-toggle danger-switch" style="transform:scale(0.8);transform-origin:right center;" title="${escapeHtml(r.domain)} 사이트 접속 자체를 완전 차단">
+                              <input type="checkbox" ${r.policy === 'full' ? 'checked' : ''}
+                                onchange="window.setDomainPolicy('${escapeHtml(r.blocked && r.blockedBy ? r.blockedBy : r.domain)}', this.checked ? 'full' : 'allow')" />
+                              <span class="switch-slider"></span>
+                            </label>
+                          </div>
                         </div>
                       </td>
                     </tr>

@@ -84,22 +84,27 @@ def load_blocklist():
     try:
         payload = json.loads(BLOCKLIST_FILE.read_text(encoding='utf-8'))
         raw = payload.get('blocked_domains', []) if isinstance(payload, dict) else []
+        raw_leak = payload.get('leak_blocked_domains', []) if isinstance(payload, dict) else []
         source_updated_at = payload.get('updated_at') if isinstance(payload, dict) else None
     except (FileNotFoundError, OSError, ValueError, TypeError):
-        raw, source_updated_at = [], None
+        raw, raw_leak, source_updated_at = [], [], None
     domains = sorted({normalize_domain(item) for item in raw if normalize_domain(item)})
+    leak_domains = sorted({normalize_domain(item) for item in raw_leak if normalize_domain(item) and item not in domains})
     return {
         'blocked_domains': domains,
+        'leak_blocked_domains': leak_domains,
         'updated_at': source_updated_at,
         'central_sync': dict(_policy_status),
     }
 
 
-def save_blocklist(domains, updated_at=None):
+def save_blocklist(domains, leak_domains=None, updated_at=None):
     clean = sorted({normalize_domain(item) for item in domains if normalize_domain(item)})
+    clean_leak = sorted({normalize_domain(item) for item in (leak_domains or []) if normalize_domain(item) and item not in clean})
     BLOCKLIST_FILE.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         'blocked_domains': clean,
+        'leak_blocked_domains': clean_leak,
         'updated_at': updated_at or datetime.now(timezone.utc).isoformat(),
         'source': 'railway-central-policy',
     }
@@ -175,7 +180,8 @@ def sync_central_policy():
         raw = payload.get('blocked_domains', []) if isinstance(payload, dict) else None
         if not isinstance(raw, list):
             raise ValueError('invalid policy payload')
-        clean = save_blocklist(raw, payload.get('updated_at'))
+        raw_leak = payload.get('leak_blocked_domains', []) if isinstance(payload, dict) else []
+        clean = save_blocklist(raw, raw_leak, payload.get('updated_at'))
         hosts_ok = apply_windows_blocklist(SITE_ACCESS.effective_domains(clean))
         _policy_status.update(ok=True, last_success=datetime.now(timezone.utc).isoformat(), error=None, detail=None)
         return hosts_ok

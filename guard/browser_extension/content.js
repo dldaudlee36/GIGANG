@@ -61,11 +61,46 @@
             await report('COPY_ATTEMPT',{timestamp,source_path:'/db',detection_scope:'customer_table',...inspection},digest);
         });
     },true);
-    document.addEventListener('paste', event => {
+    function showLeakBlockNotice(msg) {
+        let el = document.getElementById('gigang-leak-notice');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'gigang-leak-notice';
+            el.style.cssText = 'position:fixed;top:20px;right:20px;z-index:2147483647;background:#0f172a;color:#f87171;border:1px solid #ef4444;padding:12px 18px;border-radius:8px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:13px;font-weight:600;box-shadow:0 10px 25px rgba(0,0,0,0.5);display:flex;align-items:center;gap:10px;pointer-events:none;transition:opacity 0.3s;';
+            document.body.appendChild(el);
+        }
+        el.innerHTML = '<span style="font-size:16px;">🛡️</span> <span>GIGANG: ' + msg + '</span>';
+        el.style.opacity = '1';
+        clearTimeout(el._timer);
+        el._timer = setTimeout(() => {
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 400);
+        }, 3500);
+    }
+    let leakListCached = null, leakListStamp = 0;
+    async function checkLeakBlocked() {
+        try {
+            if (Date.now() - leakListStamp > 2000) {
+                const data = await chrome.storage.local.get('gigangLeakBlockPolicy');
+                leakListCached = Array.isArray(data?.gigangLeakBlockPolicy) ? data.gigangLeakBlockPolicy : [];
+                leakListStamp = Date.now();
+            }
+            const host = location.hostname.toLowerCase();
+            return (leakListCached || []).some(d => host === d || host.endsWith('.' + d));
+        } catch { return false; }
+    }
+    document.addEventListener('paste', async event => {
         if(globalThis.GIGANGPaused?.())return;
         if (!event.isTrusted || !event.clipboardData) return;
         const target = event.composedPath?.()[0] || event.target;
         if (target?.closest?.('input[type="password"]')) return;
+        if (await checkLeakBlocked()) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            showLeakBlockNotice('이 사이트에서는 데이터 유출 방지 정책에 의해 붙여넣기가 차단되었습니다.');
+            void report('PASTE_BLOCKED', {timestamp: new Date().toISOString(), reason: 'LEAK_PREVENTION_POLICY'}, null);
+            return;
+        }
         let text = event.clipboardData.getData('text/plain') || '';
         const images = Array.from(event.clipboardData.files || []).filter(file => file.type.startsWith('image/'));
         if (!text && images.length === 0) return;
@@ -80,10 +115,18 @@
             await report('PASTE_ATTEMPT', meta, digest);
         });
     },true);
-    document.addEventListener('change', event => {
+    document.addEventListener('change', async event => {
         if(globalThis.GIGANGPaused?.())return;
         const target = event.composedPath?.()[0] || event.target;
         if (!event.isTrusted || target?.tagName !== 'INPUT' || target.type !== 'file') return;
+        if (await checkLeakBlocked()) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            target.value = '';
+            showLeakBlockNotice('이 사이트에서는 데이터 유출 방지 정책에 의해 파일 업로드가 차단되었습니다.');
+            void report('FILE_UPLOAD_BLOCKED', {timestamp: new Date().toISOString(), reason: 'LEAK_PREVENTION_POLICY'}, null);
+            return;
+        }
         for (const file of Array.from(target.files || [])) {
             const timestamp = new Date().toISOString();
             enqueue(async () => {

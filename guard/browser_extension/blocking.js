@@ -16,7 +16,8 @@ const GIGANGBlocking = (() => {
             const body = await response.json();
             if (!Array.isArray(body.blocked_domains)) throw new Error('INVALID_POLICY');
             const list = domains(body.blocked_domains);
-            await chrome.storage.local.set({[policyKey]:list});
+            const leakList = domains(body.leak_blocked_domains || []);
+            await chrome.storage.local.set({[policyKey]: list, gigangLeakBlockPolicy: leakList});
             return list;
         } catch {
             return domains((await chrome.storage.local.get(policyKey))[policyKey]);
