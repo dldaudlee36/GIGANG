@@ -65,20 +65,20 @@ stateDiagram-v2
 
 전술 관제 업무에 최적화된 풀스크린 단일 인터페이스를 제공합니다.
 
-![Cyber OS Overview](screenshots/beta_terminal_page1_overview.png)
+![Cyber OS Overview](screenshots/01_overview.png)
 
 ### 화면 구성 (6개 핵심 뷰)
 | 1. 종합 관제 (Overview) | 2. 활성 인시던트 (Active Incidents) |
 |---|---|
-| ![Overview](screenshots/beta_terminal_page1_overview.png) | ![Active Incidents](screenshots/beta_terminal_page2_active_incidents.png) |
+| ![Overview](screenshots/01_overview.png) | ![Active Incidents](screenshots/02_active_incidents.png) |
 
 | 3. 전체 케이스 목록 (Cases) | 4. 3-Hop 킬체인 분석 (Kill Chain) |
 |---|---|
-| ![Cases](screenshots/beta_terminal_page3_cases.png) | ![Kill Chain](screenshots/beta_terminal_page4_killchain.png) |
+| ![Cases](screenshots/03_cases.png) | ![Kill Chain](screenshots/04_killchain.png) |
 
 | 5. Shadow AI 거버넌스 (Governance) | 6. 멀티소스 로그 파이프라인 (Pipeline) |
 |---|---|
-| ![Governance](screenshots/beta_terminal_page5_governance.png) | ![Pipeline](screenshots/beta_terminal_page6_pipeline.png) |
+| ![Governance](screenshots/05_governance.png) | ![Pipeline](screenshots/06_pipeline.png) |
 
 ---
 
