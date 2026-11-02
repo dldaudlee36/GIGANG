@@ -53,3 +53,14 @@ ON CONFLICT (dept_code, data_type) DO NOTHING;
 
 -- 사용자 부서 등록 예시 (팀원 Windows 사용자 이름으로 바꿔서 실행)
 -- INSERT INTO user_department (user_name, dept_code) VALUES ('kim', 'CS') ON CONFLICT (user_name) DO UPDATE SET dept_code = EXCLUDED.dept_code;
+
+-- 3) 중앙 브라우저 차단 정책 (전면 차단 · 유출 차단)
+CREATE TABLE IF NOT EXISTS browser_block_policy (
+    domain       TEXT PRIMARY KEY,
+    policy_type  VARCHAR(32) NOT NULL DEFAULT 'full',  -- 'full': 전면 차단, 'leak': 유출 차단
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 기존 테이블이 존재할 경우 컬럼 추가 마이그레이션
+ALTER TABLE browser_block_policy ADD COLUMN IF NOT EXISTS policy_type VARCHAR(32) NOT NULL DEFAULT 'full';
+
