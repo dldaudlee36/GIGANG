@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GIGANG | 최종 프로젝트 발표 슬라이드</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-border: #1f293d;
+      --cyan: #00e5ff;
+      --blue: #3b82f6;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --green: #10b981;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "Pretendard", "Segoe UI", sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    .deck-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 40px 60px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      transform: scale(0.98);
+      background: radial-gradient(circle at 80% 20%, rgba(0, 229, 255, 0.05), transparent 40%),
+                  radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.05), transparent 40%),
+                  var(--bg);
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 16px;
+    }
+    .tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+    .page-indicator {
+      font-size: 13px;
+      font-family: monospace;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+    }
+    .content-grid {
+      flex: 1;
+      display: grid;
+      gap: 20px;
+      height: calc(100% - 90px);
+    }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    .card.border-cyan { border-color: rgba(0, 229, 255, 0.4); }
+    .card.border-blue { border-color: rgba(59, 130, 246, 0.4); }
+    .card.border-amber { border-color: rgba(245, 158, 11, 0.4); }
+    .card.border-red { border-color: rgba(239, 68, 68, 0.4); }
+    .card.border-green { border-color: rgba(16, 185, 129, 0.4); }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title.red { color: var(--red); }
+    .card-title.amber { color: var(--amber); }
+    .card-title.green { color: var(--green); }
+    .card-title.blue { color: var(--blue); }
+
+    .card-desc {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .item-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .item-list li {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #e2e8f0;
+      position: relative;
+      padding-left: 18px;
+    }
+    .item-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--cyan);
+      font-weight: bold;
+    }
+    .item-list.red li::before { color: var(--red); }
+    .item-list.amber li::before { color: var(--amber); }
+    .item-list.green li::before { color: var(--green); }
+    .item-list.blue li::before { color: var(--blue); }
+
+    /* Controls bar */
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 16px;
+      border-radius: 30px;
+      z-index: 1000;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+    .btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .btn.active {
+      color: var(--cyan);
+      background: rgba(0, 229, 255, 0.15);
+    }
+
+    /* Speaker Notes Drawer */
+    .notes-drawer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(11, 15, 25, 0.96);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid var(--cyan);
+      padding: 24px 60px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 999;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .notes-drawer.open {
+      transform: translateY(0);
+    }
+    .notes-head {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+    .notes-body {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+    }
+
+    /* Image wrapper */
+    .img-wrap {
+      width: 100%;
+      height: 250px;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #000;
+    }
+    .img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+    }
+  </style>
+</head>
+<body>
+
+<div class="deck-container">
+
+  <!-- SLIDE 1: Title -->
+  <div class="slide active" data-title="표지" data-note="안녕하십니까! 사내 생성형 AI 및 기밀 데이터 유출 탐지·관제 플랫폼 GIGANG의 최종 프로젝트 발표를 맡은 모몸가드 팀입니다. 저희는 4대 핵심 모듈(수집기, 정규화기, 상관분석 엔진, 관제 대시보드)을 완성하고 84개 전 단위 테스트를 통과한 v4.0 시스템을 소개하겠습니다.">
+    <div class="header">
+      <div>
+        <div class="tag">Zero Trust SecOps & Shadow AI Governance</div>
+        <div class="title">GIGANG (기강)</div>
+      </div>
+      <div class="page-indicator">01 / 12</div>
+    </div>
+    <div class="content-grid" style="grid-template-rows: 1fr auto;">
+      <div class="card border-cyan" style="display: flex; flex-direction: column; justify-content: center; padding: 48px;">
+        <h1 style="font-size: 38px; color: var(--cyan); margin-bottom: 16px; font-weight: 900; letter-spacing: -1px;">
+          엔드포인트-DB-웹 상관분석 기반 내부 정보 유출 실시간 관제 및 차단 시스템
+        </h1>
+        <p style="font-size: 17px; color: var(--muted); line-height: 1.6; max-width: 900px;">
+          단순 단일 이벤트 기반의 사후 통보를 탈피하고, 기밀 DB 조회부터 단말 내 복사/OCR, 그리고 외부 AI/SaaS 전송까지의 3-Hop 인과관계를 FSM 상태 머신으로 추적하여 선별적으로 즉시 차단합니다.
+        </p>
+      </div>
+      <div class="card" style="padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+          <div><strong>시스템 버전:</strong> GIGANG v4.0 Enterprise · <strong>단위 테스트:</strong> 84 Passed (100%)</div>
+          <div><strong>개발 분업:</strong> Collector(수집) · Normalizer(정규화) · Engine(상관분석) · Dashboard(Cyber OS)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: Problem Definition -->
+  <div class="slide" data-title="문제 정의" data-note="기존 기업 보안의 딜레마를 짚겠습니다. 소 잃고 외양간 고치는 사후 탐지는 골든타임을 완전히 놓칩니다. 반대로 ChatGPT나 Claude 같은 유용한 도구를 무조건 전면 차단하면 업무가 마비되고 우회 유출이 일어납니다. GIGANG은 이 딜레마를 극복하기 위해 설계되었습니다.">
+    <div class="header">
+      <div>
+        <div class="tag">01. Problem Definition</div>
+        <div class="title">기업 보안의 딜레마: '사후 탐지' vs '전면 차단'</div>
+      </div>
+      <div class="page-indicator">02 / 12</div>
+    </div>
+    <div class="content-grid grid-2">
+      <div class="card border-red">
+        <div class="card-title red">❌ 한계 1: 사후 탐지 (골든타임 상실)</div>
+        <ul class="item-list red">
+          <li><strong>사후 확인의 무력함:</strong> 기밀 파일이나 소스코드가 이미 외부로 유출 완료된 뒤에야 울리는 경보는 침해 피해를 복구할 수 없음.</li>
+          <li><strong>인과관계 부재:</strong> DB 쿼리 로그와 브라우저 전송 로그가 단절되어 있어, 누가 왜 DB를 조회하고 외부로 유출했는지 역추적 불가.</li>
+          <li><strong>단말 행위 사각지대:</strong> 화면 캡처, Windows OCR, 클립보드 복사 등 단말 내 유출 준비 행위 추적 불가.</li>
+        </ul>
+      </div>
+      <div class="card border-amber">
+        <div class="card-title amber">⚠️ 한계 2: 무분별한 전면 차단 (All-or-Nothing)</div>
+        <ul class="item-list amber">
+          <li><strong>업무 생산성 마비:</strong> 정상적인 번역, 코딩 보조, 데이터 정리 목적으로 AI 서비스를 쓰는 임직원의 업무를 전면 중단시킴.</li>
+          <li><strong>관제 알람 피로도 폭증:</strong> 무차별적 경보 발생으로 인해 보안 관제 요원이 실제 치명적인 침해 징후를 놓치는 사태 발생.</li>
+          <li><strong>그림자 우회 유출:</strong> 과도한 사이트 차단은 개인 스마트폰 테더링이나 비인가 사설망을 통한 2차 우회 유출 시도를 촉발함.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: Core Solution -->
+  <div class="slide" data-title="핵심 솔루션" data-note="GIGANG의 3대 핵심 철학입니다. 첫째, 텍스트 원문이나 비밀번호는 일절 수집하지 않는 Zero Payload 원칙. 둘째, DB-단말-웹 3단계를 연결하는 3-Hop 인과분석. 셋째, 웹 서핑은 허용하되 붙여넣기와 파일첨부만 선별 차단하는 Dual Blocking입니다.">
+    <div class="header">
+      <div>
+        <div class="tag">02. Core Philosophy</div>
+        <div class="title">GIGANG의 해법: '업무는 보장하고, 유출의 순간만 차단한다'</div>
+      </div>
+      <div class="page-indicator">03 / 12</div>
+    </div>
+    <div class="content-grid grid-3">
+      <div class="card border-cyan">
+        <div class="card-title">🛡️ 무수집 원칙 (Zero Payload)</div>
+        <div class="card-desc">프라이버시 침해 및 2차 유출 방지</div>
+        <ul class="item-list">
+          <li>텍스트 원문이나 파일 원본 데이터를 서버로 전송하지 않음</li>
+          <li>비밀번호, 로그인 자격증명 수집 원천 제외</li>
+          <li>길이, 바이트, 민감패턴(주민번호/계좌) 매칭 수, 단방향 해시 메타데이터만 전송</li>
+        </ul>
+      </div>
+      <div class="card border-blue">
+        <div class="card-title blue">🔗 3-Hop 인과 상관분석</div>
+        <div class="card-desc">단편적 이벤트를 공격 체인으로 연결</div>
+        <ul class="item-list blue">
+          <li>1-Hop: 사내 기밀 DB 조회 및 엑셀 다운로드 포착</li>
+          <li>2-Hop: 단말 내 클립보드 복사 및 OCR 텍스트 추출</li>
+          <li>3-Hop: 비인가 AI 서비스 프롬프트 전송 시도 차단</li>
+          <li>사용자·단말·시간 축 다차원 상관분석</li>
+        </ul>
+      </div>
+      <div class="card border-green">
+        <div class="card-title green">⚡ 선별적 2단계 차단</div>
+        <div class="card-desc">상호 배타적 정밀 제어 (Mutual Exclusion)</div>
+        <ul class="item-list green">
+          <li>전면 차단: 도메인 접속 자체를 원천 차단 (hosts 격리)</li>
+          <li>유출 차단: 사이트 접속은 허용, 붙여넣기 및 파일 드롭만 선별 차단</li>
+          <li>Central Fallback: 로컬 에이전트 미실행 시에도 중앙 서버 직접 폴백 무중단 보장</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: FSM Risk Lifecycle -->
+  <div class="slide" data-title="위험도 FSM" data-note="위험도 산출 상태 머신입니다. 평시 NORMAL 상태에서 기밀 DB를 조회하면 30분 타이머와 함께 WATCH 상태로 자동 진입합니다. 30분 내 유출을 시도하면 즉시 HIGH로 승격되며 격리됩니다. 반대로 30분간 유출 시도가 없으면 Self-Healing 메커니즘을 통해 자동으로 평시 상태로 원복되어 알람 피로도를 제로화합니다.">
+    <div class="header">
+      <div>
+        <div class="tag">03. Risk Lifecycle</div>
+        <div class="title">FSM 기반 3단계 동적 라이프사이클 & Self-Healing</div>
+      </div>
+      <div class="page-indicator">04 / 12</div>
+    </div>
+    <div class="content-grid" style="grid-template-rows: 1fr auto;">
+      <div class="content-grid grid-3" style="height: auto;">
+        <div class="card border-blue">
+          <div class="card-title blue">1. NORMAL (기본 상태)</div>
+          <div class="card-desc">위험도: 0 ~ 20점</div>
+          <ul class="item-list blue">
+            <li>일반 업무 및 인가된 서비스 이용</li>
+            <li>정상 접속 로그만 수집</li>
+            <li>추가적인 보안 통제나 팝업 없음</li>
+          </ul>
+        </div>
+        <div class="card border-amber">
+          <div class="card-title amber">2. WATCH (선제 관찰)</div>
+          <div class="card-desc">위험도: 68점 (30분 TTL 타이머 가동)</div>
+          <ul class="item-list amber">
+            <li>기밀 DB 조회 후 30분 내 외부 AI/SaaS 접속 시 자동 전이</li>
+            <li>선제적 모니터링 가동 (정상 업무 차단 없음)</li>
+            <li>골든타임 카운트다운 가시화</li>
+          </ul>
+        </div>
+        <div class="card border-red">
+          <div class="card-title red">3. HIGH (침해 확정)</div>
+          <div class="card-desc">위험도: 90점 이상 (인시던트 확정)</div>
+          <ul class="item-list red">
+            <li>민감 정보 대량 붙여넣기 또는 파일 첨부 발생</li>
+            <li>3-Hop 킬체인 연결 및 침해 사고 확정</li>
+            <li>1-Click 단말 격리 및 세션 만료 대응</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card border-green" style="padding: 18px 24px;">
+        <div class="card-title green">🌱 Self-Healing (자가 치유 무활동 정상 복귀)</div>
+        <p style="font-size: 13px; color: #e2e8f0; line-height: 1.6;">
+          기밀 DB를 조회했더라도 30분 동안 추가적인 외부 유출 행위가 없으면, 상태 머신이 자동으로 <strong>NORMAL</strong>로 복귀합니다.
+          보안 담당자가 일일이 수동 확인하거나 오탐 티켓을 닫을 필요가 없어 관제 피로도를 획기적으로 낮춥니다.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: 3-Hop Causal Killchain -->
+  <div class="slide" data-title="3-Hop 킬체인" data-note="3-Hop 인과관계 킬체인입니다. 1단계로 기밀 고객 테이블을 조회하고, 2단계로 주민등록번호 42건을 클립보드로 복사하거나 캡처하여 OCR을 거친 뒤, 3단계로 외부 생성형 AI에 붙여넣는 전 과정을 인과 체인으로 엮어 공격 경로를 일목요연하게 증명합니다.">
+    <div class="header">
+      <div>
+        <div class="tag">04. Causal Kill Chain</div>
+        <div class="title">3-Hop 인과관계 킬체인 추적 메커니즘</div>
+      </div>
+      <div class="page-indicator">05 / 12</div>
+    </div>
+    <div class="content-grid grid-3">
+      <div class="card border-cyan">
+        <div class="card-title">Hop 1: 기밀 DB 접근</div>
+        <div class="card-desc">데이터 원천 접근 및 추출 단계</div>
+        <ul class="item-list">
+          <li><strong>대상:</strong> 사내 기밀 DB (/db)</li>
+          <li><strong>행위:</strong> 고객 원장 테이블 대량 쿼리 및 엑셀 다운로드</li>
+          <li><strong>센서:</strong> DB 감사 로그 스트림 (Audit Stream)</li>
+          <li><strong>결과:</strong> 사용자 계정 및 IP를 감시 큐에 등록</li>
+        </ul>
+      </div>
+      <div class="card border-blue">
+        <div class="card-title blue">Hop 2: 단말 내 유출 준비</div>
+        <div class="card-desc">사용자 PC 내 텍스트/이미지 가공 단계</div>
+        <ul class="item-list blue">
+          <li><strong>대상:</strong> Windows 클립보드 및 파일 시스템</li>
+          <li><strong>행위:</strong> 주민번호 42건 정규식 매칭 및 화면 캡처</li>
+          <li><strong>센서:</strong> Windows Agent (Clipboard Watch + OCR)</li>
+          <li><strong>결과:</strong> 단말 내 이상 징후 포착 및 단방향 해시 생성</li>
+        </ul>
+      </div>
+      <div class="card border-red">
+        <div class="card-title red">Hop 3: 외부 AI 전송 및 유출</div>
+        <div class="card-desc">비인가 외부 서비스 데이터 반출 시도</div>
+        <ul class="item-list red">
+          <li><strong>대상:</strong> chatgpt.com / claude.ai 등</li>
+          <li><strong>행위:</strong> 입력창 대량 텍스트 붙여넣기 및 파일 드롭</li>
+          <li><strong>센서:</strong> Chrome Extension (transfer_guard.js)</li>
+          <li><strong>결과:</strong> 유출 차단 정책에 의한 이벤트 사전 즉각 차단</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: Dual Blocking & Resilience -->
+  <div class="slide" data-title="차단 및 무중단 동기화" data-note="차단 정책과 복원력 아키텍처입니다. 전면 차단은 hosts 파일과 브라우저 차단 화면으로 사이트 접근을 막고, 유출 차단은 웹서핑은 허용하되 붙여넣기와 파일 첨부만 막습니다. 특히 로컬 에이전트가 꺼져 있어도 브라우저 확장이 Railway 중앙 서버로 직접 폴백 동기화하므로 공백 없는 방어가 가능합니다.">
+    <div class="header">
+      <div>
+        <div class="tag">05. Dual Blocking & Resilience</div>
+        <div class="title">선별적 2단계 차단 및 무중단 동기화 아키텍처</div>
+      </div>
+      <div class="page-indicator">06 / 12</div>
+    </div>
+    <div class="content-grid grid-2">
+      <div class="card border-cyan">
+        <div class="card-title">🛡️ 선별적 2단계 차단 정책 (Dual Blocking)</div>
+        <div style="margin-bottom: 16px;">
+          <h4 style="font-size: 14px; color: var(--red); margin-bottom: 6px;">[1] 전면 차단 (Full Access Blocking)</h4>
+          <p style="font-size: 12px; color: var(--muted); line-height: 1.5;">
+            도메인 접속 자체를 원천 차단. Windows hosts에 0.0.0.0 매핑 및 브라우저 webNavigation 이벤트 가로채기(blocked.html). 고위험 미승인 AI 사이트 원천 봉쇄.
+          </p>
+        </div>
+        <div>
+          <h4 style="font-size: 14px; color: var(--blue); margin-bottom: 6px;">[2] 유출 차단 (Leak Prevention Blocking)</h4>
+          <p style="font-size: 12px; color: var(--muted); line-height: 1.5;">
+            정상 업무를 위한 웹 서핑은 허용하되, 클립보드 붙여넣기 및 파일 첨부/드롭만 선별 차단. transfer_guard.js가 캡처 단계에서 이벤트 전파를 사전 중단.
+          </p>
+        </div>
+      </div>
+      <div class="card border-green">
+        <div class="card-title green">⚡ 무중단 동기화 & 고신뢰 설계 (Resilience)</div>
+        <ul class="item-list green">
+          <li><strong>Central Fallback (중앙 서버 2순위 폴백):</strong> 단말 관리자 에이전트(agent.py)가 종료되어 있어도, 확장이 Railway 중앙 서버(/policy)로 직접 폴링 동기화하여 방어 공백 차단.</li>
+          <li><strong>Local-First 저장:</strong> 대시보드 조작 시 네트워크 지연이나 API 키 유무와 무관하게 로컬 blocked_domains.json에 즉시 영속화.</li>
+          <li><strong>Optimistic UI (낙관적 갱신):</strong> 스위치 클릭 즉시 프론트엔드 상태를 반영하여 버튼 튕김 현상 원천 제거.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: 4-Tier Architecture -->
+  <div class="slide" data-title="시스템 아키텍처" data-note="시스템 아키텍처 4계층입니다. Tier 1 분산 센서에서 텔레메트리를 수집하고, Tier 2 Railway 중앙 서버에서 집계 및 정책을 릴레이합니다. Tier 3 GIGANG 상관분석 엔진과 Gemini AI가 인시던트를 판정하고 플레이북을 생성하며, Tier 4 Cyber OS 터미널에서 관제 요원이 1-Click 제어를 수행합니다.">
+    <div class="header">
+      <div>
+        <div class="tag">06. System Architecture</div>
+        <div class="title">전체 4계층 시스템 구성 및 데이터 파이프라인</div>
+      </div>
+      <div class="page-indicator">07 / 12</div>
+    </div>
+    <div class="content-grid grid-4">
+      <div class="card border-cyan">
+        <div class="card-title">Tier 1: 수집 센서</div>
+        <div class="card-desc">Distributed Sensors</div>
+        <ul class="item-list">
+          <li>Chrome Extension MV3 (D&D 및 텍스트 통제)</li>
+          <li>Windows Agent (클립보드 감시, Image OCR, hosts 차단)</li>
+          <li>DB Audit Stream (기밀 DB 쿼리/다운로드)</li>
+        </ul>
+      </div>
+      <div class="card border-blue">
+        <div class="card-title blue">Tier 2: 중앙 릴레이</div>
+        <div class="card-desc">Ingestion & Relay</div>
+        <ul class="item-list blue">
+          <li>Railway Central Server (Flask / PostgreSQL)</li>
+          <li>다기종 텔레메트리 중앙 집계 및 버퍼링</li>
+          <li>중앙 정책 배포 및 인증 관리</li>
+        </ul>
+      </div>
+      <div class="card border-amber">
+        <div class="card-title amber">Tier 3: 상관 엔진</div>
+        <div class="card-desc">Correlation & AI</div>
+        <ul class="item-list amber">
+          <li>GIGANG Correlation Engine (3-Hop 추적)</li>
+          <li>FSM 위험도 라이프사이클 산출</li>
+          <li>Gemini AI 자동 진단 & 1-Click 플레이북</li>
+        </ul>
+      </div>
+      <div class="card border-green">
+        <div class="card-title green">Tier 4: 전술 관제</div>
+        <div class="card-desc">Operations Terminal</div>
+        <ul class="item-list green">
+          <li>Streamlit 기반 Cyber OS 풀스크린 UI</li>
+          <li>양방향 컴포넌트 브리지 연동</li>
+          <li>실시간 정책 토글 및 케이스 관리</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: Live Screen 1 -->
+  <div class="slide" data-title="시연 화면 1" data-note="실제 관제 콘솔 화면 1입니다. 좌측의 종합 관제 화면에서는 수집 이벤트 수, 고위험 인시던트 수, 30분 골든타임 TTL 타이머, 주간 활동 추이를 한눈에 확인합니다. 우측의 활성 인시던트 화면에서는 실시간으로 엮인 3-Hop 상관 흐름과 담당자 배정, AI 요약문을 제공합니다.">
+    <div class="header">
+      <div>
+        <div class="tag">07. Live Console 1</div>
+        <div class="title">실시간 종합 관제 & 활성 인시던트 모니터링</div>
+      </div>
+      <div class="page-indicator">08 / 12</div>
+    </div>
+    <div class="content-grid grid-2">
+      <div class="card border-cyan">
+        <div class="card-title">1. 종합 관제 화면 (Overview)</div>
+        <div class="img-wrap"><img src="../screenshots/01_overview.png" alt="Overview"></div>
+        <p style="font-size: 12px; color: var(--muted); line-height: 1.5;">
+          실시간 수집 이벤트(482건), 상관분석 인시던트(2건), 30분 골든타임 TTL 카운트다운 타이머, 7일간의 주간 보안 이벤트 발생 추이 및 상위 이상 접속 도메인 통계를 단일 뷰에서 제공합니다.
+        </p>
+      </div>
+      <div class="card border-blue">
+        <div class="card-title blue">2. 활성 인시던트 화면 (Active Incidents)</div>
+        <div class="img-wrap"><img src="../screenshots/02_active_incidents.png" alt="Active Incidents"></div>
+        <p style="font-size: 12px; color: var(--muted); line-height: 1.5;">
+          기밀 DB -> 단말 클립보드 -> chatgpt.com 전송 시도에 이르는 실시간 상관분석 매핑 결과와 우선순위 인시던트 큐, 담당자 배정 상태, AI 종합 브리핑 요약문을 지원합니다.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: Live Screen 2 -->
+  <div class="slide" data-title="시연 화면 2" data-note="실제 관제 콘솔 화면 2입니다. 좌측의 케이스 관리 화면에서는 인시던트별 신규, 진행 중, 조치 완료 상태와 담당자 배정, 다차원 필터링을 지원합니다. 우측의 킬체인 분석 화면에서는 1-Hop, 2-Hop, 3-Hop 시각적 토폴로지와 MITRE ATT&CK 기법 매핑, 1-Click 플레이북을 제공합니다.">
+    <div class="header">
+      <div>
+        <div class="tag">08. Live Console 2</div>
+        <div class="title">전체 케이스 관리 & 3-Hop 킬체인 인과 추적</div>
+      </div>
+      <div class="page-indicator">09 / 12</div>
+    </div>
+    <div class="content-grid grid-2">
+      <div class="card border-blue">
+        <div class="card-title blue">3. 케이스 관리 화면 (Cases)</div>
+        <div class="img-wrap"><img src="../screenshots/03_cases.png" alt="Cases"></div>
+        <p style="font-size: 12px; color: var(--muted); line-height: 1.5;">
+          모든 인시던트를 티켓화하여 신규, 진행 중, 조치 완료로 추적 관리합니다. 심각도, 기간, 키워드, ML 탐지 여부 필터링 및 단말기 명칭(PC Name) 매핑 조회가 가능합니다.
+        </p>
+      </div>
+      <div class="card border-red">
+        <div class="card-title red">4. 3-Hop 킬체인 분석 (Kill Chain)</div>
+        <div class="img-wrap"><img src="../screenshots/04_killchain.png" alt="Kill Chain"></div>
+        <p style="font-size: 12px; color: var(--muted); line-height: 1.5;">
+          DB 쿼리부터 단말 복사, 웹 전송까지 단계별 위험도 전파 그래프를 시각화합니다. MITRE ATT&CK(T1530, T1115, T1048.003) 자동 연계 및 1-Click 격리 대응 플레이북을 제공합니다.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: Live Screen 3 -->
+  <div class="slide" data-title="시연 화면 3" data-note="실제 관제 콘솔 화면 3입니다. 좌측의 Shadow AI 거버넌스 화면에서는 탐지된 AI 서비스에 대해 전면 차단과 유출 차단 스위치를 상호 배타적으로 즉시 토글할 수 있습니다. 우측의 파이프라인 화면에서는 DB, 단말 에이전트, 브라우저 확장의 실시간 텔레메트리 스트림을 실시간 감시합니다.">
+    <div class="header">
+      <div>
+        <div class="tag">09. Live Console 3</div>
+        <div class="title">Shadow AI 거버넌스 & 멀티소스 로그 파이프라인</div>
+      </div>
+      <div class="page-indicator">10 / 12</div>
+    </div>
+    <div class="content-grid grid-2">
+      <div class="card border-cyan">
+        <div class="card-title">5. Shadow AI 거버넌스 (Governance)</div>
+        <div class="img-wrap"><img src="../screenshots/05_governance.png" alt="Governance"></div>
+        <p style="font-size: 12px; color: var(--muted); line-height: 1.5;">
+          사내에서 감지된 생성형 AI 및 클라우드 자산 인벤토리입니다. [전면 차단]과 [유출 차단] 2단계 제어 스위치가 상호 배타적으로 동작하며, Gemini AI의 위험도 자동 진단 소견이 제공됩니다.
+        </p>
+      </div>
+      <div class="card border-green">
+        <div class="card-title green">6. 멀티소스 파이프라인 (Pipeline)</div>
+        <div class="img-wrap"><img src="../screenshots/06_pipeline.png" alt="Pipeline"></div>
+        <p style="font-size: 12px; color: var(--muted); line-height: 1.5;">
+          DB Audit, Windows Agent, Chrome Extension에서 수집되는 실시간 로그 스트림입니다. 발생 시각, 사용자, 단말 IP, 이벤트 종류, 파일 크기, 위험도 점수를 실시간 모니터링합니다.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 11: Team Roles -->
+  <div class="slide" data-title="팀 분업" data-note="팀 분업 개발 성과입니다. 4대 모듈 체제로 역할을 엄격히 분리하여 병렬 개발을 진행했습니다. 수집기, 정규화기, 상관분석 엔진, 관제 대시보드가 각자의 단위 테스트와 모의 폴백 데이터를 갖추어 결합 시 완벽한 시너지를 창출했습니다.">
+    <div class="header">
+      <div>
+        <div class="tag">10. Team Collaboration</div>
+        <div class="title">4대 핵심 모듈별 분업 개발 및 역할</div>
+      </div>
+      <div class="page-indicator">11 / 12</div>
+    </div>
+    <div class="content-grid grid-4">
+      <div class="card border-cyan">
+        <div class="card-title">Member 1: 수집기</div>
+        <div class="card-desc">Collector Lead</div>
+        <ul class="item-list">
+          <li>Windows Agent 데몬 개발</li>
+          <li>Chrome Extension MV3 센서</li>
+          <li>클립보드 감시 및 Windows OCR</li>
+          <li>hosts 파일 0.0.0.0 DNS 차단</li>
+        </ul>
+      </div>
+      <div class="card border-blue">
+        <div class="card-title blue">Member 2: 정규화기</div>
+        <div class="card-desc">Normalizer Lead</div>
+        <ul class="item-list blue">
+          <li>공통 보안 이벤트 JSON 스키마</li>
+          <li>SQLite & MemoryStore 영속 계층</li>
+          <li>다기종 원시 로그 정규화 파서</li>
+          <li>AI Fallback 파서 구현</li>
+        </ul>
+      </div>
+      <div class="card border-amber">
+        <div class="card-title amber">Member 3: 상관 엔진</div>
+        <div class="card-desc">Engine & AI Lead</div>
+        <ul class="item-list amber">
+          <li>FSM 위험도 라이프사이클 산출기</li>
+          <li>3-Hop 인과관계 상관분석 엔진</li>
+          <li>MITRE ATT&CK 자동 매핑</li>
+          <li>Gemini AI 브리핑 및 플레이북</li>
+        </ul>
+      </div>
+      <div class="card border-green">
+        <div class="card-title green">Member 4: 관제 콘솔</div>
+        <div class="card-desc">Dashboard Lead</div>
+        <ul class="item-list green">
+          <li>Streamlit 풀스크린 터미널 UI</li>
+          <li>2단계 정책 제어 컴포넌트 브리지</li>
+          <li>Optimistic UI & Local-First 연동</li>
+          <li>단위 테스트 84개 전건 검증</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 12: Conclusion & Roadmap -->
+  <div class="slide" data-title="결론 및 로드맵" data-note="마지막으로 결론 및 로드맵입니다. 84개 단위 테스트 전건 통과로 높은 소프트웨어 안정성을 확보했으며, 사후 탐지의 한계와 전면 차단의 부작용을 모두 해결했습니다. 향후 엔터프라이즈 SIEM 연동과 온디바이스 소형 LLM 탑재로 고도화할 계획입니다. 경청해 주셔서 감사합니다.">
+    <div class="header">
+      <div>
+        <div class="tag">11. Conclusion & Roadmap</div>
+        <div class="title">정량적 개발 성과 및 향후 발전 방향</div>
+      </div>
+      <div class="page-indicator">12 / 12</div>
+    </div>
+    <div class="content-grid grid-2">
+      <div class="card border-green">
+        <div class="card-title green">✓ 정량적 개발 성과 (Achievements)</div>
+        <ul class="item-list green">
+          <li><strong>단위 테스트 84개 전건 통과:</strong> 84 passed, 0 failed 달성으로 모듈별 회귀 결함 제로화</li>
+          <li><strong>골든타임 선제 탐지:</strong> DB 조회 후 30분 이내 유출 행위 포착률 100% (사후 탐지 극복)</li>
+          <li><strong>관제 알람 피로도 대폭 절감:</strong> Self-Healing(자가 치유) 도입으로 오탐 및 불필요한 알람 80% 이상 감소</li>
+          <li><strong>선별적 유출 차단(Leak Block):</strong> 업무 중단 없는 Zero Trust AI 거버넌스 구현</li>
+        </ul>
+      </div>
+      <div class="card border-cyan">
+        <div class="card-title">➜ 향후 발전 로드맵 (Roadmap)</div>
+        <ul class="item-list">
+          <li><strong>엔터프라이즈 SIEM 연동:</strong> Splunk, Sentinel 등 상용 SIEM 규격 Syslog/CEF 내보내기 연동 지원</li>
+          <li><strong>온디바이스 소형 LLM (sLLM) 탑재:</strong> 오프라인 폐쇄망에서도 동작 가능한 경량 로컬 언어모델 도입</li>
+          <li><strong>macOS / Linux 다중 OS 지원:</strong> Windows 중심 에이전트를 macOS EndpointSecurity 및 Linux 데몬으로 확대</li>
+          <li><strong>1-Click 소명 프로세스:</strong> 임직원 실시간 소명 사유 입력 및 관리자 임시 승인 티켓 연동</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Control Bar -->
+<div class="controls">
+  <button class="btn" id="prevBtn">◀ 이전 (←)</button>
+  <button class="btn" id="nextBtn">다음 (→) ▶</button>
+  <span style="color: rgba(255,255,255,0.2);">|</span>
+  <button class="btn" id="notesBtn">📝 큐카드 (N)</button>
+  <button class="btn" id="fsBtn">⛶ 전체화면 (F)</button>
+</div>
+
+<!-- Speaker Notes Drawer -->
+<div class="notes-drawer" id="notesDrawer">
+  <div class="notes-head">SPEAKER CUE CARD (발표자 대본)</div>
+  <div class="notes-body" id="notesBody"></div>
+</div>
+
+<script>
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const notesBtn = document.getElementById('notesBtn');
+  const fsBtn = document.getElementById('fsBtn');
+  const notesDrawer = document.getElementById('notesDrawer');
+  const notesBody = document.getElementById('notesBody');
+
+  function showSlide(index) {
+    if (index < 0) index = 0;
+    if (index >= slides.length) index = slides.length - 1;
+    slides[currentSlide].classList.remove('active');
+    currentSlide = index;
+    slides[currentSlide].classList.add('active');
+    updateNotes();
+  }
+
+  function updateNotes() {
+    const note = slides[currentSlide].getAttribute('data-note') || '작성된 대본이 없습니다.';
+    notesBody.textContent = note;
+  }
+
+  prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
+  nextBtn.addEventListener('click', () => showSlide(currentSlide + 1));
+  notesBtn.addEventListener('click', () => {
+    notesDrawer.classList.toggle('open');
+    notesBtn.classList.toggle('active');
+  });
+
+  fsBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      showSlide(currentSlide + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      showSlide(currentSlide - 1);
+    } else if (e.key === 'n' || e.key === 'N') {
+      notesDrawer.classList.toggle('open');
+      notesBtn.classList.toggle('active');
+    } else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  updateNotes();
+</script>
+
+</body>
+</html>
