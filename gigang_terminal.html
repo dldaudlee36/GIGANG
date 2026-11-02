@@ -3012,6 +3012,9 @@
     window.openGrantForm = function(groupId) {
       state.siteAccessGroups.forEach(g => {
         g.grantFormOpen = (g.id === groupId);
+        if (g.id === groupId && !g.grantMinutes) {
+          g.grantMinutes = 15;
+        }
       });
       renderStage();
     };
@@ -3031,7 +3034,7 @@
     window.applySiteGrant = function(groupId) {
       const g = state.siteAccessGroups.find(x => x.id === groupId);
       if (!g) return;
-      window.gigangAct('site_access', { deviceId: g.deviceId, domain: g.domain, pcName: g.pcName, minutes: g.grantMinutes || 30 });
+      window.gigangAct('site_access', { deviceId: g.deviceId, domain: g.domain, pcName: g.pcName, minutes: Number(g.grantMinutes) || 15 });
     };
 
     window.revokeSiteGrant = function(groupId) {
@@ -4576,7 +4579,7 @@
                           <div style="display:flex;align-items:center;gap:10px;">
                             <span style="font-size:13px;font-weight:600;">허용 시간:</span>
                             <select class="${cfg.selectClass}" onchange="window.setGrantMinutes('${escapeHtml(g.id)}', this.value)" aria-label="일시 허용 시간(분)">
-                              <option value="15" ${g.grantMinutes === 15 ? 'selected' : ''}>15분 허용</option>
+                              <option value="15" ${(g.grantMinutes || 15) === 15 ? 'selected' : ''}>15분 허용</option>
                               <option value="30" ${g.grantMinutes === 30 ? 'selected' : ''}>30분 허용</option>
                               <option value="60" ${g.grantMinutes === 60 ? 'selected' : ''}>60분 허용</option>
                             </select>
