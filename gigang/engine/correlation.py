@@ -15,7 +15,6 @@ from gigang.schemas.incident import (
 from gigang.engine.respond import on_risk_state_changed
 from gigang.engine import policy as dept_policy
 from gigang.storage.sqlite_store import SQLiteStore
-from gigang.engine.slack_notify import notify_high
 
 # 상태별 만료 주기 (TTL)
 # 이 시간이 지나면 해당 상태는 조회에서 제외되어 자동으로 NORMAL로 취급된다.
@@ -446,8 +445,7 @@ class CorrelationEngine:
             event_ids=[event.event_id], evidences=evidence, network_hops=[], soar_actions=[])
         self.incidents[inc.incident_id] = inc
         self.store.save_incident(inc)
-        if getattr(self.store, "db_path", None):
-            notify_high(inc, self.store.db_path)
+
         return inc
 
     def _apply_db_export(self, user: str, event: SecurityEvent, ai_accesses: List[tuple]) -> Optional[str]:
